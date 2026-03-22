@@ -4,7 +4,7 @@ import { Camera, Package, MessageSquare, TrendingUp, ChevronRight, Send, Plus, X
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "/api";
 
 // Mock Data
 const INVENTORY = [

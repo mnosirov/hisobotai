@@ -32,7 +32,7 @@ def read_root():
     return {"status": "ok", "app": "Hisobot AI"}
 
 # Module 2: Inventory Actions
-@app.post("/inventory/voice", response_model=Dict)
+@app.post("/api/inventory/voice", response_model=Dict)
 async def upload_voice(audio: UploadFile = File(...), tenant_id: int = 1, db: Session = Depends(get_db)):
     """Module 2: Voice-to-Inventory."""
     # (Helper to save file temporarily)
@@ -44,7 +44,7 @@ async def upload_voice(audio: UploadFile = File(...), tenant_id: int = 1, db: Se
     results = service.handle_voice_inventory(temp_path)
     return {"status": "success", "processed_count": len(results)}
 
-@app.post("/inventory/invoice", response_model=Dict)
+@app.post("/api/inventory/invoice", response_model=Dict)
 async def upload_invoice(image: UploadFile = File(...), tenant_id: int = 1, db: Session = Depends(get_db)):
     """Module 2: Invoice-OCR."""
     temp_path = f"/tmp/{image.filename}"
@@ -56,7 +56,7 @@ async def upload_invoice(image: UploadFile = File(...), tenant_id: int = 1, db: 
     return {"status": "success", "processed_count": len(results)}
 
 # Module 3: Daily Sales (Daily Ledger)
-@app.post("/sales/ledger", response_model=Dict)
+@app.post("/api/sales/ledger", response_model=Dict)
 async def upload_handwritten_ledger(image: UploadFile = File(...), tenant_id: int = 1, db: Session = Depends(get_db)):
     """Module 3: Daily Sales OCR (Handwriting)."""
     temp_path = f"/tmp/{image.filename}"
@@ -68,7 +68,7 @@ async def upload_handwritten_ledger(image: UploadFile = File(...), tenant_id: in
     return res
 
 # Module 5: BI & Reporting
-@app.get("/bi/insights", response_model=List[Dict])
+@app.get("/api/bi/insights", response_model=List[Dict])
 def get_insights(tenant_id: int = 1, db: Session = Depends(get_db)):
     """Module 5: Weekly Insights & Predictions."""
     service = BIService(db, tenant_id)
