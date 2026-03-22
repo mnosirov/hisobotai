@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/.env
+backend/hisobot.db
+venv/
+.venv/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 antialiased;
+  }
+}
+
+.glass-card {
+  @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl;
+}
+
+.primary-btn {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 
+         text-white font-bold py-4 px-8 rounded-2xl shadow-lg transform transition active:scale-95;
+}
+
+.secondary-btn {
+  @apply bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 font-medium py-3 px-6 
+         rounded-2xl border border-slate-700/50 transition;
+}
+
+/* Telegram Specific Fixes */
+:root {
+  --tg-theme-bg-color: #0f172a;
+}
+
+body {
+  background-color: var(--tg-theme-bg-color);
+  min-height: 100vh;
+  /* Scroll lock for Mini Apps */
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+main {
+  height: 100vh;
+  overflow-y: auto;
+}
