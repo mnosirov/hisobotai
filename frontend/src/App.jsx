@@ -36,7 +36,11 @@ const App = () => {
       tgApp.ready();
       tgApp.expand();
       setTg(tgApp);
-      tgApp.headerColor = '#0f172a';
+      
+      // Only set header color if supported (v6.1+)
+      if (tgApp.isVersionAtLeast('6.1')) {
+        tgApp.setHeaderColor('#0f172a');
+      }
     }
   }, []);
 
