@@ -21,6 +21,22 @@ async def lifespan(app: FastAPI):
         print("Database initialized successfully.")
     except Exception as e:
         print(f"Error during database initialization: {e}")
+        
+    # Auto-set Telegram Webhook on startup to make it foolproof
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if bot_token and "dummy" not in bot_token:
+        try:
+            # We use the current production domain name
+            webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    f"https://api.telegram.org/bot{bot_token}/setWebhook",
+                    json={"url": webhook_url}
+                )
+                print(f"Telegram Webhook Status: {res.json()}")
+        except Exception as e:
+            print(f"Failed to auto-set Telegram Webhook: {e}")
+            
     yield
 
 app = FastAPI(title="Hisobot AI — Pro API", lifespan=lifespan)
