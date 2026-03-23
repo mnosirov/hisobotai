@@ -68,12 +68,21 @@ class AIService:
         tried_models = set()
         last_error = "Noma'lum xatolik"
         
+        # Convert to standard JPEG to avoid 'image/mpo' or other unsupported types
+        standard_path = f"{image_path}_standard.jpg"
+        try:
+            with PIL.Image.open(image_path) as img:
+                img.convert("RGB").save(standard_path, "JPEG")
+            processing_path = standard_path
+        except:
+            processing_path = image_path
+
         for _ in range(3):
             model_name = await cls._get_best_model(exclude=tried_models)
             tried_models.add(model_name)
             
             try:
-                img = PIL.Image.open(image_path)
+                img = PIL.Image.open(processing_path)
                 model = genai.GenerativeModel(model_name)
                 response = await asyncio.to_thread(model.generate_content, [prompt, img])
                 content = response.text
@@ -86,7 +95,8 @@ class AIService:
                 last_error = str(e)
                 print(f"Vision (Invoice) failed with {model_name}: {e}")
                 continue
-                
+        
+        if os.path.exists(standard_path): os.remove(standard_path)
         raise ValueError(f"Barcha modellar muvaffaqiyatsiz tugadi. So'nggi xato: {last_error}")
 
     @classmethod
@@ -102,13 +112,22 @@ class AIService:
         
         tried_models = set()
         last_error = "Noma'lum xatolik"
+
+        # Convert to standard JPEG
+        standard_path = f"{image_path}_standard_sales.jpg"
+        try:
+            with PIL.Image.open(image_path) as img:
+                img.convert("RGB").save(standard_path, "JPEG")
+            processing_path = standard_path
+        except:
+            processing_path = image_path
         
         for _ in range(3):
             model_name = await cls._get_best_model(exclude=tried_models)
             tried_models.add(model_name)
             
             try:
-                img = PIL.Image.open(image_path)
+                img = PIL.Image.open(processing_path)
                 model = genai.GenerativeModel(model_name)
                 response = await asyncio.to_thread(model.generate_content, [prompt, img])
                 content = response.text
@@ -121,7 +140,8 @@ class AIService:
                 last_error = str(e)
                 print(f"Vision (Sales) failed with {model_name}: {e}")
                 continue
-                
+        
+        if os.path.exists(standard_path): os.remove(standard_path)
         raise ValueError(f"Barcha modellar muvaffaqiyatsiz tugadi. So'nggi xato: {last_error}")
 
     @classmethod
