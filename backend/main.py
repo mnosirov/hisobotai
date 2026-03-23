@@ -148,6 +148,27 @@ async def chat_with_assistant(chat: schemas.ChatMessage, tenant_id: int = 1, db:
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- TELEGRAM WEBHOOK ---
+@app.get("/api/telegram/setup")
+async def setup_webhook():
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not bot_token or "dummy" in bot_token:
+        return {"status": "error", "message": "TELEGRAM_BOT_TOKEN kiritilmagan yoki xato."}
+    
+    webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                f"https://api.telegram.org/bot{bot_token}/setWebhook",
+                json={"url": webhook_url}
+            )
+            return {
+                "status": "Telegram API javobi",
+                "response": res.json(),
+                "webhook_url": webhook_url
+            }
+    except Exception as e:
+        return {"status": "error", "error_details": str(e)}
+
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(update: Dict):
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
