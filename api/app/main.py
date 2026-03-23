@@ -63,6 +63,29 @@ def get_sales_summary(tenant_id: int = 1, db: Session = Depends(get_db)):
     }
 
 # --- Module 2: Inventory Actions ---
+@app.post("/api/inventory", response_model=schemas.Product)
+def add_product_manual(product: schemas.ProductCreate, tenant_id: int = 1, db: Session = Depends(get_db)):
+    """Add a product manually to inventory."""
+    service = InventoryService(db, tenant_id)
+    # The inventory service uses a slightly different dict format, so we map it:
+    product_data = {
+        "name": product.name,
+        "quantity": product.stock,
+        "unit": product.unit,
+        "price": product.last_purchase_price
+    }
+    # Provide the option to explicitly set sell_price via service, or let it calculate
+    # Currently add_or_update_product calculates sell_price = price * 1.2 if it's new
+    # I'll let the service handle it as is for simplicity, or modify the service.
+    # Actually, pass the data directly:
+    res = service.add_or_update_product(product_data, source="Qo'lda (Manual)")
+    # Force the sell_price if explicitly provided
+    if product.sell_price > 0:
+        res.sell_price = product.sell_price
+        db.commit()
+        db.refresh(res)
+    return res
+
 @app.post("/api/inventory/voice", response_model=Dict)
 async def upload_voice(audio: UploadFile = File(...), tenant_id: int = 1, db: Session = Depends(get_db)):
     """Module 2: Voice-to-Inventory."""
