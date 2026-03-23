@@ -9,10 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Async OpenAI Client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_key = os.getenv("OPENAI_API_KEY", "dummy_key_to_prevent_crash")
+client = AsyncOpenAI(api_key=openai_key)
 
 # Gemini configure
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+gemini_key = os.getenv("GEMINI_API_KEY", "dummy_key")
+if gemini_key != "dummy_key":
+    genai.configure(api_key=gemini_key)
 
 class AIService:
     
