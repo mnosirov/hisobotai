@@ -16,16 +16,17 @@ elif raw_url.startswith("postgresql://") and not raw_url.startswith("postgresql+
 else:
     DATABASE_URL = raw_url
 
-# Strip problematic neon parameters
-if "channel_binding=require" in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
+# Strip problematic neon parameters (asyncpg doesn't support them in the URL)
+if "?" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?")[0]
 
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_pre_ping=True,  # Test connection liveness
+    pool_pre_ping=True,
     pool_size=5,
-    max_overflow=10
+    max_overflow=10,
+    connect_args={"ssl": "require"} if "neon.tech" in DATABASE_URL else {}
 ) if "postgresql" in DATABASE_URL else create_async_engine(DATABASE_URL, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
