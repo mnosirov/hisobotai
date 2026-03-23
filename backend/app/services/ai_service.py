@@ -29,12 +29,12 @@ class AIService:
             models = await asyncio.to_thread(genai.list_models)
             available_models = [m.name for m in models if "generateContent" in m.supported_generation_methods]
             
-            # 1.5-flash is the most reliable for free tier
+            # Priority list - Prioritizing 2.0 Flash as requested by user
             priorities = [
+                "models/gemini-2.0-flash",
                 "models/gemini-1.5-flash",
                 "models/gemini-1.5-flash-8b",
                 "models/gemini-1.5-pro",
-                "models/gemini-2.0-flash",
                 "models/gemini-pro"
             ]
             
