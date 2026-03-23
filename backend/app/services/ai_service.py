@@ -83,23 +83,22 @@ class AIService:
 
     @staticmethod
     async def chat_with_assistant(context_text: str, message: str) -> str:
-        """Uses Async OpenAI to chat with business context."""
+        """Uses Gemini 1.5 Flash to chat with business context."""
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        
         system_prompt = (
             "Sen 'Hisobot AI' aqlli yordamchisan. Berilgan biznes hisoboti (context) dan foydalanib o'zbek tilida, "
-            "do'stona, aniq va qisqa qilib javob ber. Hech qanday murakkab gaplardan foydalanma. Javob oxirida bitta emoj qoldir."
+            "do'stona, aniq va qisqa qilib javob ber. Hech qanday murakkab gaplardan foydalanma. Javob oxirida bitta emoji qoldir."
         )
         
-        full_content = f"Biznes egasi so'rovi: {message}\n\nHozirgi Holat (Context):\n{context_text}"
+        full_content = f"{system_prompt}\n\nHozirgi Holat (Context):\n{context_text}\n\nFoydalanuvchi: {message}"
         
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": full_content}
-                ]
+            response = await asyncio.to_thread(
+                model.generate_content,
+                full_content
             )
-            return response.choices[0].message.content
+            return response.text
         except Exception as e:
-            print(f"Chat API error: {e}")
-            return "Kechirasiz, xizmatda uzilish yuz berdi. Iltimos, keyinroq urinib ko'ring."
+            print(f"Chat API error (Gemini): {e}")
+            return "Kechirasiz, xizmatda uzilish yuz berdi. Iltimos, keyinroq urinib ko'ring. 😔"
