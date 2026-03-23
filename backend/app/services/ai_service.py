@@ -24,7 +24,7 @@ class AIService:
     @staticmethod
     async def extract_invoice_data(image_path: str) -> List[Dict]:
         """Uses Gemini 1.5 Pro to extract structured data from an invoice image asynchronously."""
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = (
             "Mana bu faktura (qog'oz hujjat) rasmini tahlil qil. "
@@ -54,7 +54,7 @@ class AIService:
     @staticmethod
     async def extract_handwritten_sales(image_path: str) -> List[Dict]:
         """Uses Gemini to extract sales from handwritten ledger asynchronously."""
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = (
             "Mana bu qo'lyozma savdo sahifasini tahlil qil. "
@@ -84,7 +84,7 @@ class AIService:
     @staticmethod
     async def chat_with_assistant(context_text: str, message: str) -> str:
         """Uses Gemini 1.5 Flash to chat with business context."""
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         system_prompt = (
             "Sen 'Hisobot AI' aqlli yordamchisan. Berilgan biznes hisoboti (context) dan foydalanib o'zbek tilida, "
