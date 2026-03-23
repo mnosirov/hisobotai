@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database Configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./hisobot.db")
+# Using /tmp for Vercel Serverless environment compatibility
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////tmp/hisobot.db")
+
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
