@@ -20,11 +20,49 @@ if gemini_key != "dummy_key":
     genai.configure(api_key=gemini_key)
 
 class AIService:
-    
-    @staticmethod
-    async def extract_invoice_data(image_path: str) -> List[Dict]:
-        """Uses Gemini 1.5 Pro to extract structured data from an invoice image asynchronously."""
-        model = genai.GenerativeModel("gemini-1.5-flash")
+    _cached_model_name = None
+
+    @classmethod
+    async def _get_best_model(cls) -> str:
+        """Dynamically finds the best available model for the current API key."""
+        if cls._cached_model_name:
+            return cls._cached_model_name
+        
+        try:
+            # We wrap in to_thread because list_models is synchronous
+            models = await asyncio.to_thread(genai.list_models)
+            available_models = [m.name for m in models if "generateContent" in m.supported_generation_methods]
+            
+            # Priority list for a smooth experience
+            priorities = [
+                "models/gemini-1.5-flash",
+                "models/gemini-1.5-flash-latest",
+                "models/gemini-2.0-flash",
+                "models/gemini-1.5-pro",
+                "models/gemini-pro"
+            ]
+            
+            for p in priorities:
+                if p in available_models:
+                    cls._cached_model_name = p
+                    print(f"Auto-selected model: {p}")
+                    return p
+            
+            # Fallback to the first available if none of our priorities match
+            if available_models:
+                cls._cached_model_name = available_models[0]
+                return available_models[0]
+                
+            return "gemini-1.5-flash" # Absolute fallback
+        except Exception as e:
+            print(f"Model discovery error: {e}")
+            return "gemini-1.5-flash"
+
+    @classmethod
+    async def extract_invoice_data(cls, image_path: str) -> List[Dict]:
+        """Uses the best available Gemini model to extract structured data from an invoice image."""
+        model_name = await cls._get_best_model()
+        model = genai.GenerativeModel(model_name)
         
         prompt = (
             "Mana bu faktura (qog'oz hujjat) rasmini tahlil qil. "
@@ -51,10 +89,11 @@ class AIService:
             print(f"Vision API error (Invoice): {e}")
             raise e
 
-    @staticmethod
-    async def extract_handwritten_sales(image_path: str) -> List[Dict]:
-        """Uses Gemini to extract sales from handwritten ledger asynchronously."""
-        model = genai.GenerativeModel("gemini-1.5-flash")
+    @classmethod
+    async def extract_handwritten_sales(cls, image_path: str) -> List[Dict]:
+        """Uses the best available Gemini model to extract sales from handwritten ledger."""
+        model_name = await cls._get_best_model()
+        model = genai.GenerativeModel(model_name)
         
         prompt = (
             "Mana bu qo'lyozma savdo sahifasini tahlil qil. "
@@ -81,10 +120,11 @@ class AIService:
             print(f"Vision API error (Sales): {e}")
             raise e
 
-    @staticmethod
-    async def chat_with_assistant(context_text: str, message: str) -> str:
-        """Uses Gemini 1.5 Flash to chat with business context."""
-        model = genai.GenerativeModel("gemini-1.5-flash")
+    @classmethod
+    async def chat_with_assistant(cls, context_text: str, message: str) -> str:
+        """Uses the best available Gemini model to chat with business context."""
+        model_name = await cls._get_best_model()
+        model = genai.GenerativeModel(model_name)
         
         system_prompt = (
             "Sen 'Hisobot AI' aqlli yordamchisan. Berilgan biznes hisoboti (context) dan foydalanib o'zbek tilida, "
