@@ -86,3 +86,10 @@ class User(UserBase):
     
     class Config:
         orm_mode = True
+
+# Chat Schemas
+class ChatMessage(BaseModel):
+    message: str
+
+class ChatResponse(BaseModel):
+    reply: str

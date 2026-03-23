@@ -1,34 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Package, MessageSquare, TrendingUp, ChevronRight, Send, Plus, X, Upload } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
+import { Toaster, toast } from 'react-hot-toast';
 
 const API_BASE = "/api";
-
-// Mock Data
-const INVENTORY = [
-  { id: 1, name: 'Non (Oddiy)', stock: 5, unit: 'ta', threshold: 10 },
-  { id: 2, name: 'Yog (Lazzat)', stock: 45, unit: 'litr', threshold: 15 },
-  { id: 3, name: 'Sut', stock: 12, unit: 'litr', threshold: 5 },
-  { id: 4, name: 'Shakar', stock: 120, unit: 'kg', threshold: 20 },
-];
-
-const SALES_DATA = [
-  { day: 'Du', profit: 450000 },
-  { day: 'Se', profit: 320000 },
-  { day: 'Ch', profit: 580000 },
-  { day: 'Pa', profit: 420000 },
-  { day: 'Ju', profit: 950000 },
-  { day: 'Sh', profit: 1200000 },
-  { day: 'Ya', profit: 850000 },
-];
+const TENANT_ID = 1; // Default tenant for demo purposes
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [profit, setProfit] = useState(1250000); // 1.25M UZS
+  
+  // Real Data State
+  const [profit, setProfit] = useState(0); 
+  const [inventory, setInventory] = useState([]);
+  const [salesData, setSalesData] = useState([]); // Array format for chart
+  
+  // Chat State
   const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', content: "Assalomu alaykum! Biznesingiz bo'yicha qanday savolingiz bor? Masalan: \"Bugun qancha foyda qildim?\" deb so'rashingiz mumkin." }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef(null);
+
   const [tg, setTg] = useState(null);
+
+  // Initial Data Fetch
+  useEffect(() => {
+    fetchDashboardData();
+    fetchInventoryData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/sales/summary?tenant_id=${TENANT_ID}`);
+      setProfit(data.today_profit || 0);
+      // For chart, we would map real historical data here, using placeholder for now to keep chart structure
+      setSalesData([
+        { day: 'Du', profit: (data.today_profit * 0.4) || 0 },
+        { day: 'Se', profit: (data.today_profit * 0.6) || 0 },
+        { day: 'Ch', profit: (data.today_profit * 0.8) || 0 },
+        { day: 'Pa', profit: (data.today_profit * 1.0) || 0 },
+        { day: 'Ju', profit: (data.today_profit * 0.7) || 0 },
+        { day: 'Sh', profit: (data.today_profit * 1.3) || 0 },
+        { day: 'Ya', profit: data.today_profit || 0 },
+      ]);
+    } catch (e) {
+      console.error("Dashboard fetch error", e);
+    }
+  };
+
+  const fetchInventoryData = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/inventory?tenant_id=${TENANT_ID}`);
+      // Add threshold logic on frontend for UI coloring
+      const mappedData = data.map(i => ({ ...i, threshold: 10 })); 
+      setInventory(mappedData);
+    } catch (e) {
+      console.error("Inventory fetch error", e);
+    }
+  };
+
+  // Auto scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
@@ -56,18 +94,44 @@ const App = () => {
       const formData = new FormData();
       formData.append('image', file);
       
+      const loadingToast = toast.loading('Ma\'lumotlar tahlil qilinmoqda...');
       try {
-        const res = await axios.post(`${API_BASE}/sales/ledger`, formData);
-        alert(`Muvaffaqiyatli! Jami: ${res.data.total_amount} UZS`);
+        const res = await axios.post(`${API_BASE}/sales/ledger?tenant_id=${TENANT_ID}`, formData);
+        toast.success(`Muvaffaqiyatli! Jami: ${res.data.total_amount} UZS`, { id: loadingToast });
+        fetchDashboardData(); // Refresh data
+        fetchInventoryData();
       } catch (err) {
-        alert("Xatolik: Backend ulanmagan!");
+        toast.error("Xatolik: API ulanmadi yoki xato ro'y berdi!", { id: loadingToast });
       }
     };
     fileInput.click();
   };
 
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+    
+    // Add user message
+    const newMessages = [...chatMessages, { role: 'user', content: chatInput }];
+    setChatMessages(newMessages);
+    setChatInput("");
+    setIsTyping(true);
+
+    try {
+      const res = await axios.post(`${API_BASE}/chat?tenant_id=${TENANT_ID}`, {
+        message: chatInput
+      });
+      setChatMessages([...newMessages, { role: 'assistant', content: res.data.reply }]);
+    } catch (err) {
+      toast.error("Xatolik: Chat serveri bilan aloqa yo'q!");
+      setChatMessages([...newMessages, { role: 'assistant', content: "Kechirasiz, aloqa uzildi. Iltimos, keyinroq qayta urinib ko'ring." }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#0F172A] text-slate-100 selection:bg-indigo-500/30">
+      <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '16px' } }} />
       {/* Top Header */}
       <header className="px-6 pt-10 pb-4 h-[120px] flex items-center justify-between">
         <div>
@@ -155,7 +219,10 @@ const App = () => {
               </div>
 
               <div className="space-y-3">
-                {INVENTORY.map((item) => (
+                {inventory.length === 0 && (
+                  <div className="text-center py-10 text-slate-500 text-sm">Sklad hozircha bo'sh. Mahsulot qo'shing.</div>
+                )}
+                {inventory.map((item) => (
                   <div key={item.id} className="glass-card p-4 flex items-center justify-between relative overflow-hidden">
                     <div className="flex items-center space-x-4">
                       <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${
@@ -258,16 +325,33 @@ const App = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              <div className="glass-card p-4 max-w-[80%] rounded-tl-none">
-                <p className="text-sm">Assalomu alaykum! Biznesingiz bo'yicha qanday savolingiz bor? Masalan: "Bugun qancha foyda qildim?" deb so'rashingiz mumkin.</p>
-              </div>
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`p-4 max-w-[80%] text-sm ${
+                    msg.role === 'user' ? 
+                    'bg-indigo-600 rounded-2xl rounded-tr-none' : 
+                    'glass-card rounded-2xl rounded-tl-none'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="glass-card p-4 max-w-[50%] rounded-2xl rounded-tl-none text-sm text-slate-400 animate-pulse">
+                    Yozmoqda...
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
 
-              {/* AI Insight Chart Example */}
+              {/* AI Insight Chart Example (Only shown if specific condition met, hiding for now as real dynamic flow) */}
+              {/*
               <div className="glass-card p-4 w-full">
                 <p className="text-xs text-slate-400 mb-4 font-bold uppercase tracking-widest italic">Haftalik foyda grafigi:</p>
                 <div className="h-48 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={SALES_DATA}>
+                    <BarChart data={salesData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                       <XAxis dataKey="day" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                       <Tooltip 
@@ -285,25 +369,23 @@ const App = () => {
                   </ResponsiveContainer>
                 </div>
               </div>
-
-              <div className="flex justify-end">
-                <div className="bg-indigo-600 p-4 max-w-[80%] rounded-2xl rounded-tr-none text-sm">
-                  Bugun qancha foyda qildim?
-                </div>
-              </div>
-              
-              <div className="glass-card p-4 max-w-[80%] rounded-tl-none">
-                <p className="text-sm">Akram aka, bugungi umumiy foydangiz <span className="text-emerald-400 font-bold">1,250,000 UZS</span> ni tashkil etdi. Bu kechagiga nisbatan 12% ko'proq. 🚀</p>
-              </div>
+              */}
             </div>
 
             <div className="p-6 pb-10 flex items-center space-x-2">
               <input 
                 type="text" 
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
                 placeholder="Savol yozing..." 
                 className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:border-indigo-500/50"
               />
-              <button className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+              <button 
+                onClick={handleSendMessage}
+                disabled={isTyping}
+                className={`h-14 w-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20 ${isTyping ? 'bg-indigo-600/50' : 'bg-indigo-600'}`}
+              >
                 <Send size={24} />
               </button>
             </div>
