@@ -148,6 +148,14 @@ async def chat_with_assistant(chat: schemas.ChatMessage, tenant_id: int = 1, db:
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- TELEGRAM WEBHOOK ---
+@app.get("/api/debug/file")
+async def debug_file():
+    path = "app/services/ai_service.py"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return {"path": path, "content": f.read()[-500:]}
+    return {"error": "File not found"}
+
 @app.get("/api/telegram/setup")
 async def setup_webhook():
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
