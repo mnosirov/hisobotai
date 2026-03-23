@@ -46,10 +46,10 @@ class AIService:
             json_match = re.search(r'\[.*\]', content, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group(0))
-            return []
+            raise ValueError(f"Kutilgan JSON format topilmadi. AI javobi: {content}")
         except Exception as e:
             print(f"Vision API error (Invoice): {e}")
-            return []
+            raise e
 
     @staticmethod
     async def extract_handwritten_sales(image_path: str) -> List[Dict]:
@@ -76,10 +76,10 @@ class AIService:
             json_match = re.search(r'\[.*\]', content, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group(0))
-            return []
+            raise ValueError(f"Kutilgan JSON format topilmadi. AI javobi: {content}")
         except Exception as e:
             print(f"Vision API error (Sales): {e}")
-            return []
+            raise e
 
     @staticmethod
     async def chat_with_assistant(context_text: str, message: str) -> str:

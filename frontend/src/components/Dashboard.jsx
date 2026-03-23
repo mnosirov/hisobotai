@@ -25,7 +25,8 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, TENANT_
         fetchDashboardData();
         fetchInventoryData();
       } catch (err) {
-        toast.error("Xatolik: Tarmoq yoki AI ushlanib qoldi!", { id: loadingToast });
+        const errorMsg = err.response?.data?.detail || "Xatolik: Tarmoq yoki AI ushlanib qoldi!";
+        toast.error(errorMsg, { id: loadingToast });
       }
     };
     fileInput.click();
