@@ -22,20 +22,24 @@ if gemini_key != "dummy_key":
 class AIService:
     @classmethod
     async def _get_best_model(cls, exclude: set = None) -> str:
-        """Finds the best available model, optionally excluding certain ones."""
+        """Finds the best available model, respecting GEMINI_MODEL_NAME override."""
         if exclude is None: exclude = set()
         
+        # 1. Manual override from Environment Variable
+        manual_model = os.getenv("GEMINI_MODEL_NAME")
+        if manual_model and manual_model not in exclude:
+            return manual_model
+            
         try:
+            # 2. Dynamic Discovery
             models = await asyncio.to_thread(genai.list_models)
             available_models = [m.name for m in models if "generateContent" in m.supported_generation_methods]
             
-            # Priority list - Prioritizing 2.0 Flash as requested by user
+            # Priority list for future-proofing
             priorities = [
                 "models/gemini-2.0-flash",
                 "models/gemini-1.5-flash",
-                "models/gemini-1.5-flash-8b",
                 "models/gemini-1.5-pro",
-                "models/gemini-pro"
             ]
             
             for p in priorities:
@@ -45,7 +49,7 @@ class AIService:
             for m in available_models:
                 if m not in exclude:
                     return m
-            return "models/gemini-1.5-flash" # Absolute fallback
+            return "models/gemini-1.5-flash"
         except Exception as e:
             print(f"Model discovery error: {e}")
             return "models/gemini-1.5-flash"
