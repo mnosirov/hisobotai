@@ -12,9 +12,8 @@ import AddProductModal from './components/AddProductModal';
 // Set this to your production backend URL eventually.
 // Since Vercel rewrites were removed, the frontend will communicate with the dedicated backend URL.
 // Assuming it will be deployed on render or similar, we leave it configurable.
-// For now, if deployed together, we can still use `/api` if configured, 
-// but it's much safer to use full URL for separated domains.
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+// Hardcoded to point to Railway backend to avoid Vercel Environment Variable sync issues
+const API_BASE = "https://hisobotai-production.up.railway.app/api";
 const TENANT_ID = 1;
 
 const App = () => {
