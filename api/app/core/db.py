@@ -33,3 +33,18 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    
+    # Seed default user if not exists to prevent Postgres FK violation
+    db = SessionLocal()
+    try:
+        from .models import User
+        # Postgres might throw errors if we query before tables exist, but create_all handles it
+        if not db.query(User).filter(User.id == 1).first():
+            default_user = User(id=1, username="default_tenant", email="admin@hisobot.ai", hashed_password="dummy")
+            db.add(default_user)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding user: {e}")
+    finally:
+        db.close()
