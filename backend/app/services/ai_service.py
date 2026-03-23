@@ -5,6 +5,8 @@ from typing import List, Dict
 from openai import AsyncOpenAI
 import google.generativeai as genai
 from dotenv import load_dotenv
+import re
+import PIL.Image
 
 load_dotenv()
 
@@ -32,21 +34,19 @@ class AIService:
             "Agar aniq bo'lmasa, taxmin qilib yozma. O'zbek tiliga e'tibor ber."
         )
         
-        with open(image_path, "rb") as f:
-            image_data = f.read()
-            
         try:
-            # We wrap the synchronous generate_content in asyncio.to_thread because the SDK might not be fully async
+            img = PIL.Image.open(image_path)
             response = await asyncio.to_thread(
                 model.generate_content,
-                [prompt, {"mime_type": "image/jpeg", "data": image_data}]
+                [prompt, img]
             )
             content = response.text
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].strip()
-            return json.loads(content)
+            
+            # Robust JSON extraction
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            return []
         except Exception as e:
             print(f"Vision API error (Invoice): {e}")
             return []
@@ -64,18 +64,19 @@ class AIService:
             "O'zbek tilidagi qisqartmalarni tushun (masalan: '2ta choy 6000' -> name: 'choy', quantity: 2, price: 3000)."
         )
         
-        with open(image_path, "rb") as f:
-            image_data = f.read()
-            
         try:
+            img = PIL.Image.open(image_path)
             response = await asyncio.to_thread(
                 model.generate_content,
-                [prompt, {"mime_type": "image/jpeg", "data": image_data}]
+                [prompt, img]
             )
             content = response.text
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            return json.loads(content)
+            
+            # Robust JSON extraction
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            return []
         except Exception as e:
             print(f"Vision API error (Sales): {e}")
             return []
