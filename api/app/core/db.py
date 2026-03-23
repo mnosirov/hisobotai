@@ -18,6 +18,7 @@ else:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
+    init_db()  # Ensures tables exist on every request for Vercel Serverless
     db = SessionLocal()
     try:
         yield db
