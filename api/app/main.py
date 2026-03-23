@@ -50,7 +50,7 @@ def get_sales_summary(tenant_id: int = 1, db: Session = Depends(get_db)):
     today = date.today()
     sales_today = db.query(sa.func.sum(Sale.profit)).filter(
         Sale.tenant_id == tenant_id,
-        sa.func.date(Sale.created_at) == today
+        sa.cast(Sale.created_at, sa.Date) == today
     ).scalar() or 0.0
     
     total_sales = db.query(sa.func.sum(Sale.profit)).filter(

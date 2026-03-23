@@ -75,14 +75,14 @@ def process_invoice_vision(image_path: str) -> List[Dict]:
 def chat_with_assistant_logic(db: Session, tenant_id: int, message: str) -> str:
     """Answers user queries by combining DB context with LLM."""
     from .models.models import Sale, Product
-    from sqlalchemy import func
+    from sqlalchemy import func, cast, Date
     from datetime import date
     
     # 1. Gather context (Simple snapshot)
     today = date.today()
     sales_today = db.query(func.sum(Sale.profit)).filter(
         Sale.tenant_id == tenant_id,
-        func.date(Sale.created_at) == today
+        cast(Sale.created_at, Date) == today
     ).scalar() or 0.0
     
     top_products = db.query(Product).filter(Product.tenant_id == tenant_id).order_by(Product.stock.asc()).limit(5).all()

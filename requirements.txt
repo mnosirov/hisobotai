@@ -6,4 +6,4 @@ openai
 google-generativeai
 python-multipart
 python-dotenv
-psycopg2-binary
+pg8000
