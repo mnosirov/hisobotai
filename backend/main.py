@@ -57,7 +57,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "version": "2.0 Pro", "app": "Hisobot AI"}
+    return {"status": "ok", "version": "2.1 Pro — Webhook Update", "app": "Hisobot AI"}
 
 # --- INVENTORY API ---
 @app.get("/api/inventory", response_model=List[schemas.ProductResponse])
