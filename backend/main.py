@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict
 import os
 import httpx
-from contextlib import asynccontextcontextmanager
+from contextlib import asynccontextmanager
 
 from app.core.db import get_db, init_db
 from app.services.inventory_service import InventoryService
