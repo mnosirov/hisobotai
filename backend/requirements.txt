@@ -6,7 +6,7 @@ psycopg2-binary
 alembic
 pydantic
 openai
-google-generativeai
+google-generativeai==0.8.3
 python-multipart
 python-dotenv
 httpx
