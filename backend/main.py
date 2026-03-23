@@ -57,7 +57,36 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "version": "2.1 Pro — Webhook Update", "app": "Hisobot AI"}
+    return {"status": "ok", "version": "2.1 Pro — Debug Active", "app": "Hisobot AI"}
+
+@app.get("/api/debug/file")
+async def debug_file():
+    path = "app/services/ai_service.py"
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return {"path": path, "content": f.read()[-500:]}
+    return {"error": "File not found"}
+
+@app.get("/api/telegram/setup")
+async def setup_webhook():
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not bot_token or "dummy" in bot_token:
+        return {"status": "error", "message": "TELEGRAM_BOT_TOKEN kiritilmagan yoki xato."}
+    
+    webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                f"https://api.telegram.org/bot{bot_token}/setWebhook",
+                json={"url": webhook_url}
+            )
+            return {
+                "status": "Telegram API javobi",
+                "response": res.json(),
+                "webhook_url": webhook_url
+            }
+    except Exception as e:
+        return {"status": "error", "error_details": str(e)}
 
 # --- INVENTORY API ---
 @app.get("/api/inventory", response_model=List[schemas.ProductResponse])
@@ -147,35 +176,9 @@ async def chat_with_assistant(chat: schemas.ChatMessage, tenant_id: int = 1, db:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- TELEGRAM WEBHOOK ---
-@app.get("/api/debug/file")
-async def debug_file():
-    path = "app/services/ai_service.py"
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return {"path": path, "content": f.read()[-500:]}
-    return {"error": "File not found"}
-
-@app.get("/api/telegram/setup")
-async def setup_webhook():
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token or "dummy" in bot_token:
-        return {"status": "error", "message": "TELEGRAM_BOT_TOKEN kiritilmagan yoki xato."}
-    
-    webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                f"https://api.telegram.org/bot{bot_token}/setWebhook",
-                json={"url": webhook_url}
-            )
-            return {
-                "status": "Telegram API javobi",
-                "response": res.json(),
-                "webhook_url": webhook_url
-            }
-    except Exception as e:
-        return {"status": "error", "error_details": str(e)}
+@app.get("/api/telegram/webhook")
+async def telegram_webhook_get():
+    return {"status": "ok", "message": "Bot is alive. Use POST for webhook."}
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(update: Dict):
