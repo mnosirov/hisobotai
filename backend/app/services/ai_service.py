@@ -101,4 +101,4 @@ class AIService:
             return response.text
         except Exception as e:
             print(f"Chat API error (Gemini): {e}")
-            return "Kechirasiz, xizmatda uzilish yuz berdi. Iltimos, keyinroq urinib ko'ring. 😔"
+            return f"Xatolik (AI): {str(e)} 😔"
