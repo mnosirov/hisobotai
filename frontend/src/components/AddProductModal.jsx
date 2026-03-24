@@ -36,6 +36,16 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   placeholder="Masalan: Qora choy" 
                 />
               </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Bo'lim (Kategoriya)</label>
+                <input 
+                  type="text" 
+                  value={newProduct.category} 
+                  onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                  placeholder="Masalan: Oziq-ovqat" 
+                />
+              </div>
               <div className="flex space-x-4">
                 <div className="flex-1">
                   <label className="text-xs text-slate-400 mb-1 block">Miqdor</label>

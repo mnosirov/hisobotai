@@ -21,7 +21,7 @@ const MainApp = () => {
   const [inventory, setInventory] = useState([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
 
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([
@@ -79,6 +79,7 @@ const MainApp = () => {
     try {
       await axios.post(`${API_BASE}/inventory`, {
         name: newProduct.name,
+        category: newProduct.category,
         unit: newProduct.unit,
         stock: parseFloat(newProduct.stock) || 0,
         last_purchase_price: parseFloat(newProduct.buyPrice) || 0,
@@ -86,7 +87,7 @@ const MainApp = () => {
       });
       toast.success("Muvaffaqiyatli qo'shildi!", { id: loadingToast });
       setShowAddModal(false);
-      setNewProduct({ name: '', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
+      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
       fetchInventoryData(); 
     } catch (err) {
       toast.error("Xatolik yuz berdi", { id: loadingToast });
