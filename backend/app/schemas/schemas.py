@@ -33,6 +33,7 @@ class SaleResponse(BaseModel):
     id: int
     total_amount: float
     profit: float
+    items_json: List[Dict]
     created_at: datetime
     
     class Config:

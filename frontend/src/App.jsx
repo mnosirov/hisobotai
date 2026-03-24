@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, History } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
