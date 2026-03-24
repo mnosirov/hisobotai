@@ -11,6 +11,5 @@ python-dotenv
 httpx
 aiosqlite
 Pillow
-bcrypt
 pyjwt
 python-multipart
