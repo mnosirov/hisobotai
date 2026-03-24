@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Minus, Shovels as ShoppingCart, Search, Check } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Search, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
