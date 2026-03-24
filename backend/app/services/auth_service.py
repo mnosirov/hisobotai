@@ -13,7 +13,7 @@ class AuthService:
         # Check if user already exists
         query = select(User).where((User.email == user_data.email) | (User.username == user_data.username))
         result = await self.db.execute(query)
-        if result.scalar_one_or_none():
+        if result.first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Bunday email yoki foydalanuvchi nomi allaqachon mavjud."

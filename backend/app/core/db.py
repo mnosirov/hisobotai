@@ -53,6 +53,16 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
+        # 1.5 Auto-migrate missing columns for existing Phase 1 database
+        try:
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR;"))
+            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+        except Exception as e:
+            print(f"Schema auto-migration skipped or failed: {e}")
+        
     # 2. Seed Default User securely
     async with AsyncSessionLocal() as session:
         query = sa.select(User).where(User.id == 1)
