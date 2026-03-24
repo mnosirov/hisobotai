@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from typing import Optional, Any
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
 
 # Configuration

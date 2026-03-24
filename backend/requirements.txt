@@ -13,6 +13,5 @@ httpx
 aiosqlite
 Pillow
 passlib[bcrypt]
-python-jose
-cryptography
+PyJWT
 python-multipart
