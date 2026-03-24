@@ -21,6 +21,7 @@ const MainApp = () => {
   
   const [profit, setProfit] = useState(0); 
   const [profitGrowth, setProfitGrowth] = useState(0);
+  const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -47,6 +48,7 @@ const MainApp = () => {
       const { data } = await axios.get(`${API_BASE}/sales/summary`);
       setProfit(data.today_profit || 0);
       setProfitGrowth(data.profit_growth || 0);
+      setLowStockItems(data.low_stock_items || []);
     } catch (e) {
       console.error("Dashboard fetch error", e);
     }
@@ -141,7 +143,7 @@ const MainApp = () => {
       {/* Header */}
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-2xl font-bold tracking-tight">Hisobot AI <span className="text-[10px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">v1.1.8</span></h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hisobot AI <span className="text-[10px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">v1.1.9</span></h1>
           <div className="flex items-center space-x-2 text-slate-400 text-xs">
             <UserIcon size={12} className="text-indigo-400" />
             <span>{user.username}</span>
@@ -165,6 +167,7 @@ const MainApp = () => {
             <Dashboard 
               profit={profit} 
               profitGrowth={profitGrowth}
+              lowStockItems={lowStockItems}
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
               fetchInventoryData={fetchInventoryData}

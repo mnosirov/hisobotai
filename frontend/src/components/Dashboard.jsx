@@ -146,16 +146,26 @@ const Dashboard = ({ profit, profitGrowth, tg, fetchDashboardData, fetchInventor
       <div className="space-y-4 pt-4">
         <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Kutilayotgan topshiriqlar</h4>
         <div className="glass-card divide-y divide-white/5 overflow-hidden">
-          <button className="flex items-center w-full p-4 hover:bg-white/5 transition">
-            <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center mr-4">
-              <div className="h-5 w-5 rounded-full border-2 border-orange-500" />
+          {lowStockItems.length === 0 ? (
+            <div className="p-10 text-center text-slate-500 text-sm italic">
+              Hozircha kutilayotgan vazifalar yo'q. Hammasi joyida! ✨
             </div>
-            <div className="flex-1 text-left">
-              <p className="font-semibold text-sm">Asosiy qarzni to'plash</p>
-              <p className="text-slate-500 text-xs">Muddat: Bugun</p>
-            </div>
-            <ChevronRight size={18} className="text-slate-600" />
-          </button>
+          ) : (
+            lowStockItems.map((item, idx) => (
+              <button key={idx} className="flex items-center w-full p-4 hover:bg-white/5 transition group">
+                <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center mr-4 group-hover:bg-orange-500/30 transition">
+                  <div className="h-5 w-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
+                    <span className="text-[8px] font-bold text-orange-500">!</span>
+                  </div>
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-semibold text-sm">{item.name} kam qoldi</p>
+                  <p className="text-slate-500 text-xs">Qoldiq: {item.stock} {item.unit}. Sotib olish kerak.</p>
+                </div>
+                <ChevronRight size={18} className="text-slate-600 group-hover:text-indigo-400 transition" />
+              </button>
+            ))
+          )}
         </div>
       </div>
 

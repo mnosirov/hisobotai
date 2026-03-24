@@ -48,10 +48,21 @@ class SalesService:
         res_total = await self.db.execute(query_total)
         total_sales = res_total.scalar() or 0.0
 
+        # Low stock items (Ombor nazorati)
+        query_low_stock = select(Product).where(
+            Product.tenant_id == self.tenant_id,
+            Product.stock < 10
+        ).limit(5)
+        res_low_stock = await self.db.execute(query_low_stock)
+        low_stock_items = res_low_stock.scalars().all()
+        
+        low_stock_data = [{"name": p.name, "stock": p.stock, "unit": p.unit} for p in low_stock_items]
+
         return {
             "today_profit": sales_today,
             "total_profit": total_sales,
-            "profit_growth": round(profit_growth, 1)
+            "profit_growth": round(profit_growth, 1),
+            "low_stock_items": low_stock_data
         }
 
     async def get_todays_sales(self) -> List[Dict]:
