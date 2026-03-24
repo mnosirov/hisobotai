@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, History } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ import Inventory from './components/Inventory';
 import Chat from './components/Chat';
 import AddProductModal from './components/AddProductModal';
 import AddSaleModal from './components/AddSaleModal';
+import SalesHistory from './components/SalesHistory';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -175,6 +176,10 @@ const MainApp = () => {
               setShowAddModal={setShowAddModal} 
             />
           )}
+
+          {activeTab === 'history' && (
+            <SalesHistory API_BASE={API_BASE} />
+          )}
         </AnimatePresence>
       </main>
 
@@ -229,6 +234,18 @@ const MainApp = () => {
             <Package size={24} />
           </div>
           <span className="text-[10px] font-bold uppercase tracking-tight">Sklad</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('history')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'history' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'history' ? 'bg-indigo-500/20' : ''}`}>
+            <Calendar size={24} />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-tight">Tarix</span>
         </button>
 
         <button 

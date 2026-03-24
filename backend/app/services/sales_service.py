@@ -47,6 +47,12 @@ class SalesService:
             all_items.extend(s.items_json)
         return all_items
 
+    async def get_sales_history(self) -> List[Sale]:
+        """Barcha sotuvlar tarixini qaytaradi."""
+        query = select(Sale).where(Sale.tenant_id == self.tenant_id).order_by(Sale.created_at.desc())
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
     async def analyze_handwritten_sales(self, image_path: str) -> List[Dict]:
         """AI orqali rasmdan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
         raw_items = await AIService.extract_handwritten_sales(image_path)

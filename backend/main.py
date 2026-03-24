@@ -196,6 +196,14 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/sales/history", response_model=List[schemas.SaleResponse])
+async def get_sales_history(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = SalesService(db, current_user.id)
+        return await service.get_sales_history()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/sales/analyze", response_model=List[Dict])
 async def analyze_handwritten_ledger(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     temp_path = f"/tmp/{image.filename}"
