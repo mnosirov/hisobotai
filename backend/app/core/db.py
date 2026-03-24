@@ -55,11 +55,26 @@ async def init_db():
         
         # 1.5 Auto-migrate missing columns for existing Phase 1 database
         try:
+            # Users table
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR;"))
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+            
+            # Products table
             await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+            
+            # Sales table
             await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+            
+            # Debts table
             await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+            
+            # Inventory Logs table
             await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
+            await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+            
         except Exception as e:
             print(f"Schema auto-migration skipped or failed: {e}")
         
