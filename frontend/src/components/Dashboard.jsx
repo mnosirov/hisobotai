@@ -79,8 +79,11 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
           <h2 className="text-3xl font-black text-white">
             {profit.toLocaleString('uz-UZ')} <span className="text-lg font-normal text-indigo-300">UZS</span>
           </h2>
-          <div className="flex items-center text-green-400 text-sm font-bold bg-green-500/10 px-2 py-1 rounded-lg">
-            +12% <TrendingUp size={14} className="ml-1" />
+          <div className={`flex items-center text-sm font-bold px-2 py-1 rounded-lg ${
+            profitGrowth >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
+          }`}>
+            {profitGrowth >= 0 ? '+' : ''}{profitGrowth}% 
+            {profitGrowth >= 0 ? <TrendingUp size={14} className="ml-1" /> : <TrendingDown size={14} className="ml-1" />}
           </div>
         </div>
       </div>

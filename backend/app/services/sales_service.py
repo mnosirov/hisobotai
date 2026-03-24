@@ -16,6 +16,7 @@ class SalesService:
 
     async def get_sales_summary(self) -> Dict:
         today = self.get_tashkent_today()
+        yesterday = today - timedelta(days=1)
         
         # Today's profit (Add 5 hours for Tashkent)
         query_today = select(func.sum(Sale.profit)).where(
@@ -24,6 +25,21 @@ class SalesService:
         )
         res_today = await self.db.execute(query_today)
         sales_today = res_today.scalar() or 0.0
+
+        # Yesterday's profit (Add 5 hours for Tashkent)
+        query_yesterday = select(func.sum(Sale.profit)).where(
+            Sale.tenant_id == self.tenant_id,
+            cast(Sale.created_at + timedelta(hours=5), Date) == yesterday
+        )
+        res_yesterday = await self.db.execute(query_yesterday)
+        sales_yesterday = res_yesterday.scalar() or 0.0
+
+        # Calculate growth percentage
+        profit_growth = 0.0
+        if sales_yesterday > 0:
+            profit_growth = ((sales_today - sales_yesterday) / sales_yesterday) * 100
+        elif sales_today > 0:
+            profit_growth = 100.0  # From 0 to something is 100% growth
 
         # Total profit
         query_total = select(func.sum(Sale.profit)).where(
@@ -34,7 +50,8 @@ class SalesService:
 
         return {
             "today_profit": sales_today,
-            "total_profit": total_sales
+            "total_profit": total_sales,
+            "profit_growth": round(profit_growth, 1)
         }
 
     async def get_todays_sales(self) -> List[Dict]:
