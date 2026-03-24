@@ -46,6 +46,7 @@ async def get_db():
 
 async def init_db():
     from app.models.models import Base, User
+    from app.core.security import get_password_hash
     import sqlalchemy as sa
     
     # 1. Create tables
@@ -61,9 +62,9 @@ async def init_db():
         if not user:
             default_user = User(
                 id=1,
-                username="default_tenant",
+                username="admin",
                 email="admin@hisobot.ai",
-                hashed_password="dummy_password_xyz"
+                hashed_password=get_password_hash("admin123")
             )
             session.add(default_user)
             await session.commit()

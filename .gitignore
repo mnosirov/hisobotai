@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 backend/.env
+.env
 backend/hisobot.db
 venv/
 .venv/

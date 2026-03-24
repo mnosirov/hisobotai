@@ -4,7 +4,7 @@ import { Camera, TrendingUp, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, TENANT_ID, API_BASE }) => {
+const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BASE }) => {
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
@@ -20,7 +20,7 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, TENANT_
       
       const loadingToast = toast.loading('Ma\'lumotlar tahlil qilinmoqda...');
       try {
-        const res = await axios.post(`${API_BASE}/sales/ledger?tenant_id=${TENANT_ID}`, formData);
+        const res = await axios.post(`${API_BASE}/sales/ledger`, formData);
         toast.success(`Muvaffaqiyatli! Jami: ${res.data.total_amount} UZS`, { id: loadingToast });
         fetchDashboardData();
         fetchInventoryData();

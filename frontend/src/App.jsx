@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -8,16 +8,14 @@ import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Chat from './components/Chat';
 import AddProductModal from './components/AddProductModal';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Set this to your production backend URL eventually.
-// Since Vercel rewrites were removed, the frontend will communicate with the dedicated backend URL.
-// Assuming it will be deployed on render or similar, we leave it configurable.
-// Hardcoded to point to Railway backend to avoid Vercel Environment Variable sync issues
-const API_BASE = "https://hisobotai-production.up.railway.app/api";
-const TENANT_ID = 1;
-
-const App = () => {
+const MainApp = () => {
+  const { user, logout, loading, API_BASE } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   
   const [profit, setProfit] = useState(0); 
   const [inventory, setInventory] = useState([]);
@@ -34,13 +32,15 @@ const App = () => {
   const [tg, setTg] = useState(null);
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchInventoryData();
-  }, []);
+    if (user) {
+      fetchDashboardData();
+      fetchInventoryData();
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/sales/summary?tenant_id=${TENANT_ID}`);
+      const { data } = await axios.get(`${API_BASE}/sales/summary`);
       setProfit(data.today_profit || 0);
     } catch (e) {
       console.error("Dashboard fetch error", e);
@@ -49,7 +49,7 @@ const App = () => {
 
   const fetchInventoryData = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/inventory?tenant_id=${TENANT_ID}`);
+      const { data } = await axios.get(`${API_BASE}/inventory`);
       const mappedData = data.map(i => ({ ...i, threshold: 10 })); 
       setInventory(mappedData);
     } catch (e) {
@@ -77,7 +77,7 @@ const App = () => {
     
     const loadingToast = toast.loading("Qo'shilmoqda...");
     try {
-      await axios.post(`${API_BASE}/inventory?tenant_id=${TENANT_ID}`, {
+      await axios.post(`${API_BASE}/inventory`, {
         name: newProduct.name,
         unit: newProduct.unit,
         stock: parseFloat(newProduct.stock) || 0,
@@ -89,7 +89,7 @@ const App = () => {
       setNewProduct({ name: '', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
       fetchInventoryData(); 
     } catch (err) {
-      toast.error("Xatolik: Tarmoq bilan aloqa yo'q", { id: loadingToast });
+      toast.error("Xatolik yuz berdi", { id: loadingToast });
     }
   };
 
@@ -102,7 +102,7 @@ const App = () => {
     setIsTyping(true);
 
     try {
-      const res = await axios.post(`${API_BASE}/chat?tenant_id=${TENANT_ID}`, {
+      const res = await axios.post(`${API_BASE}/chat`, {
         message: chatInput
       });
       setChatMessages([...newMessages, { role: 'assistant', content: res.data.reply }]);
@@ -114,19 +114,42 @@ const App = () => {
     }
   };
 
+  if (loading) return (
+    <div className="h-screen bg-[#0F172A] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+  );
+
+  if (!user) {
+    return (
+      authMode === 'login' 
+        ? <Login onSwitch={() => setAuthMode('register')} /> 
+        : <Register onSwitch={() => setAuthMode('login')} />
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#0F172A] text-slate-100 selection:bg-indigo-500/30">
       <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '16px' } }} />
       
       {/* Header */}
-      <header className="px-6 pt-10 pb-4 h-[120px] flex items-center justify-between">
-        <div>
+      <header className="px-6 pt-10 pb-4 flex items-center justify-between">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <h1 className="text-2xl font-bold tracking-tight">Hisobot AI</h1>
-          <p className="text-slate-400 text-sm">Biznesingiz raqamli hamrohi (Pro)</p>
-        </div>
-        <div className="h-10 w-10 glass-card flex items-center justify-center">
-          <TrendingUp className="text-blue-400" size={20} />
-        </div>
+          <div className="flex items-center space-x-2 text-slate-400 text-xs">
+            <UserIcon size={12} className="text-indigo-400" />
+            <span>{user.username}</span>
+          </div>
+        </motion.div>
+        <motion.button 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={logout}
+          className="h-10 w-10 glass-card flex items-center justify-center hover:bg-red-500/10 transition-colors group"
+          title="Chiqish"
+        >
+          <LogOut className="text-slate-400 group-hover:text-red-400" size={20} />
+        </motion.button>
       </header>
 
       {/* Main Content Area */}
@@ -138,7 +161,6 @@ const App = () => {
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
               fetchInventoryData={fetchInventoryData}
-              TENANT_ID={TENANT_ID}
               API_BASE={API_BASE}
             />
           )}
@@ -209,5 +231,11 @@ const App = () => {
     </div>
   );
 };
+
+const App = () => (
+  <AuthProvider>
+    <MainApp />
+  </AuthProvider>
+);
 
 export default App;

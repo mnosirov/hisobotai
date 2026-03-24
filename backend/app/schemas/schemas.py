@@ -38,3 +38,27 @@ class ChatMessage(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+# Authentication Schemas
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3)
+    email: str = Field(..., pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+    password: str = Field(..., min_length=6)
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
