@@ -24,18 +24,19 @@ const SalesHistory = ({ API_BASE }) => {
   };
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
     return d.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   const getTime = (dateStr) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
     return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
   };
 
   // Group by date
   const groupedHistory = history.reduce((groups, sale) => {
-    const dateKey = new Date(sale.created_at).toLocaleDateString();
+    const d = new Date(sale.created_at.endsWith('Z') ? sale.created_at : sale.created_at + 'Z');
+    const dateKey = d.toLocaleDateString();
     if (!groups[dateKey]) groups[dateKey] = [];
     groups[dateKey].push(sale);
     return groups;
