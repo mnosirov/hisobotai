@@ -40,9 +40,9 @@ class SalesService:
         sold_items = []
 
         for item in items:
-            name = item.get("name", "")
-            qty = item.get("quantity", 0)
-            revenue = item.get("total_price", 0.0)
+            name = item.get("name", "Noma'lum")
+            qty = float(item.get("quantity") or 0.0)
+            revenue = float(item.get("total_price") or 0.0)
 
             # Match product
             query = select(Product).where(

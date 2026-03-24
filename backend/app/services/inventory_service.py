@@ -15,11 +15,11 @@ class InventoryService:
         return result.scalars().all()
 
     async def add_or_update_product(self, product_data: Dict, source: str) -> Product:
-        name = product_data.get("name")
-        quantity = product_data.get("quantity", 0)
-        unit = product_data.get("unit", "dona")
-        price = product_data.get("price", 0.0)
-        sell_price = product_data.get("sell_price", 0.0)
+        name = product_data.get("name", "Noma'lum")
+        quantity = float(product_data.get("quantity") or 0.0)
+        unit = product_data.get("unit") or "dona"
+        price = float(product_data.get("price") or 0.0)
+        sell_price = float(product_data.get("sell_price") or 0.0)
 
         # Basic case-insensitive search
         query = select(Product).where(
