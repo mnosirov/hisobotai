@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, TrendingUp, ChevronRight, FileText, ShoppingBag } from 'lucide-react';
+import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 
-const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
