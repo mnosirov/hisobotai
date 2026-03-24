@@ -66,23 +66,27 @@ class SalesService:
             result = await self.db.execute(query)
             product = result.scalar_one_or_none()
 
-            cost = 0.0
-            if product:
-                product.stock -= qty
-                cost = product.last_purchase_price * qty
-                
-                # Agar AI narxni topolmagan bo'lsa (yozilmagan bo'lsa), bazadagi sotish narxidan foydalanamiz
-                if revenue <= 0:
-                    revenue = product.sell_price * qty
-                
-                self.db.add(product)
+            if not product:
+                # Ro'yxatda yo'q mahsulotlarni o'tkazib yuboramiz (yoki xabar beramiz)
+                print(f"Mahsulot topilmadi: {name}")
+                continue
+
+            # Agar product bo'lsa, hisoblashni davom ettiramiz
+            product.stock -= qty
+            cost = product.last_purchase_price * qty
+            
+            # Agar AI narxni topolmagan bo'lsa (yozilmagan bo'lsa), bazadagi sotish narxidan foydalanamiz
+            if revenue <= 0:
+                revenue = product.sell_price * qty
+            
+            self.db.add(product)
 
             profit = revenue - cost
             total_revenue += revenue
             total_profit += profit
 
             sold_items.append({
-                "product": name,
+                "product": product.name,
                 "quantity": qty,
                 "revenue": revenue,
                 "profit": profit
