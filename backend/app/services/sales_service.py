@@ -33,6 +33,20 @@ class SalesService:
             "total_profit": total_sales
         }
 
+    async def get_todays_sales(self) -> List[Dict]:
+        today = date.today()
+        query = select(Sale).where(
+            Sale.tenant_id == self.tenant_id,
+            cast(Sale.created_at, Date) == today
+        )
+        result = await self.db.execute(query)
+        sales = result.scalars().all()
+        
+        all_items = []
+        for s in sales:
+            all_items.extend(s.items_json)
+        return all_items
+
     async def process_handwritten_sales(self, image_path: str) -> Dict:
         items = await AIService.extract_handwritten_sales(image_path)
         total_revenue = 0.0

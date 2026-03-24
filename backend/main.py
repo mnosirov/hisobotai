@@ -218,9 +218,17 @@ async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = De
         
         summary = await sales_service.get_sales_summary()
         products = await inv_service.get_all_products()
+        todays_sales = await sales_service.get_todays_sales()
         
         low_stock = [f"{p.name} ({p.stock} qoldi)" for p in products if p.stock < 10]
-        context = f"Bugungi foyda: {summary.get('today_profit', 0)} UZS.\n"
+        
+        # Detailed sales context
+        sales_detail = ""
+        if todays_sales:
+            sales_detail = "Bugungi sotilgan mahsulotlar: " + ", ".join([f"{s.get('product')}: {s.get('quantity')} ta" for s in todays_sales])
+        
+        context = f"Bugungi jami foyda: {summary.get('today_profit', 0)} UZS.\n"
+        context += f"{sales_detail}\n"
         if low_stock:
             context += f"Tugab qolayotgan mahsulotlar: {', '.join(low_stock)}.\n"
             

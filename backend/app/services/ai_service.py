@@ -60,6 +60,7 @@ class AIService:
         prompt = (
             "Mana bu faktura (qog'oz hujjat) rasmini tahlil qil. "
             "Unda qanday mahsulotlar borligini top va miqdori hamda harid narxini ajrat. "
+            "Matn Kiril yoki Lotin alifbosida bo'lishi mumkin, har ikkalasini tushunib tahlil qil. "
             "Natijani qat'iy ravishda JSON ro'yxatda qaytar. "
             "Format: [{\"name\": \"...\", \"quantity\": ..., \"unit\": \"...\", \"price\": ...}] "
             "Agar aniq bo'lmasa, taxmin qilib yozma. O'zbek tiliga e'tibor ber."
@@ -105,9 +106,10 @@ class AIService:
         prompt = (
             "Mana bu qo'lyozma savdo sahifasini tahlil qil. "
             "Har bir qatorni o'qi va mahsulot nomi, miqdori va umumiy narxni ajrat. "
+            "Matn Kiril yoki Lotin alifbosida bo'lishi mumkin, har ikkalasini tushunib tahlil qil. "
             "Natijani qat'iy ravishda JSON ro'yxatda qaytar. "
             "Format: [{\"name\": \"...\", \"quantity\": ..., \"total_price\": ...}] "
-            "O'zbek tilidagi qisqartmalarni tushun (masalan: '2ta choy 6000' -> name: 'choy', quantity: 2, price: 3000)."
+            "O'zbek tilidagi qisqartmalarni tushun (masalan: '2ta choy 6000' -> name: 'choy', quantity: 2, total_price: 6000)."
         )
         
         tried_models = set()
