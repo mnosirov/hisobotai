@@ -139,7 +139,7 @@ const MainApp = () => {
       {/* Header */}
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-2xl font-bold tracking-tight">Hisobot AI <span className="text-[10px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">v1.1.3</span></h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hisobot AI <span className="text-[10px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">v1.1.4</span></h1>
           <div className="flex items-center space-x-2 text-slate-400 text-xs">
             <UserIcon size={12} className="text-indigo-400" />
             <span>{user.username}</span>

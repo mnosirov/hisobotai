@@ -6,6 +6,7 @@ import axios from 'axios';
 
 const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, fetchInventoryData }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [mobileTab, setMobileTab] = useState("products"); // 'products' or 'cart'
   const [cart, setCart] = useState([]); // [{product_id, name, quantity, revenue}]
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -93,9 +94,25 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
             </button>
           </div>
 
+          {/* Mobile Tabs */}
+          <div className="flex md:hidden bg-black/20 p-1 rounded-xl mb-4">
+            <button 
+              onClick={() => setMobileTab('products')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${mobileTab === 'products' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
+            >
+              Mahsulotlar
+            </button>
+            <button 
+              onClick={() => setMobileTab('cart')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition relative ${mobileTab === 'cart' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
+            >
+              Savat {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{cart.length}</span>}
+            </button>
+          </div>
+
           <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden">
-            {/* Left side: Product Search */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Left side: Product Search (Visible on md or when mobileTab is 'products') */}
+            <div className={`flex-1 flex flex-col overflow-hidden ${mobileTab !== 'products' ? 'hidden md:flex' : 'flex'}`}>
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                 <input 
@@ -124,9 +141,9 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
               </div>
             </div>
 
-            {/* Right side: Cart */}
-            <div className="w-full md:w-72 bg-black/20 rounded-2xl p-4 flex flex-col overflow-hidden">
-              <h4 className="font-bold text-sm mb-4 flex items-center">
+            {/* Right side: Cart (Visible on md or when mobileTab is 'cart') */}
+            <div className={`w-full md:w-80 bg-black/20 rounded-2xl p-4 flex flex-col overflow-hidden ${mobileTab !== 'cart' ? 'hidden md:flex' : 'flex'}`}>
+              <h4 className="font-bold text-sm mb-4 flex items-center hidden md:flex">
                 <ShoppingCart size={16} className="mr-2 text-indigo-400" />
                 Savat ({cart.length})
               </h4>
