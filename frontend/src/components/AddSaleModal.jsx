@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Minus, ShoppingCart, Search, Check } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Search, Check, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -33,6 +33,10 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
     toast.success(`${product.name} qo'shildi`);
   };
 
+  const removeFromCart = (productId) => {
+    setCart(cart.filter(item => item.product_id !== productId));
+  };
+
   const updateQuantity = (productId, delta) => {
     setCart(cart.map(item => {
       if (item.product_id === productId) {
@@ -41,7 +45,7 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
         return { ...item, quantity: newQty, revenue: newQty * product.sell_price };
       }
       return item;
-    }).filter(item => item.quantity > 0));
+    }));
   };
 
   const handleSell = async () => {
@@ -129,21 +133,24 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
               
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-hide">
                 {cart.map(item => (
-                  <div key={item.product_id} className="bg-white/5 p-2 rounded-lg text-xs">
-                    <div className="flex justify-between font-bold mb-1">
-                      <span>{item.name}</span>
-                      <span>{item.revenue.toLocaleString()}</span>
+                  <div key={item.product_id} className="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <div className="flex justify-between font-bold mb-2">
+                      <span className="text-slate-100">{item.name}</span>
+                      <button onClick={() => removeFromCart(item.product_id)} className="text-red-400/50 hover:text-red-400 transition-colors">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <button onClick={() => updateQuantity(item.product_id, -1)} className="p-1 bg-white/10 rounded hover:bg-white/20">
-                          <Minus size={12} />
+                      <div className="flex items-center bg-black/30 rounded-lg p-1">
+                        <button onClick={() => updateQuantity(item.product_id, -1)} className="p-1.5 hover:bg-white/10 rounded-md transition">
+                          <Minus size={14} />
                         </button>
-                        <span>{item.quantity} {item.unit}</span>
-                        <button onClick={() => updateQuantity(item.product_id, 1)} className="p-1 bg-white/10 rounded hover:bg-white/20">
-                          <Plus size={12} />
+                        <span className="px-3 font-mono font-bold text-indigo-400">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.product_id, 1)} className="p-1.5 hover:bg-white/10 rounded-md transition">
+                          <Plus size={14} />
                         </button>
                       </div>
+                      <span className="font-black text-white">{item.revenue.toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
