@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict
@@ -87,7 +88,10 @@ app.add_middleware(
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
     traceback.print_exc()
-    return {"detail": "Ichki xatolik yuz berdi. Admin bilan bog'laning."}, 500
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Ichki xatolik yuz berdi. Admin bilan bog'laning.", "error": str(exc)}
+    )
 
 @app.get("/")
 def read_root():
