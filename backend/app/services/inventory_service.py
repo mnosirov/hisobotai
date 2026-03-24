@@ -64,10 +64,42 @@ class InventoryService:
         await self.db.refresh(product)
         return product
 
-    async def process_invoice_upload(self, image_path: str) -> List[Product]:
-        items = await AIService.extract_invoice_data(image_path)
+    async def analyze_invoice_upload(self, image_path: str) -> List[Dict]:
+        """AI orqali fakturadan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
+        raw_items = await AIService.extract_invoice_data(image_path)
+        analyzed_items = []
+        
+        for item in raw_items:
+            name = item.get("name", "Noma'lum")
+            category = item.get("category", "Umumiy")
+            quantity = float(item.get("quantity") or 0.0)
+            unit = item.get("unit") or "dona"
+            price = float(item.get("price") or 0.0)
+            
+            # Mavjud mahsulotni qidirish
+            query = select(Product).where(
+                Product.tenant_id == self.tenant_id,
+                Product.name.ilike(f"%{name}%")
+            )
+            result = await self.db.execute(query)
+            product = result.scalar_one_or_none()
+            
+            analyzed_items.append({
+                "product_id": product.id if product else None,
+                "name": product.name if product else name,
+                "category": product.category if product else category,
+                "quantity": quantity,
+                "unit": product.unit if product else unit,
+                "price": price,
+                "is_new": product is None
+            })
+        return analyzed_items
+
+    async def commit_invoice_upload(self, items: List[Dict]) -> List[Product]:
+        """Foydalanuvchi tasdiqlagan faktura ma'lumotlarini bazaga saqlaydi."""
         processed_products = []
         for item in items:
             product = await self.add_or_update_product(item, source="Faktura (AI)")
             processed_products.append(product)
         return processed_products
+

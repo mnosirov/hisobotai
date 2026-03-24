@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, TrendingUp, ChevronRight } from 'lucide-react';
+import { Camera, TrendingUp, ChevronRight, FileText, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import ConfirmationModal from './ConfirmationModal';
 
 const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BASE }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [analyzedItems, setAnalyzedItems] = useState([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
+
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
@@ -18,18 +25,43 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
       const formData = new FormData();
       formData.append('image', file);
       
+      setIsAnalyzing(true);
       const loadingToast = toast.loading('Ma\'lumotlar tahlil qilinmoqda...');
+      
       try {
-        const res = await axios.post(`${API_BASE}/sales/ledger`, formData);
-        toast.success(`Muvaffaqiyatli! Jami: ${res.data.total_amount} UZS`, { id: loadingToast });
-        fetchDashboardData();
-        fetchInventoryData();
+        const endpoint = captureMode === 'sales' ? '/sales/analyze' : '/inventory/analyze';
+        const res = await axios.post(`${API_BASE}${endpoint}`, formData);
+        
+        setAnalyzedItems(res.data);
+        setShowConfirm(true);
+        toast.dismiss(loadingToast);
       } catch (err) {
         const errorMsg = err.response?.data?.detail || "Xatolik: Tarmoq yoki AI ushlanib qoldi!";
         toast.error(errorMsg, { id: loadingToast });
+      } finally {
+        setIsAnalyzing(false);
       }
     };
     fileInput.click();
+  };
+
+  const handleFinalConfirm = async () => {
+    setIsConfirming(true);
+    const loadingToast = toast.loading('Tasdiqlanmoqda...');
+    
+    try {
+      const endpoint = captureMode === 'sales' ? '/sales/confirm' : '/inventory/confirm';
+      await axios.post(`${API_BASE}${endpoint}`, analyzedItems);
+      
+      toast.success("Muvaffaqiyatli saqlandi!", { id: loadingToast });
+      setShowConfirm(false);
+      fetchDashboardData();
+      fetchInventoryData();
+    } catch (err) {
+      toast.error("Saqlashda xatolik yuz berdi", { id: loadingToast });
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   return (
@@ -53,19 +85,48 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
         </div>
       </div>
 
+      {/* Mode Selector */}
+      <div className="flex bg-slate-800/50 p-1 rounded-2xl border border-white/5">
+        <button 
+          onClick={() => setCaptureMode('sales')}
+          className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl transition ${
+            captureMode === 'sales' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'
+          }`}
+        >
+          <FileText size={18} />
+          <span className="text-sm font-bold">Sotuv (Daftar)</span>
+        </button>
+        <button 
+          onClick={() => setCaptureMode('inventory')}
+          className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl transition ${
+            captureMode === 'inventory' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'
+          }`}
+        >
+          <ShoppingBag size={18} />
+          <span className="text-sm font-bold">Xarid (Faktura)</span>
+        </button>
+      </div>
+
       {/* Central Action Button */}
-      <div className="pt-8 flex flex-col items-center justify-center space-y-4">
+      <div className="pt-4 flex flex-col items-center justify-center space-y-4">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleCapture}
-          className="w-40 h-40 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-[0_0_50px_rgba(79,70,229,0.3)] flex items-center justify-center text-white"
+          disabled={isAnalyzing}
+          className={`w-40 h-40 rounded-full bg-gradient-to-tr ${
+            captureMode === 'sales' ? 'from-blue-600 to-indigo-600' : 'from-emerald-600 to-teal-600'
+          } shadow-[0_0_50px_rgba(79,70,229,0.3)] flex items-center justify-center text-white relative`}
         >
-          <Camera size={56} />
+          {isAnalyzing ? (
+            <div className="h-16 w-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Camera size={56} />
+          )}
         </motion.button>
         <div className="text-center">
-          <h3 className="text-xl font-bold">Rasmga olish</h3>
-          <p className="text-slate-500 text-sm">Daftar yoki Fakturani yuklash</p>
+          <h3 className="text-xl font-bold">{captureMode === 'sales' ? 'Sotuvlarni tahlil qilish' : 'Xaridlarni tahlil qilish'}</h3>
+          <p className="text-slate-500 text-sm">{captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling'}</p>
         </div>
       </div>
 
@@ -85,6 +146,15 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
           </button>
         </div>
       </div>
+
+      <ConfirmationModal 
+        show={showConfirm}
+        title={captureMode === 'sales' ? "Sotuvlarni tasdiqlash" : "Xaridlarni tasdiqlash"}
+        items={analyzedItems}
+        loading={isConfirming}
+        onConfirm={handleFinalConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
     </motion.div>
   );
 };

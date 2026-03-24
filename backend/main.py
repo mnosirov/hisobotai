@@ -167,15 +167,22 @@ async def add_product_manual(product: schemas.ProductCreate, current_user: User 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/inventory/invoice", response_model=Dict)
-async def upload_invoice(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@app.post("/api/inventory/analyze", response_model=List[Dict])
+async def analyze_invoice(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     temp_path = f"/tmp/{image.filename}"
     with open(temp_path, "wb") as f:
         f.write(await image.read())
-        
     try:
         service = InventoryService(db, current_user.id)
-        results = await service.process_invoice_upload(temp_path)
+        return await service.analyze_invoice_upload(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/inventory/confirm", response_model=Dict)
+async def confirm_invoice(items: List[Dict], current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = InventoryService(db, current_user.id)
+        results = await service.commit_invoice_upload(items)
         return {"status": "success", "processed_count": len(results)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -189,15 +196,22 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/sales/ledger", response_model=Dict)
-async def upload_handwritten_ledger(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+@app.post("/api/sales/analyze", response_model=List[Dict])
+async def analyze_handwritten_ledger(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     temp_path = f"/tmp/{image.filename}"
     with open(temp_path, "wb") as f:
         f.write(await image.read())
-        
     try:
         service = SalesService(db, current_user.id)
-        return await service.process_handwritten_sales(temp_path)
+        return await service.analyze_handwritten_sales(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sales/confirm", response_model=Dict)
+async def confirm_sales(items: List[Dict], current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = SalesService(db, current_user.id)
+        return await service.commit_handwritten_sales(items)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

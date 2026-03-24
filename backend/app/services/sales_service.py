@@ -47,54 +47,83 @@ class SalesService:
             all_items.extend(s.items_json)
         return all_items
 
-    async def process_handwritten_sales(self, image_path: str) -> Dict:
-        items = await AIService.extract_handwritten_sales(image_path)
-        total_revenue = 0.0
-        total_profit = 0.0
-        sold_items = []
-
-        for item in items:
+    async def analyze_handwritten_sales(self, image_path: str) -> List[Dict]:
+        """AI orqali rasmdan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
+        raw_items = await AIService.extract_handwritten_sales(image_path)
+        analyzed_items = []
+        
+        for item in raw_items:
             name = item.get("name", "Noma'lum")
             qty = float(item.get("quantity") or 0.0)
             revenue = float(item.get("total_price") or 0.0)
-
-            # Match product
+            
+            # Mahsulotni qidirish (faqat ma'lumot uchun)
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,
                 Product.name.ilike(f"%{name}%")
             )
             result = await self.db.execute(query)
             product = result.scalar_one_or_none()
+            
+            if product:
+                if revenue <= 0:
+                    revenue = product.sell_price * qty
+                
+                analyzed_items.append({
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "quantity": qty,
+                    "revenue": revenue,
+                    "found": True
+                })
+            else:
+                analyzed_items.append({
+                    "product_name": name,
+                    "quantity": qty,
+                    "revenue": revenue,
+                    "found": False
+                })
+        return analyzed_items
 
-            if not product:
-                # Ro'yxatda yo'q mahsulotlarni o'tkazib yuboramiz (yoki xabar beramiz)
-                print(f"Mahsulot topilmadi: {name}")
+    async def commit_handwritten_sales(self, items: List[Dict]) -> Dict:
+        """Foydalanuvchi tasdiqlagan ma'lumotlarni bazaga saqlaydi."""
+        total_revenue = 0.0
+        total_profit = 0.0
+        sold_items_records = []
+
+        for item in items:
+            product_id = item.get("product_id")
+            qty = float(item.get("quantity") or 0.0)
+            revenue = float(item.get("revenue") or 0.0)
+
+            if not product_id:
                 continue
 
-            # Agar product bo'lsa, hisoblashni davom ettiramiz
-            product.stock -= qty
-            cost = product.last_purchase_price * qty
-            
-            # Agar AI narxni topolmagan bo'lsa (yozilmagan bo'lsa), bazadagi sotish narxidan foydalanamiz
-            if revenue <= 0:
-                revenue = product.sell_price * qty
-            
-            self.db.add(product)
+            query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
+            res = await self.db.execute(query)
+            product = res.scalar_one_or_none()
 
-            profit = revenue - cost
-            total_revenue += revenue
-            total_profit += profit
+            if product:
+                product.stock -= qty
+                profit = revenue - (product.last_purchase_price * qty)
+                
+                total_revenue += revenue
+                total_profit += profit
+                
+                sold_items_records.append({
+                    "product": product.name,
+                    "quantity": qty,
+                    "revenue": revenue,
+                    "profit": profit
+                })
+                self.db.add(product)
 
-            sold_items.append({
-                "product": product.name,
-                "quantity": qty,
-                "revenue": revenue,
-                "profit": profit
-            })
+        if not sold_items_records:
+            return {"status": "error", "message": "Hech qanday mahsulot saqlanmadi."}
 
         sale_record = Sale(
             tenant_id=self.tenant_id,
-            items_json=sold_items,
+            items_json=sold_items_records,
             total_amount=total_revenue,
             profit=total_profit
         )
@@ -105,5 +134,5 @@ class SalesService:
             "status": "success",
             "total_amount": total_revenue,
             "profit": total_profit,
-            "items": sold_items
+            "items": sold_items_records
         }
