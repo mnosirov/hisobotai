@@ -109,7 +109,8 @@ class AIService:
             "Matn Kiril yoki Lotin alifbosida bo'lishi mumkin, har ikkalasini tushunib tahlil qil. "
             "Natijani qat'iy ravishda JSON ro'yxatda qaytar. "
             "Format: [{\"name\": \"...\", \"quantity\": ..., \"total_price\": ...}] "
-            "O'zbek tilidagi qisqartmalarni tushun (masalan: '2ta choy 6000' -> name: 'choy', quantity: 2, total_price: 6000)."
+            "O'zbek tilidagi qisqartmalarni tushun (masalan: '2ta choy 6000' -> name: 'choy', quantity: 2, total_price: 6000). "
+            "Agar umumiy narx yozilmagan bo'lsa (masalan: '2ta choy'), total_price ni 0 qoldir."
         )
         
         tried_models = set()

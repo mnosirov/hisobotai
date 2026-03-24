@@ -70,6 +70,11 @@ class SalesService:
             if product:
                 product.stock -= qty
                 cost = product.last_purchase_price * qty
+                
+                # Agar AI narxni topolmagan bo'lsa (yozilmagan bo'lsa), bazadagi sotish narxidan foydalanamiz
+                if revenue <= 0:
+                    revenue = product.sell_price * qty
+                
                 self.db.add(product)
 
             profit = revenue - cost
