@@ -26,6 +26,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     name = Column(String, index=True, nullable=False)
+    category = Column(String, index=True, nullable=True, default="Umumiy")
     unit = Column(String, nullable=False, default="dona")  # e.g., kg, litr, dona
     stock = Column(Float, nullable=False, default=0.0)
     last_purchase_price = Column(Float, nullable=False, default=0.0)

@@ -59,10 +59,10 @@ class AIService:
         """Uses Gemini with auto-retry across models to extract invoice data."""
         prompt = (
             "Mana bu faktura (qog'oz hujjat) rasmini tahlil qil. "
-            "Unda qanday mahsulotlar borligini top va miqdori hamda harid narxini ajrat. "
+            "Unda qanday mahsulotlar borligini top, ularni mantiqiy toifalarga (kategoriyalarga, masalan: 'Oziq-ovqat', 'Ichimlik', 'Shirinlik') ajrat, miqdori hamda harid narxini ajrat. "
             "Matn Kiril yoki Lotin alifbosida bo'lishi mumkin, har ikkalasini tushunib tahlil qil. "
             "Natijani qat'iy ravishda JSON ro'yxatda qaytar. "
-            "Format: [{\"name\": \"...\", \"quantity\": ..., \"unit\": \"...\", \"price\": ...}] "
+            "Format: [{\"name\": \"...\", \"category\": \"...\", \"quantity\": ..., \"unit\": \"...\", \"price\": ...}] "
             "Agar aniq bo'lmasa, taxmin qilib yozma. O'zbek tiliga e'tibor ber."
         )
         

@@ -60,6 +60,7 @@ async def init_db():
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             
             # Products table
+            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'Umumiy';"))
             await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
             await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             

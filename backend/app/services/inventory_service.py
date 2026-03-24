@@ -16,6 +16,7 @@ class InventoryService:
 
     async def add_or_update_product(self, product_data: Dict, source: str) -> Product:
         name = product_data.get("name", "Noma'lum")
+        category = product_data.get("category", "Umumiy")
         quantity = float(product_data.get("quantity") or 0.0)
         unit = product_data.get("unit") or "dona"
         price = float(product_data.get("price") or 0.0)
@@ -31,6 +32,8 @@ class InventoryService:
 
         if product:
             product.stock += quantity
+            if category and category != "Umumiy":
+                product.category = category
             if price > 0:
                 product.last_purchase_price = price
             if sell_price > 0:
@@ -41,6 +44,7 @@ class InventoryService:
             product = Product(
                 tenant_id=self.tenant_id,
                 name=name,
+                category=category,
                 unit=unit,
                 stock=quantity,
                 last_purchase_price=price,

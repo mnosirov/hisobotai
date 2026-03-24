@@ -156,6 +156,7 @@ async def add_product_manual(product: schemas.ProductCreate, current_user: User 
         service = InventoryService(db, current_user.id)
         product_data = {
             "name": product.name,
+            "category": product.category,
             "quantity": product.stock,
             "unit": product.unit,
             "price": product.last_purchase_price,

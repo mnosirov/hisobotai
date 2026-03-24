@@ -4,6 +4,7 @@ from typing import List, Optional, Dict
 
 class ProductBase(BaseModel):
     name: str = Field(..., min_length=1)
+    category: Optional[str] = Field(default="Umumiy")
     unit: str = Field(default="dona")
     stock: float = Field(default=0.0)
     last_purchase_price: float = Field(default=0.0)
