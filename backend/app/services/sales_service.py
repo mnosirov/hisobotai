@@ -85,8 +85,8 @@ class SalesService:
                 })
         return analyzed_items
 
-    async def commit_handwritten_sales(self, items: List[Dict]) -> Dict:
-        """Foydalanuvchi tasdiqlagan ma'lumotlarni bazaga saqlaydi."""
+    async def commit_sales(self, items: List[Dict]) -> Dict:
+        """Tasdiqlangan yoki qo'lda kiritilgan sotuvlarni bazaga saqlaydi."""
         total_revenue = 0.0
         total_profit = 0.0
         sold_items_records = []
@@ -105,6 +105,7 @@ class SalesService:
 
             if product:
                 product.stock -= qty
+                # Foyda = (Sotish narxi - Kelish narxi) * Miqdor
                 profit = revenue - (product.last_purchase_price * qty)
                 
                 total_revenue += revenue

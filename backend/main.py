@@ -211,7 +211,17 @@ async def analyze_handwritten_ledger(image: UploadFile = File(...), current_user
 async def confirm_sales(items: List[Dict], current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
         service = SalesService(db, current_user.id)
-        return await service.commit_handwritten_sales(items)
+        return await service.commit_sales(items)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sales/manual", response_model=Dict)
+async def create_manual_sale(sale: schemas.SaleCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = SalesService(db, current_user.id)
+        # SaleCreate.items is List[SaleItem], commit_sales expects List[Dict]
+        items_dict = [item.dict() for item in sale.items]
+        return await service.commit_sales(items_dict)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

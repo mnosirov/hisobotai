@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Chat from './components/Chat';
 import AddProductModal from './components/AddProductModal';
+import AddSaleModal from './components/AddSaleModal';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -21,6 +22,7 @@ const MainApp = () => {
   const [inventory, setInventory] = useState([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddSaleModal, setShowAddSaleModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
 
   const [showChat, setShowChat] = useState(false);
@@ -163,6 +165,7 @@ const MainApp = () => {
               fetchDashboardData={fetchDashboardData} 
               fetchInventoryData={fetchInventoryData}
               API_BASE={API_BASE}
+              setShowAddSaleModal={setShowAddSaleModal}
             />
           )}
 
@@ -181,6 +184,15 @@ const MainApp = () => {
         newProduct={newProduct} 
         setNewProduct={setNewProduct} 
         handleAddProduct={handleAddProduct} 
+      />
+
+      <AddSaleModal 
+        show={showAddSaleModal}
+        onClose={() => setShowAddSaleModal(false)}
+        inventory={inventory}
+        API_BASE={API_BASE}
+        fetchDashboardData={fetchDashboardData}
+        fetchInventoryData={fetchInventoryData}
       />
 
       <Chat 

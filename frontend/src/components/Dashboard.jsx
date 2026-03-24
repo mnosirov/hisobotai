@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 
-const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BASE }) => {
+const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -108,7 +108,7 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
       </div>
 
       {/* Central Action Button */}
-      <div className="pt-4 flex flex-col items-center justify-center space-y-4">
+      <div className="pt-4 flex flex-col items-center justify-center space-y-6">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.9 }}
@@ -126,7 +126,16 @@ const Dashboard = ({ profit, tg, fetchDashboardData, fetchInventoryData, API_BAS
         </motion.button>
         <div className="text-center">
           <h3 className="text-xl font-bold">{captureMode === 'sales' ? 'Sotuvlarni tahlil qilish' : 'Xaridlarni tahlil qilish'}</h3>
-          <p className="text-slate-500 text-sm">{captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling'}</p>
+          <p className="text-slate-500 text-sm mb-4">{captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling'}</p>
+          
+          {captureMode === 'sales' && (
+            <button 
+              onClick={() => setShowAddSaleModal(true)}
+              className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-indigo-400 text-xs font-bold hover:bg-indigo-500/10 transition pb-2.5"
+            >
+              Qo'lda sotuv qo'shish +
+            </button>
+          )}
         </div>
       </div>
 

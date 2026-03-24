@@ -21,14 +21,18 @@ class ProductResponse(ProductBase):
     class Config:
         from_attributes = True
 
+class SaleItem(BaseModel):
+    product_id: int
+    quantity: float
+    revenue: float
+
 class SaleCreate(BaseModel):
-    items_json: List[Dict]
+    items: List[SaleItem]
+
+class SaleResponse(BaseModel):
+    id: int
     total_amount: float
     profit: float
-
-class SaleResponse(SaleCreate):
-    id: int
-    tenant_id: int
     created_at: datetime
     
     class Config:
