@@ -1,22 +1,24 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date
 from typing import Dict, List
-from datetime import date
-from app.models.models import Product, Sale
-from app.services.ai_service import AIService
+from datetime import date, datetime, timedelta, timezone
 
 class SalesService:
     def __init__(self, db: AsyncSession, tenant_id: int):
         self.db = db
         self.tenant_id = tenant_id
 
+    def get_tashkent_today(self) -> date:
+        # Tashkent is UTC+5
+        return (datetime.now(timezone.utc) + timedelta(hours=5)).date()
+
     async def get_sales_summary(self) -> Dict:
-        today = date.today()
+        today = self.get_tashkent_today()
         
-        # Today's profit
+        # Today's profit (Add 5 hours for Tashkent)
         query_today = select(func.sum(Sale.profit)).where(
             Sale.tenant_id == self.tenant_id,
-            cast(Sale.created_at, Date) == today
+            cast(Sale.created_at + timedelta(hours=5), Date) == today
         )
         res_today = await self.db.execute(query_today)
         sales_today = res_today.scalar() or 0.0
@@ -34,10 +36,10 @@ class SalesService:
         }
 
     async def get_todays_sales(self) -> List[Dict]:
-        today = date.today()
+        today = self.get_tashkent_today()
         query = select(Sale).where(
             Sale.tenant_id == self.tenant_id,
-            cast(Sale.created_at, Date) == today
+            cast(Sale.created_at + timedelta(hours=5), Date) == today
         )
         result = await self.db.execute(query)
         sales = result.scalars().all()
