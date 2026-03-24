@@ -2,6 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date
 from typing import Dict, List
 from datetime import date, datetime, timedelta, timezone
+from app.models.models import Product, Sale
+from app.services.ai_service import AIService
 
 class SalesService:
     def __init__(self, db: AsyncSession, tenant_id: int):
