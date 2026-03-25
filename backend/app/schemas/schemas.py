@@ -59,6 +59,10 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
+    is_admin: Optional[int] = 0
+    subscription_tier: Optional[str] = "free"
+    subscription_start: Optional[datetime] = None
+    subscription_end: Optional[datetime] = None
     created_at: datetime
     
     class Config:
@@ -68,3 +72,37 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+# --- Admin & Subscription Schemas ---
+class SubscriptionGrant(BaseModel):
+    user_id: int
+    tier: str = Field(..., pattern=r"^(standard|premium)$")
+    start_date: datetime
+    end_date: datetime
+
+class SubscriptionResponse(BaseModel):
+    id: int
+    user_id: int
+    tier: str
+    start_date: datetime
+    end_date: datetime
+    activated_by: Optional[int] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserAdminResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    is_admin: int
+    subscription_tier: str
+    subscription_start: Optional[datetime] = None
+    subscription_end: Optional[datetime] = None
+    is_active: bool = False  # computed: obuna aktiv yoki yo'q
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+

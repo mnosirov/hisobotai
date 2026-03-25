@@ -12,6 +12,10 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     telegram_chat_id = Column(String, unique=True, index=True, nullable=True)
+    is_admin = Column(Integer, default=0)  # 0=oddiy, 1=admin
+    subscription_tier = Column(String, default="free")  # "free", "standard", "premium"
+    subscription_start = Column(DateTime, nullable=True)
+    subscription_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -19,6 +23,21 @@ class User(Base):
     sales = relationship("Sale", back_populates="owner", cascade="all, delete-orphan")
     debts = relationship("Debt", back_populates="owner", cascade="all, delete-orphan")
     inventory_logs = relationship("InventoryLog", back_populates="owner", cascade="all, delete-orphan")
+    subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    tier = Column(String, nullable=False)  # "standard", "premium"
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    activated_by = Column(Integer, nullable=True)  # admin user id
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="subscriptions")
 
 class Product(Base):
     __tablename__ = "products"

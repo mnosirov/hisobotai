@@ -14,6 +14,7 @@ from app.services.sales_service import SalesService
 from app.services.bi_service import BIService
 from app.services.ai_service import AIService
 from app.services.auth_service import AuthService
+from app.services.subscription_service import SubscriptionService
 from app.schemas import schemas
 from app.models.models import User
 from fastapi.security import OAuth2PasswordBearer
@@ -41,7 +42,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     user = result.scalar_one_or_none()
     if user is None:
         raise credentials_exception
+    
+    # Avtomatik obuna muddati tekshiruvi
+    await SubscriptionService.check_and_expire(user, db)
+    
     return user
+
+async def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """Faqat admin uchun"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sizda admin huquqi yo'q."
+        )
+    return current_user
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -331,3 +345,24 @@ async def telegram_webhook(update: Dict):
                 await client.post(url, json={"chat_id": chat_id, "text": reply})
             
     return {"status": "ok"}
+
+# --- ADMIN API ---
+@app.get("/api/admin/users", response_model=List[schemas.UserAdminResponse])
+async def admin_get_users(admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    service = SubscriptionService(db)
+    return await service.get_all_users()
+
+@app.post("/api/admin/subscription", response_model=Dict)
+async def admin_grant_subscription(data: schemas.SubscriptionGrant, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    service = SubscriptionService(db)
+    return await service.grant_subscription(data, admin.id)
+
+@app.delete("/api/admin/subscription/{user_id}", response_model=Dict)
+async def admin_revoke_subscription(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    service = SubscriptionService(db)
+    return await service.revoke_subscription(user_id)
+
+@app.get("/api/admin/subscriptions", response_model=List[schemas.SubscriptionResponse])
+async def admin_get_subscriptions(admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    service = SubscriptionService(db)
+    return await service.get_subscription_history()

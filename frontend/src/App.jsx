@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -10,6 +10,8 @@ import Chat from './components/Chat';
 import AddProductModal from './components/AddProductModal';
 import AddSaleModal from './components/AddSaleModal';
 import SalesHistory from './components/SalesHistory';
+import AdminPanel from './components/AdminPanel';
+import PricingPage from './components/PricingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -35,6 +37,12 @@ const MainApp = () => {
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [tg, setTg] = useState(null);
+
+  // Subscription helpers
+  const isAdmin = user?.is_admin === 1;
+  const subscriptionTier = user?.subscription_tier || 'free';
+  const subscriptionEnd = user?.subscription_end;
+  const isSubscriptionActive = subscriptionTier !== 'free' && subscriptionEnd && new Date(subscriptionEnd) > new Date();
 
   useEffect(() => {
     if (user) {
@@ -136,6 +144,14 @@ const MainApp = () => {
     );
   }
 
+  // Tier label and colors
+  const tierInfo = {
+    free: { label: 'Bepul', color: 'text-slate-400', bg: 'bg-slate-700/50' },
+    standard: { label: 'Standart', color: 'text-blue-400', bg: 'bg-blue-500/20' },
+    premium: { label: 'Premium', color: 'text-amber-400', bg: 'bg-amber-500/20' }
+  };
+  const currentTierInfo = tierInfo[subscriptionTier] || tierInfo.free;
+
   return (
     <div className="flex flex-col h-screen bg-[#0F172A] text-slate-100 selection:bg-indigo-500/30">
       <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '16px' } }} />
@@ -144,9 +160,15 @@ const MainApp = () => {
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <h1 className="text-2xl font-bold tracking-tight">Hisobot AI <span className="text-[10px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">v1.2.0</span></h1>
-          <div className="flex items-center space-x-2 text-slate-400 text-xs">
+          <div className="flex items-center space-x-2 text-xs mt-0.5">
             <UserIcon size={12} className="text-indigo-400" />
-            <span>{user.username}</span>
+            <span className="text-slate-400">{user.username}</span>
+            <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${currentTierInfo.bg} ${currentTierInfo.color}`}>
+              {currentTierInfo.label}
+            </span>
+            {isAdmin && (
+              <span className="px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-400 text-[10px] font-bold">ADMIN</span>
+            )}
           </div>
         </motion.div>
         <motion.button 
@@ -159,6 +181,27 @@ const MainApp = () => {
           <LogOut className="text-slate-400 group-hover:text-red-400" size={20} />
         </motion.button>
       </header>
+
+      {/* Subscription Expired Banner */}
+      {subscriptionTier !== 'free' && !isSubscriptionActive && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-6 mb-3 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3"
+        >
+          <AlertTriangle size={18} className="text-red-400 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-red-400 text-xs font-semibold">Obuna muddati tugagan</p>
+            <p className="text-slate-400 text-[10px]">Ma'lumotlaringiz saqlanib qoldi. Qayta obuna bo'ling.</p>
+          </div>
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 text-xs font-bold hover:bg-red-500/30 transition flex-shrink-0"
+          >
+            Tariflar
+          </button>
+        </motion.div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto px-6 pb-24 scrollbar-hide">
@@ -185,6 +228,17 @@ const MainApp = () => {
 
           {activeTab === 'history' && (
             <SalesHistory API_BASE={API_BASE} />
+          )}
+
+          {activeTab === 'pricing' && (
+            <PricingPage 
+              currentTier={subscriptionTier}
+              subscriptionEnd={subscriptionEnd}
+            />
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+            <AdminPanel API_BASE={API_BASE} />
           )}
         </AnimatePresence>
       </main>
@@ -217,7 +271,7 @@ const MainApp = () => {
       />
 
       {/* Bottom Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 h-20 glass-card rounded-none rounded-t-3xl border-x-0 border-b-0 px-6 flex items-center justify-around z-10">
+      <footer className="fixed bottom-0 left-0 right-0 h-20 glass-card rounded-none rounded-t-3xl border-x-0 border-b-0 px-4 flex items-center justify-around z-10">
         <button 
           onClick={() => setActiveTab('dashboard')}
           className={`flex flex-col items-center space-y-1 transition ${
@@ -225,9 +279,9 @@ const MainApp = () => {
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeTab === 'dashboard' ? 'bg-indigo-500/20' : ''}`}>
-            <TrendingUp size={24} />
+            <TrendingUp size={22} />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-tight">Xulosa</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Xulosa</span>
         </button>
         
         <button 
@@ -237,9 +291,9 @@ const MainApp = () => {
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeTab === 'inventory' ? 'bg-indigo-500/20' : ''}`}>
-            <Package size={24} />
+            <Package size={22} />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-tight">Sklad</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Sklad</span>
         </button>
 
         <button 
@@ -249,19 +303,45 @@ const MainApp = () => {
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeTab === 'history' ? 'bg-indigo-500/20' : ''}`}>
-            <Calendar size={24} />
+            <Calendar size={22} />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-tight">Tarix</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Tarix</span>
         </button>
+
+        <button 
+          onClick={() => setActiveTab('pricing')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'pricing' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'pricing' ? 'bg-indigo-500/20' : ''}`}>
+            <CreditCard size={22} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Tariflar</span>
+        </button>
+
+        {isAdmin && (
+          <button 
+            onClick={() => setActiveTab('admin')}
+            className={`flex flex-col items-center space-y-1 transition ${
+              activeTab === 'admin' ? 'text-red-400' : 'text-slate-500'
+            }`}
+          >
+            <div className={`p-2 rounded-xl transition ${activeTab === 'admin' ? 'bg-red-500/20' : ''}`}>
+              <Shield size={22} />
+            </div>
+            <span className="text-[9px] font-bold uppercase tracking-tight">Admin</span>
+          </button>
+        )}
 
         <button 
           onClick={() => setShowChat(true)}
           className="flex flex-col items-center space-y-1 text-slate-500"
         >
           <div className="p-2 rounded-xl">
-            <MessageSquare size={24} />
+            <MessageSquare size={22} />
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-tight">Chat</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Chat</span>
         </button>
       </footer>
     </div>
@@ -275,3 +355,4 @@ const App = () => (
 );
 
 export default App;
+

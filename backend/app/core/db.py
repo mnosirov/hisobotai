@@ -76,6 +76,12 @@ async def init_db():
             await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
             await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             
+            # Subscription & Admin columns
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR DEFAULT 'free';"))
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMP;"))
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMP;"))
+            
         except Exception as e:
             print(f"Schema auto-migration skipped or failed: {e}")
         
@@ -90,7 +96,13 @@ async def init_db():
                 id=1,
                 username="admin",
                 email="admin@hisobot.ai",
-                hashed_password=get_password_hash("admin123")
+                hashed_password=get_password_hash("admin123"),
+                is_admin=1
             )
             session.add(default_user)
             await session.commit()
+        else:
+            # Mavjud admin foydalanuvchiga is_admin=1 o'rnatish
+            if not user.is_admin:
+                user.is_admin = 1
+                await session.commit()
