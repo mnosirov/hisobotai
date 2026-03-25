@@ -61,17 +61,21 @@ class SubscriptionService:
                 detail="Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak."
             )
         
+        # Ensure naive datetimes for DB compatibility
+        start_date = data.start_date.replace(tzinfo=None) if data.start_date.tzinfo else data.start_date
+        end_date = data.end_date.replace(tzinfo=None) if data.end_date.tzinfo else data.end_date
+
         # User modelini yangilash
         user.subscription_tier = data.tier
-        user.subscription_start = data.start_date
-        user.subscription_end = data.end_date
+        user.subscription_start = start_date
+        user.subscription_end = end_date
         
         # To'lov tarixiga yozish
         subscription = Subscription(
             user_id=data.user_id,
             tier=data.tier,
-            start_date=data.start_date,
-            end_date=data.end_date,
+            start_date=start_date,
+            end_date=end_date,
             activated_by=admin_id
         )
         self.db.add(subscription)
@@ -110,7 +114,8 @@ class SubscriptionService:
         """Obuna muddati tekshiruvi — avtomatik expire"""
         if user.subscription_tier in ("standard", "premium") and user.subscription_end:
             now = now_tashkent()
-            if user.subscription_end < now:
+            sub_end = user.subscription_end.replace(tzinfo=None) if user.subscription_end.tzinfo else user.subscription_end
+            if sub_end < now:
                 user.subscription_tier = "free"
                 user.subscription_start = None
                 user.subscription_end = None

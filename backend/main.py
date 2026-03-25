@@ -104,7 +104,13 @@ async def global_exception_handler(request: Request, exc: Exception):
     traceback.print_exc()
     return JSONResponse(
         status_code=500,
-        content={"detail": "Ichki xatolik yuz berdi. Admin bilan bog'laning.", "error": str(exc)}
+        content={"detail": "Internal server error. Please contact admin.", "error": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": "https://hisobotai.vercel.app",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
     )
 
 @app.get("/")

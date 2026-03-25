@@ -73,9 +73,37 @@ async def init_db():
             await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             
             # Inventory Logs table
+            # Inventory Logs table
             await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
             await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             
+            # Subscriptions table (Postgres-friendly SERIAL, fallback for SQLite)
+            try:
+                await conn.execute(sa.text("""
+                    CREATE TABLE IF NOT EXISTS subscriptions (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        tier VARCHAR NOT NULL,
+                        start_date TIMESTAMP NOT NULL,
+                        end_date TIMESTAMP NOT NULL,
+                        activated_by INTEGER,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+            except Exception:
+                # Fallback for SQLite (AUTOINCREMENT)
+                await conn.execute(sa.text("""
+                    CREATE TABLE IF NOT EXISTS subscriptions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        tier VARCHAR NOT NULL,
+                        start_date DATETIME NOT NULL,
+                        end_date DATETIME NOT NULL,
+                        activated_by INTEGER,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+
             # Subscription & Admin columns
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR DEFAULT 'free';"))
