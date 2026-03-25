@@ -106,16 +106,15 @@ const PricingPage = ({ currentTier, subscriptionEnd }) => {
       <div className="space-y-4">
         {plans.map((plan, index) => {
           const isCurrent = currentTier === plan.id && (plan.id === 'free' || isActive);
-          
+
           return (
             <motion.div
               key={plan.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`relative glass-card p-5 space-y-4 ${
-                isCurrent ? 'ring-2 ring-indigo-500/50' : ''
-              } ${plan.popular ? 'border-blue-500/30' : ''}`}
+              className={`relative glass-card p-5 space-y-4 ${isCurrent ? 'ring-2 ring-indigo-500/50' : ''
+                } ${plan.popular ? 'border-blue-500/30' : ''}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -162,14 +161,13 @@ const PricingPage = ({ currentTier, subscriptionEnd }) => {
 
               {plan.id !== 'free' && !isCurrent && (
                 <a
-                  href="https://t.me/hisobotai_admin"
+                  href="https://t.me/MNosirov"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition transform active:scale-[0.98] ${
-                    plan.id === 'premium'
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition transform active:scale-[0.98] ${plan.id === 'premium'
                       ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500'
                       : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500'
-                  }`}
+                    }`}
                 >
                   <MessageCircle size={16} />
                   Telegram orqali sotib olish
@@ -195,12 +193,12 @@ const PricingPage = ({ currentTier, subscriptionEnd }) => {
           </p>
         </div>
         <a
-          href="https://t.me/hisobotai_admin"
+          href="https://t.me/MNosirov"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-blue-500/20 text-blue-400 font-semibold text-sm border border-blue-500/30 hover:bg-blue-500/30 transition"
         >
-          <MessageCircle size={16} /> @hisobotai_admin
+          <MessageCircle size={16} /> @MNosirov
         </a>
       </motion.div>
     </motion.div>
