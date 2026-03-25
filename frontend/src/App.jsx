@@ -249,6 +249,7 @@ const MainApp = () => {
         newProduct={newProduct} 
         setNewProduct={setNewProduct} 
         handleAddProduct={handleAddProduct} 
+        inventory={inventory}
       />
 
       <AddSaleModal 
