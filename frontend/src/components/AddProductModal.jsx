@@ -4,20 +4,23 @@ import { X } from 'lucide-react';
 
 const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [] }) => {
   const categories = [...new Set(inventory.map(i => i.category || 'Umumiy'))];
+  const [matchFound, setMatchFound] = React.useState(false);
   
   const handleNameChange = (val) => {
-    const existing = inventory.find(i => i.name.toLowerCase() === val.toLowerCase());
+    const existing = inventory.find(i => i.name.toLowerCase() === val.trim().toLowerCase());
     if (existing) {
+      setMatchFound(true);
       setNewProduct({
         ...newProduct,
-        name: existing.name,
+        name: val, // Keep case as typed or can use existing.name
         category: existing.category || 'Umumiy',
         unit: existing.unit || 'dona',
         buyPrice: existing.last_purchase_price || 0,
         sellPrice: existing.sell_price || 0,
-        stock: newProduct.stock // Keep currently entered stock
+        stock: newProduct.stock
       });
     } else {
+      setMatchFound(false);
       setNewProduct({...newProduct, name: val});
     }
   };
@@ -39,20 +42,33 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">Yangi mahsulot</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+              <button 
+                onClick={() => {
+                  setShowAddModal(false);
+                  setMatchFound(false);
+                }} 
+                className="text-slate-400 hover:text-white"
+              >
                 <X size={20} />
               </button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">Nomi</label>
+                <div className="flex justify-between items-end mb-1">
+                  <label className="text-xs text-slate-400 block">Nomi</label>
+                  {matchFound && (
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Mavjud mahsulot topildi</span>
+                  )}
+                </div>
                 <input 
                   type="text" 
                   list="product-suggestions"
                   value={newProduct.name} 
                   onChange={e => handleNameChange(e.target.value)} 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
+                    matchFound ? 'border-emerald-500/50 focus:border-emerald-500' : 'border-white/10 focus:border-indigo-500'
+                  }`} 
                   placeholder="Masalan: Qora choy" 
                 />
                 <datalist id="product-suggestions">
@@ -128,9 +144,11 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
               
               <button 
                 onClick={handleAddProduct} 
-                className="w-full bg-indigo-600 font-bold py-4 rounded-xl mt-6 active:scale-95 transition"
+                className={`w-full font-bold py-4 rounded-xl mt-6 active:scale-95 transition ${
+                  matchFound ? 'bg-emerald-600 shadow-lg shadow-emerald-500/20' : 'bg-indigo-600'
+                }`}
               >
-                Saqlash
+                {matchFound ? "Mavjudni yangilash" : "Saqlash"}
               </button>
             </div>
           </motion.div>

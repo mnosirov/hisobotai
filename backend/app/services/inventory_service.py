@@ -22,10 +22,10 @@ class InventoryService:
         price = float(product_data.get("price") or 0.0)
         sell_price = float(product_data.get("sell_price") or 0.0)
 
-        # Basic case-insensitive search
+        # Exact case-insensitive search to avoid fuzzy match accidents
         query = select(Product).where(
             Product.tenant_id == self.tenant_id,
-            Product.name.ilike(f"%{name}%")
+            Product.name.ilike(name)
         )
         result = await self.db.execute(query)
         product = result.scalar_one_or_none()
