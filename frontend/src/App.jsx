@@ -53,7 +53,8 @@ const MainApp = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/sales/summary`);
+      // Add timestamp to bypass potential caching
+      const { data } = await axios.get(`${API_BASE}/sales/summary?t=${Date.now()}`);
       setProfit(data.today_profit || 0);
       setProfitGrowth(data.profit_growth || 0);
       setLowStockItems(data.low_stock_items || []);
@@ -64,7 +65,8 @@ const MainApp = () => {
 
   const fetchInventoryData = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/inventory`);
+      // Add timestamp to bypass potential caching
+      const { data } = await axios.get(`${API_BASE}/inventory?t=${Date.now()}`);
       const mappedData = data.map(i => ({ ...i, threshold: 10 })); 
       setInventory(mappedData);
     } catch (e) {
@@ -104,6 +106,7 @@ const MainApp = () => {
       setShowAddModal(false);
       setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
       fetchInventoryData(); 
+      fetchDashboardData(); // Refresh dashboard for low stock alerts
     } catch (err) {
       toast.error("Xatolik yuz berdi", { id: loadingToast });
     }

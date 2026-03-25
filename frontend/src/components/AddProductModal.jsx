@@ -144,9 +144,10 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
               
               <button 
                 onClick={handleAddProduct} 
-                className={`w-full font-bold py-4 rounded-xl mt-6 active:scale-95 transition ${
+                disabled={!newProduct.name || !newProduct.stock}
+                className={`w-full font-bold py-4 rounded-xl mt-6 active:scale-95 transition flex items-center justify-center space-x-2 ${
                   matchFound ? 'bg-emerald-600 shadow-lg shadow-emerald-500/20' : 'bg-indigo-600'
-                }`}
+                } disabled:opacity-50`}
               >
                 {matchFound ? "Mavjudni yangilash" : "Saqlash"}
               </button>

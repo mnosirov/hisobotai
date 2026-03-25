@@ -14,7 +14,7 @@ const SalesHistory = ({ API_BASE }) => {
 
   const fetchHistory = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/sales/history`);
+      const { data } = await axios.get(`${API_BASE}/sales/history?t=${Date.now()}`);
       setHistory(data);
     } catch (err) {
       console.error("History fetch error", err);

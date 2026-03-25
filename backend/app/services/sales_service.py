@@ -85,6 +85,20 @@ class SalesService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
+    async def get_recent_sales_full(self, limit: int = 15) -> List[str]:
+        """AI uchun oxirgi sotuvlar tafsilotlari"""
+        query = select(Sale).where(Sale.tenant_id == self.tenant_id).order_by(Sale.created_at.desc()).limit(limit)
+        result = await self.db.execute(query)
+        sales = result.scalars().all()
+        
+        history = []
+        for s in sales:
+            # Tashkent vaqti
+            dt = (s.created_at + timedelta(hours=5)).strftime("%H:%M (%d-%b)")
+            items = ", ".join([f"{i.get('product')} ({i.get('quantity')} ta)" for i in s.items_json])
+            history.append(f"{dt}: {items} - {int(s.total_amount)} UZS")
+        return history
+
     async def analyze_handwritten_sales(self, image_path: str) -> List[Dict]:
         """AI orqali rasmdan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
         raw_items = await AIService.extract_handwritten_sales(image_path)
