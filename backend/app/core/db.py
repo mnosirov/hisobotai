@@ -87,13 +87,14 @@ async def init_db():
         
     # 2. Seed Default User securely
     async with AsyncSessionLocal() as session:
-        query = sa.select(User).where(User.id == 1)
+        # Try to find admin by email first
+        query = sa.select(User).where(User.email == "admin@hisobot.ai")
         result = await session.execute(query)
         user = result.scalar_one_or_none()
         
         if not user:
+            # Create if doesn't exist
             default_user = User(
-                id=1,
                 username="admin",
                 email="admin@hisobot.ai",
                 hashed_password=get_password_hash("admin123"),
@@ -101,8 +102,10 @@ async def init_db():
             )
             session.add(default_user)
             await session.commit()
+            print("Default admin created.")
         else:
-            # Mavjud admin foydalanuvchiga is_admin=1 o'rnatish
-            if not user.is_admin:
-                user.is_admin = 1
-                await session.commit()
+            # Force update password and admin status for existing user
+            user.hashed_password = get_password_hash("admin123")
+            user.is_admin = 1
+            await session.commit()
+            print("Default admin credentials reset.")
