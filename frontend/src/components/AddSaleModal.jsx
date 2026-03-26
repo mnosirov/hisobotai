@@ -7,7 +7,7 @@ import axios from 'axios';
 const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, fetchInventoryData }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileTab, setMobileTab] = useState("products"); // 'products' or 'cart'
-  const [cart, setCart] = useState([]); // [{product_id, name, quantity, revenue}]
+  const [cart, setCart] = useState([]); // [{product_id, name, quantity, unit_price, revenue, unit}]
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredProducts = inventory.filter(p => 
@@ -17,9 +17,10 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
   const addToCart = (product) => {
     const existing = cart.find(item => item.product_id === product.id);
     if (existing) {
+      const newQty = existing.quantity + 1;
       setCart(cart.map(item => 
         item.product_id === product.id 
-          ? { ...item, quantity: item.quantity + 1, revenue: (item.quantity + 1) * product.sell_price }
+          ? { ...item, quantity: newQty, revenue: newQty * item.unit_price }
           : item
       ));
     } else {
@@ -27,6 +28,7 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
         product_id: product.id, 
         name: product.name, 
         quantity: 1, 
+        unit_price: product.sell_price,
         revenue: product.sell_price,
         unit: product.unit 
       }]);
@@ -41,9 +43,18 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
   const updateQuantity = (productId, delta) => {
     setCart(cart.map(item => {
       if (item.product_id === productId) {
-        const product = inventory.find(p => p.id === productId);
         const newQty = Math.max(0.1, item.quantity + delta);
-        return { ...item, quantity: newQty, revenue: newQty * product.sell_price };
+        return { ...item, quantity: newQty, revenue: newQty * item.unit_price };
+      }
+      return item;
+    }));
+  };
+
+  const updateUnitPrice = (productId, newPrice) => {
+    const price = parseFloat(newPrice) || 0;
+    setCart(cart.map(item => {
+      if (item.product_id === productId) {
+        return { ...item, unit_price: price, revenue: item.quantity * price };
       }
       return item;
     }));
@@ -152,12 +163,13 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
                 {cart.map(item => (
                   <div key={item.product_id} className="bg-white/5 p-3 rounded-xl border border-white/5">
                     <div className="flex justify-between font-bold mb-2">
-                      <span className="text-slate-100">{item.name}</span>
+                      <span className="text-slate-100 text-sm">{item.name}</span>
                       <button onClick={() => removeFromCart(item.product_id)} className="text-red-400/50 hover:text-red-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <div className="flex items-center justify-between">
+                    {/* Quantity controls */}
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center bg-black/30 rounded-lg p-1">
                         <button onClick={() => updateQuantity(item.product_id, -1)} className="p-1.5 hover:bg-white/10 rounded-md transition">
                           <Minus size={14} />
@@ -167,7 +179,20 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
                           <Plus size={14} />
                         </button>
                       </div>
-                      <span className="font-black text-white">{item.revenue.toLocaleString()}</span>
+                      <span className="text-[10px] text-slate-500">{item.unit}</span>
+                    </div>
+                    {/* Editable unit price */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-[10px] text-slate-500">Narxi:</span>
+                        <input 
+                          type="number"
+                          value={item.unit_price}
+                          onChange={e => updateUnitPrice(item.product_id, e.target.value)}
+                          className="w-20 bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-xs font-bold text-amber-400 focus:outline-none focus:border-amber-500 text-right"
+                        />
+                      </div>
+                      <span className="font-black text-white text-sm">{item.revenue.toLocaleString()} <span className="text-[10px] text-slate-500">UZS</span></span>
                     </div>
                   </div>
                 ))}
