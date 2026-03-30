@@ -11,8 +11,8 @@ TASHKENT_OFFSET = timezone(timedelta(hours=5))
 
 TIER_LIMITS = {
     "free": {
-        "max_products": 15,
-        "max_monthly_sales": 50,
+        "max_products": 10,
+        "max_monthly_sales": 20,
         "max_monthly_ai": 5,
     },
     "standard": {
