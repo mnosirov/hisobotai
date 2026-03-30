@@ -98,8 +98,8 @@ class InventoryService:
         
         try:
             # Check if cloudinary is configured
-            if not os.getenv("CLOUDINARY_CLOUD_NAME"):
-                # Fallback to local storage if no keys
+            if not os.getenv("CLOUDINARY_CLOUD_NAME") or "placeholder" in os.getenv("CLOUDINARY_CLOUD_NAME", ""):
+                print("DEBUG: Cloudinary keys not set, falling back to local storage")
                 os.makedirs("static/uploads/products", exist_ok=True)
                 new_filename = f"{uuid.uuid4()}.jpg"
                 with open(f"static/uploads/products/{new_filename}", "wb") as f:
@@ -107,16 +107,20 @@ class InventoryService:
                 return f"/static/uploads/products/{new_filename}"
             
             # Upload to Cloudinary
+            print(f"DEBUG: Attempting Cloudinary upload for {filename}")
             upload_result = cloudinary.uploader.upload(
                 buffer,
                 folder="hisobotai_products",
                 public_id=f"prod_{uuid.uuid4().hex[:8]}",
                 resource_type="image"
             )
-            return upload_result.get("secure_url")
+            secure_url = upload_result.get("secure_url")
+            print(f"DEBUG: Cloudinary upload success: {secure_url}")
+            return secure_url
         except Exception as e:
-            print(f"Cloudinary upload error: {e}")
-            # Final fallback
+            print(f"ERROR: Cloudinary upload failed: {e}")
+            import traceback
+            traceback.print_exc()
             return ""
 
     async def analyze_invoice_upload(self, image_path: str) -> List[Dict]:

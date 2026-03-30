@@ -56,12 +56,16 @@ const Inventory = ({ inventory, setShowAddModal }) => {
             <div key={item.id} className="glass-card p-4 flex items-center justify-between relative overflow-hidden group">
               <div className="flex items-center space-x-4">
                 <div 
-                  onClick={() => item.image_url && setFullscreenImage(item.image_url.startsWith('http') ? item.image_url : `${BACKEND_URL}${item.image_url}`)}
+                  onClick={() => {
+                    if (!item.image_url || typeof item.image_url !== 'string') return;
+                    const url = item.image_url.startsWith('http') ? item.image_url : `${BACKEND_URL}${item.image_url}`;
+                    setFullscreenImage(url);
+                  }}
                   className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden cursor-pointer ${
                     item.stock < (item.threshold || 10) ? 'bg-rose-500/20' : 'bg-emerald-500/20'
                   }`}
                 >
-                  {item.image_url ? (
+                  {item.image_url && typeof item.image_url === 'string' ? (
                     <img 
                       src={item.image_url.startsWith('http') ? item.image_url : `${BACKEND_URL}${item.image_url}`} 
                       alt={item.name} 
