@@ -165,7 +165,19 @@ async def debug_storage_config(admin: User = Depends(get_admin_user)):
         }
     }
 
-@app.get("/api/admin/debug/cloudinary_test")
+@app.get("/api/admin/debug/env_keys")
+async def debug_env_keys(admin: User = Depends(get_admin_user)):
+    """Serverdagi barcha o'zgaruvchilar NOMINI tekshirish (Faqat Admin)"""
+    import os
+    keys = list(os.environ.keys())
+    cloud_keys = [k for k in keys if "CLOUDINARY" in k]
+    return {
+        "all_keys_count": len(keys),
+        "cloudinary_keys_found": cloud_keys,
+        "is_database_url_present": "DATABASE_URL" in keys
+    }
+
+@app.get("/api/admin/debug/test_upload")
 async def debug_cloudinary_test(admin: User = Depends(get_admin_user)):
     """Real vaqtda Cloudinary yuklashni test qilish"""
     import cloudinary.uploader
@@ -179,14 +191,18 @@ async def debug_cloudinary_test(admin: User = Depends(get_admin_user)):
         img.save(buffer, format="JPEG")
         buffer.seek(0)
         
+        # Explicit test with environment variables
         res = cloudinary.uploader.upload(
             buffer,
             folder="debug_test",
-            public_id="test_pixel"
+            public_id=f"test_pixel_{os.urandom(4).hex()}",
+            cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+            api_key=os.getenv("CLOUDINARY_API_KEY"),
+            api_secret=os.getenv("CLOUDINARY_API_SECRET")
         )
-        return {"status": "success", "url": res.get("secure_url"), "result": res}
+        return {"status": "success", "url": res.get("secure_url"), "result": "UPLOADED"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": str(e), "env_exists": bool(os.getenv("CLOUDINARY_CLOUD_NAME"))}
 
 @app.get("/api/telegram/setup")
 async def setup_webhook():
