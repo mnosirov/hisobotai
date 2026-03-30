@@ -163,6 +163,7 @@ class SalesService:
             
             q_count = select(func.count(Sale.id)).where(
                 Sale.tenant_id == self.tenant_id,
+                Sale.is_deleted == 0,
                 cast(Sale.created_at + timedelta(hours=5), Date) >= first_day
             )
             r_count = await self.db.execute(q_count)

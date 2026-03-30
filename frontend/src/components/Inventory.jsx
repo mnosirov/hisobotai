@@ -77,7 +77,7 @@ const Inventory = ({ inventory, setShowAddModal, user }) => {
                     setFullscreenImage(url);
                   }}
                   className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden cursor-pointer ${
-                    item.stock < (item.threshold || 10) ? 'bg-rose-500/20' : 'bg-emerald-500/20'
+                    item.stock <= 0 ? 'bg-rose-500/20' : (item.stock <= 5 ? 'bg-amber-500/10' : 'bg-emerald-500/20')
                   }`}
                 >
                   {item.image_url && typeof item.image_url === 'string' ? (
@@ -91,7 +91,7 @@ const Inventory = ({ inventory, setShowAddModal, user }) => {
                       }}
                     />
                   ) : (
-                    <Package className={item.stock < (item.threshold || 10) ? 'text-rose-400' : 'text-emerald-400'} size={24} />
+                    <Package className={item.stock <= 0 ? 'text-rose-400' : (item.stock <= 5 ? 'text-amber-400' : 'text-emerald-400')} size={24} />
                   )}
                 </div>
                 <div>
