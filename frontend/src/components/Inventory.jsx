@@ -56,19 +56,23 @@ const Inventory = ({ inventory, setShowAddModal }) => {
             <div key={item.id} className="glass-card p-4 flex items-center justify-between relative overflow-hidden group">
               <div className="flex items-center space-x-4">
                 <div 
-                  onClick={() => item.image_url && setFullscreenImage(`${BACKEND_URL}${item.image_url}`)}
+                  onClick={() => item.image_url && setFullscreenImage(item.image_url.startsWith('http') ? item.image_url : `${BACKEND_URL}${item.image_url}`)}
                   className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden cursor-pointer ${
-                    item.stock < item.threshold ? 'bg-rose-500/20' : 'bg-emerald-500/20'
+                    item.stock < (item.threshold || 10) ? 'bg-rose-500/20' : 'bg-emerald-500/20'
                   }`}
                 >
                   {item.image_url ? (
                     <img 
-                      src={`${BACKEND_URL}${item.image_url}`} 
+                      src={item.image_url.startsWith('http') ? item.image_url : `${BACKEND_URL}${item.image_url}`} 
                       alt={item.name} 
                       className="h-full w-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.parentElement.innerHTML = '<div class="flex items-center justify-center h-full w-full opacity-50"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package text-slate-400"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg></div>';
+                      }}
                     />
                   ) : (
-                    <Package className={item.stock < item.threshold ? 'text-rose-400' : 'text-emerald-400'} size={24} />
+                    <Package className={item.stock < (item.threshold || 10) ? 'text-rose-400' : 'text-emerald-400'} size={24} />
                   )}
                 </div>
                 <div>
