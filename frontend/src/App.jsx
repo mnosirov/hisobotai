@@ -235,6 +235,7 @@ const MainApp = () => {
             <Inventory 
               inventory={inventory} 
               setShowAddModal={setShowAddModal} 
+              user={user}
             />
           )}
 

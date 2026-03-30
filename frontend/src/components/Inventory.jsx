@@ -3,10 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Inventory = ({ inventory, setShowAddModal }) => {
+const Inventory = ({ inventory, setShowAddModal, user }) => {
   const { BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
   const [fullscreenImage, setFullscreenImage] = useState(null);
+
+  const isAdmin = user?.is_admin === 1;
+  const tier = user?.subscription_tier || 'free';
+  const maxProducts = isAdmin ? 5000 : (tier === 'premium' ? 5000 : (tier === 'standard' ? 100 : 10));
 
   const filteredInventory = selectedCategory === 'Barchasi' 
     ? inventory 
@@ -26,11 +30,11 @@ const Inventory = ({ inventory, setShowAddModal }) => {
             <h2 className="text-2xl font-bold">Sklad (Zaxira)</h2>
             <div className="flex items-center gap-2 mt-1">
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
-                inventory.length >= 10 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                inventory.length >= maxProducts ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 
+                inventory.length >= maxProducts * 0.8 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
+                'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
               }`}>
-                {inventory.length} / { 
-                  inventory.length <= 10 ? 10 : (inventory.length <= 100 ? 100 : 5000) 
-                } mahsulot
+                {inventory.length} / {maxProducts} mahsulot
               </span>
             </div>
           </div>
