@@ -99,6 +99,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Ensure static directory exists before mounting
+os.makedirs("static/uploads/products", exist_ok=True)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.exception_handler(Exception)
