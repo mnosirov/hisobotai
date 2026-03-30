@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart, TrendingUp, DollarSign } from 'lucide-react';
+import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart, TrendingUp, DollarSign, User as UserIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
