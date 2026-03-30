@@ -36,6 +36,8 @@ class SaleResponse(BaseModel):
     total_amount: float
     profit: float
     items_json: List[Dict]
+    is_deleted: int = 0
+    deleted_at: Optional[datetime] = None
     created_at: datetime
     
     class Config:
