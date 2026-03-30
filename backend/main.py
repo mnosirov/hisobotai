@@ -13,6 +13,17 @@ from app.core.db import get_db, init_db
 from app.core.security import ALGORITHM, SECRET_KEY
 from app.services.inventory_service import InventoryService
 from app.services.sales_service import SalesService
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+
+# Cloudinary configuration
+cloudinary.config( 
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"), 
+    api_key = os.getenv("CLOUDINARY_API_KEY"), 
+    api_secret = os.getenv("CLOUDINARY_API_SECRET"),
+    secure = True
+)
 from app.services.bi_service import BIService
 from app.services.ai_service import AIService
 from app.services.auth_service import AuthService

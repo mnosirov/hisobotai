@@ -77,27 +77,47 @@ class InventoryService:
         os.makedirs(upload_dir, exist_ok=True)
         
         # Unique filename
-        ext = os.path.splitext(filename)[1].lower()
-        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
-            ext = '.jpg'
-        new_filename = f"{uuid.uuid4()}{ext}"
-        save_path = os.path.join(upload_dir, new_filename)
-        
+    def process_product_image(self, image_bytes: bytes, filename: str) -> str:
+        """Cloudinary xizmatiga rasmni yuklaydi va URL qaytaradi."""
         from io import BytesIO
-        img = Image.open(BytesIO(image_bytes))
+        import cloudinary.uploader
         
-        # Resize logic: 500px max dimension
+        # Pillow processing: 500px max, optimized
+        img = Image.open(BytesIO(image_bytes))
         if img.mode != 'RGB':
             img = img.convert('RGB')
-            
+        
         max_size = (500, 500)
-        # Compatibility fix for Pillow < 10.0.0
         resample_filter = getattr(Image, 'Resampling', Image).LANCZOS
         img.thumbnail(max_size, resample=resample_filter)
         
-        img.save(save_path, "JPEG", quality=85, optimize=True)
+        # Save processed image to a buffer
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        buffer.seek(0)
         
-        return f"/static/uploads/products/{new_filename}"
+        try:
+            # Check if cloudinary is configured
+            if not os.getenv("CLOUDINARY_CLOUD_NAME"):
+                # Fallback to local storage if no keys
+                os.makedirs("static/uploads/products", exist_ok=True)
+                new_filename = f"{uuid.uuid4()}.jpg"
+                with open(f"static/uploads/products/{new_filename}", "wb") as f:
+                    f.write(buffer.getvalue())
+                return f"/static/uploads/products/{new_filename}"
+            
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload(
+                buffer,
+                folder="hisobotai_products",
+                public_id=f"prod_{uuid.uuid4().hex[:8]}",
+                resource_type="image"
+            )
+            return upload_result.get("secure_url")
+        except Exception as e:
+            print(f"Cloudinary upload error: {e}")
+            # Final fallback
+            return ""
 
     async def analyze_invoice_upload(self, image_path: str) -> List[Dict]:
         """AI orqali fakturadan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""

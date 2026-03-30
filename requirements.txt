@@ -13,3 +13,4 @@ aiosqlite
 Pillow
 pyjwt
 python-multipart
+cloudinary
