@@ -9,7 +9,14 @@ const Login = ({ onSwitch }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [localError, setLocalError] = useState('');
   const { login, API_BASE } = useAuth();
+
+  const handleInputChange = (field, value) => {
+    setLocalError('');
+    if (field === 'email') setEmail(value);
+    if (field === 'password') setPassword(value);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,7 +28,9 @@ const Login = ({ onSwitch }) => {
       login(data.access_token, data.user);
       toast.success(`Xush kelibsiz, ${data.user.username}!`, { id: loadingToast });
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Email yoki parol xato", { id: loadingToast });
+      const msg = err.response?.data?.detail || "Email yoki parol xato";
+      setLocalError(msg);
+      toast.error(msg, { id: loadingToast });
     } finally {
       setLoading(false);
     }
@@ -44,6 +53,15 @@ const Login = ({ onSwitch }) => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-4">
+            {localError && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold text-center"
+              >
+                {localError}
+              </motion.div>
+            )}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-indigo-400 transition-colors">
                 <Mail size={18} />
@@ -54,7 +72,7 @@ const Login = ({ onSwitch }) => {
                 className="block w-full pl-10 pr-3 py-3 bg-slate-900/50 border border-slate-700 rounded-xl leading-5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                 placeholder="Email manzilingiz"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleInputChange('email', e.target.value)}
               />
             </div>
 
@@ -68,7 +86,7 @@ const Login = ({ onSwitch }) => {
                 className="block w-full pl-10 pr-3 py-3 bg-slate-900/50 border border-slate-700 rounded-xl leading-5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                 placeholder="Parolingiz"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handleInputChange('password', e.target.value)}
               />
             </div>
           </div>
