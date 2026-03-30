@@ -21,6 +21,7 @@ class SalesService:
         # Today's profit (Add 5 hours for Tashkent)
         query_today = select(func.sum(Sale.profit)).where(
             Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0,
             cast(Sale.created_at + timedelta(hours=5), Date) == today
         )
         res_today = await self.db.execute(query_today)
@@ -29,6 +30,7 @@ class SalesService:
         # Yesterday's profit (Add 5 hours for Tashkent)
         query_yesterday = select(func.sum(Sale.profit)).where(
             Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0,
             cast(Sale.created_at + timedelta(hours=5), Date) == yesterday
         )
         res_yesterday = await self.db.execute(query_yesterday)
@@ -43,7 +45,8 @@ class SalesService:
 
         # Total profit
         query_total = select(func.sum(Sale.profit)).where(
-            Sale.tenant_id == self.tenant_id
+            Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0
         )
         res_total = await self.db.execute(query_total)
         total_sales = res_total.scalar() or 0.0
@@ -254,6 +257,8 @@ class SalesService:
                 product.stock += qty
                 self.db.add(product)
         
-        await self.db.delete(sale)
+        # Soft delete
+        sale.is_deleted = 1
+        self.db.add(sale)
         await self.db.commit()
-        return {"status": "success", "message": "Sotuv o'chirildi va ombor yangilandi."}
+        return {"status": "success", "message": "Sotuv o'chirildi (Soft Delete) va ombor yangilandi."}

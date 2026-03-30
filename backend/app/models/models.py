@@ -79,6 +79,7 @@ class Sale(Base):
     items_json = Column(JSON, nullable=False)  # List of dicts representing sold items
     total_amount = Column(Float, nullable=False, default=0.0)
     profit = Column(Float, nullable=False, default=0.0)
+    is_deleted = Column(Integer, default=0)  # 0=active, 1=deleted
     created_at = Column(DateTime, default=datetime.utcnow)
     
     owner = relationship("User", back_populates="sales")

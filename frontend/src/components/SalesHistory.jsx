@@ -90,35 +90,49 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
             
             <div className="space-y-3">
               {sales.map((sale) => (
-                <div key={sale.id} className="glass-card overflow-hidden group">
+                <div key={sale.id} className={`glass-card overflow-hidden group ${sale.is_deleted ? 'opacity-60 bg-slate-800/10' : ''}`}>
                   <div className="p-4 flex justify-between items-center bg-white/5 relative">
                     <div className="flex items-center space-x-3">
-                      <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs font-bold">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                        sale.is_deleted ? 'bg-slate-700 text-slate-500' : 'bg-indigo-500/20 text-indigo-400'
+                      }`}>
                         {getTime(sale.created_at)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-100">
-                          {sale.items_json.length} xil mahsulot
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-bold ${sale.is_deleted ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                            {sale.items_json.length} xil mahsulot
+                          </p>
+                          {sale.is_deleted === 1 && (
+                            <span className="text-[8px] bg-red-500/20 text-red-400 px-1 py-0.5 rounded uppercase font-black tracking-tighter">O'chirilgan</span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-slate-500">Sotuv: #{sale.id.toString().slice(-4)}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-3 shrink-0 ml-2">
                       <div className="text-right flex flex-col items-end max-w-[120px]">
-                        <p className="text-sm font-black text-emerald-400 truncate w-full">
-                          +{sale.total_amount.toLocaleString()} UZS
+                        <p className={`text-sm font-black truncate w-full ${sale.is_deleted ? 'text-slate-500 line-through' : 'text-emerald-400'}`}>
+                          {sale.is_deleted ? '' : '+'}{sale.total_amount.toLocaleString()} UZS
                         </p>
                         <p className="text-[10px] text-slate-500 truncate w-full">
-                          Foyda: {itemProfit(sale).toLocaleString()} UZS
+                          {sale.is_deleted ? 'Profit excluded' : `Foyda: ${itemProfit(sale).toLocaleString()} UZS`}
                         </p>
                       </div>
-                      <button 
-                        onClick={() => handleDelete(sale.id)}
-                        className="h-9 w-9 shrink-0 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition-all hover:bg-red-500/20 active:scale-90"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      {!sale.is_deleted && (
+                        <button 
+                          onClick={() => handleDelete(sale.id)}
+                          className="h-9 w-9 shrink-0 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition-all hover:bg-red-500/20 active:scale-90"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                      {sale.is_deleted === 1 && (
+                        <div className="h-9 w-9 shrink-0 flex items-center justify-center text-slate-600">
+                          <AlertCircle size={18} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -126,7 +140,7 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
                     <div className="flex space-x-4 min-w-max">
                       {sale.items_json.map((item, idx) => (
                         <div key={idx} className="flex flex-col">
-                          <span className="text-[11px] font-bold text-slate-300">{item.product}</span>
+                          <span className={`text-[11px] font-bold ${sale.is_deleted ? 'text-slate-600 line-through' : 'text-slate-300'}`}>{item.product}</span>
                           <span className="text-[9px] text-slate-500">{item.quantity} ta | {item.revenue.toLocaleString()}</span>
                         </div>
                       ))}
