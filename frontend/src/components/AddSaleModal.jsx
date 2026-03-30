@@ -51,7 +51,11 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
   };
 
   const updateUnitPrice = (productId, newPrice) => {
-    const price = parseFloat(newPrice) || 0;
+    // Limit to 9 digits
+    const priceStr = newPrice.toString();
+    const limitedPrice = priceStr.length > 9 ? priceStr.slice(0, 9) : priceStr;
+    const price = parseFloat(limitedPrice) || 0;
+    
     setCart(cart.map(item => {
       if (item.product_id === productId) {
         return { ...item, unit_price: price, revenue: item.quantity * price };

@@ -32,6 +32,11 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
     }
   };
 
+  const limitDigits = (val, max = 9) => {
+    if (val.length > max) return val.slice(0, max);
+    return val;
+  };
+
   return (
     <AnimatePresence>
       {showAddModal && (
@@ -130,7 +135,7 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   <input 
                     type="number" 
                     value={newProduct.stock} 
-                    onChange={e => setNewProduct({...newProduct, stock: e.target.value})} 
+                    onChange={e => setNewProduct({...newProduct, stock: limitDigits(e.target.value)})} 
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
@@ -156,7 +161,7 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   <input 
                     type="number" 
                     value={newProduct.buyPrice} 
-                    onChange={e => setNewProduct({...newProduct, buyPrice: e.target.value})} 
+                    onChange={e => setNewProduct({...newProduct, buyPrice: limitDigits(e.target.value)})} 
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
@@ -166,7 +171,7 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   <input 
                     type="number" 
                     value={newProduct.sellPrice} 
-                    onChange={e => setNewProduct({...newProduct, sellPrice: e.target.value})} 
+                    onChange={e => setNewProduct({...newProduct, sellPrice: limitDigits(e.target.value)})} 
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
