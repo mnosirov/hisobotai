@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart, TrendingUp, DollarSign, User as UserIcon } from 'lucide-react';
+import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart as BarChartIcon, TrendingUp, DollarSign, User as UserIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -101,7 +101,7 @@ const AdminPanel = ({ API_BASE }) => {
     }
   };
 
-  const tierBadge = (tier, isActive) => {
+  const tierBadge = (tier, isActive, userItem) => {
     const styles = {
       free: 'bg-slate-700/50 text-slate-400 border-slate-600/50',
       standard: isActive ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600/50',
@@ -120,7 +120,7 @@ const AdminPanel = ({ API_BASE }) => {
           {icons[tier]} {labels[tier]}
           {!isActive && tier !== 'free' && <span className="text-red-400 ml-1">(muddati o'tgan)</span>}
         </span>
-        {selectedUser?.is_blocked === 1 && (
+        {userItem?.is_blocked === 1 && (
           <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
             Bloklangan
           </span>
@@ -211,7 +211,7 @@ const AdminPanel = ({ API_BASE }) => {
               : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
           }`}
         >
-          <BarChart size={16} /> Tahlil
+          <BarChartIcon size={16} /> Tahlil
         </button>
         <button
           onClick={() => setActiveView('users')}
@@ -368,24 +368,19 @@ const AdminPanel = ({ API_BASE }) => {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                     <button
                       onClick={() => { setSelectedUser(u); setShowGrantModal(true); }}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-xs font-semibold hover:bg-indigo-500/30 transition border border-indigo-500/20"
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-[10px] font-bold hover:bg-indigo-500/30 transition border border-indigo-500/20"
                     >
-                      <Award size={14} /> Obuna berish
+                      <Award size={14} /> OBUNA
                     </button>
-                    {u.subscription_tier !== 'free' && (
-                      <button
-                        onClick={() => handleRevoke(u.id, u.username)}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition border border-red-500/20"
-                      >
-                        <XCircle size={14} /> Bekor qilish
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/5">
+                    <button
+                      onClick={() => handleImpersonate(u.id, u.username)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/10 text-blue-400 text-[10px] font-bold hover:bg-blue-500/20 transition border border-blue-500/20"
+                    >
+                      <UserIcon size={14} /> KIRISH
+                    </button>
                     <button
                       onClick={() => handleToggleBlock(u.id, u.username, u.is_blocked)}
                       className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold transition border ${
@@ -396,12 +391,6 @@ const AdminPanel = ({ API_BASE }) => {
                     >
                       {u.is_blocked === 1 ? <CheckCircle size={14} /> : <Shield size={14} />}
                       {u.is_blocked === 1 ? 'OCHISH' : 'BLOK'}
-                    </button>
-                    <button
-                      onClick={() => handleImpersonate(u.id, u.username)}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-[10px] font-bold hover:bg-indigo-500/20 transition border border-indigo-500/20"
-                    >
-                      <UserIcon size={14} /> KIRISH
                     </button>
                     <button
                       onClick={() => handleDeleteUser(u.id, u.username)}
