@@ -81,6 +81,7 @@ class SubscriptionGrant(BaseModel):
     tier: str = Field(..., pattern=r"^(standard|premium)$")
     start_date: datetime
     end_date: datetime
+    price: float = Field(default=0.0)
 
 class SubscriptionResponse(BaseModel):
     id: int
@@ -89,6 +90,7 @@ class SubscriptionResponse(BaseModel):
     start_date: datetime
     end_date: datetime
     activated_by: Optional[int] = None
+    price: float = 0.0
     created_at: datetime
     
     class Config:
@@ -107,4 +109,15 @@ class UserAdminResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class DailyGrowth(BaseModel):
+    date: str
+    count: int
+
+class SystemStats(BaseModel):
+    total_users: int
+    active_subscriptions: int
+    total_revenue: float
+    new_users_today: int
+    growth_7d: List[DailyGrowth]
 

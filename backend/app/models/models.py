@@ -35,6 +35,7 @@ class Subscription(Base):
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     activated_by = Column(Integer, nullable=True)  # admin user id
+    price = Column(Float, nullable=False, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="subscriptions")

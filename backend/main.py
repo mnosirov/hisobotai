@@ -408,3 +408,8 @@ async def admin_revoke_subscription(user_id: int, admin: User = Depends(get_admi
 async def admin_get_subscriptions(admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
     service = SubscriptionService(db)
     return await service.get_subscription_history()
+
+@app.get("/api/admin/stats", response_model=schemas.SystemStats)
+async def admin_get_stats(admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    service = SubscriptionService(db)
+    return await service.get_system_stats()

@@ -1,28 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award } from 'lucide-react';
+import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const AdminPanel = ({ API_BASE }) => {
   const [users, setUsers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showGrantModal, setShowGrantModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeView, setActiveView] = useState('users'); // 'users' or 'history'
+  const [activeView, setActiveView] = useState('stats'); // 'stats', 'users' or 'history'
 
   const [grantForm, setGrantForm] = useState({
     tier: 'standard',
     start_date: new Date().toISOString().split('T')[0],
-    end_date: ''
+    end_date: '',
+    price: 79000
   });
 
   useEffect(() => {
     fetchUsers();
     fetchSubscriptions();
+    fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/admin/stats`);
+      setStats(data);
+    } catch (err) {
+      console.error("Stats fetch error", err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -57,14 +70,16 @@ const AdminPanel = ({ API_BASE }) => {
         user_id: selectedUser.id,
         tier: grantForm.tier,
         start_date: new Date(grantForm.start_date).toISOString(),
-        end_date: new Date(grantForm.end_date).toISOString()
+        end_date: new Date(grantForm.end_date).toISOString(),
+        price: parseFloat(grantForm.price) || 0
       });
       toast.success("Obuna muvaffaqiyatli berildi!", { id: loadingToast });
       setShowGrantModal(false);
       setSelectedUser(null);
-      setGrantForm({ tier: 'standard', start_date: new Date().toISOString().split('T')[0], end_date: '' });
+      setGrantForm({ tier: 'standard', start_date: new Date().toISOString().split('T')[0], end_date: '', price: 79000 });
       fetchUsers();
       fetchSubscriptions();
+      fetchStats();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Xatolik yuz berdi", { id: loadingToast });
     }
@@ -136,6 +151,16 @@ const AdminPanel = ({ API_BASE }) => {
       {/* Tab Switcher */}
       <div className="flex gap-2">
         <button
+          onClick={() => setActiveView('stats')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeView === 'stats' 
+              ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' 
+              : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
+          }`}
+        >
+          <BarChart3 size={16} /> Tahlil
+        </button>
+        <button
           onClick={() => setActiveView('users')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
             activeView === 'users' 
@@ -156,6 +181,66 @@ const AdminPanel = ({ API_BASE }) => {
           <Clock size={16} /> To'lov tarixi ({subscriptions.length})
         </button>
       </div>
+
+      {/* Stats View */}
+      {activeView === 'stats' && stats && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                <Users size={14} /> Jami foydalanuvchilar
+              </div>
+              <p className="text-2xl font-black">{stats.total_users}</p>
+            </div>
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                <Crown size={14} /> Faol obunalar
+              </div>
+              <p className="text-2xl font-black">{stats.active_subscriptions}</p>
+            </div>
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                <DollarSign size={14} /> Jami tushum
+              </div>
+              <p className="text-2xl font-black text-amber-400">{stats.total_revenue.toLocaleString()} <span className="text-xs font-normal">UZS</span></p>
+            </div>
+            <div className="glass-card p-4 space-y-2">
+              <div className="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                <TrendingUp size={14} /> Bugun qo'shilganlar
+              </div>
+              <p className="text-2xl font-black">{stats.new_users_today}</p>
+            </div>
+          </div>
+
+          <div className="glass-card p-6 min-h-[300px]">
+            <h4 className="text-sm font-bold text-slate-400 mb-6 flex items-center gap-2">
+              <TrendingUp size={16} /> Oxirgi 7 kundagi o'sish
+            </h4>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.growth_7d}>
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#94a3b8', fontSize: 10}} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '12px' }}
+                    itemStyle={{ color: '#818cf8', fontSize: '12px', fontWeight: 'bold' }}
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {stats.growth_7d.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === stats.growth_7d.length - 1 ? '#6366f1' : '#312e81'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Users View */}
       {activeView === 'users' && (
@@ -306,7 +391,7 @@ const AdminPanel = ({ API_BASE }) => {
                 <label className="text-xs text-slate-400 font-medium">Tarif</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setGrantForm({...grantForm, tier: 'standard'})}
+                    onClick={() => setGrantForm({...grantForm, tier: 'standard', price: 79000})}
                     className={`p-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition ${
                       grantForm.tier === 'standard'
                         ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
@@ -316,7 +401,7 @@ const AdminPanel = ({ API_BASE }) => {
                     <Shield size={16} /> Standart
                   </button>
                   <button
-                    onClick={() => setGrantForm({...grantForm, tier: 'premium'})}
+                    onClick={() => setGrantForm({...grantForm, tier: 'premium', price: 149000})}
                     className={`p-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition ${
                       grantForm.tier === 'premium'
                         ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
@@ -326,6 +411,18 @@ const AdminPanel = ({ API_BASE }) => {
                     <Crown size={16} /> Premium
                   </button>
                 </div>
+              </div>
+
+              {/* Price Input */}
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-medium">To'lov miqdori (UZS)</label>
+                <input
+                  type="number"
+                  value={grantForm.price}
+                  onChange={(e) => setGrantForm({...grantForm, price: e.target.value})}
+                  className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-amber-400 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  placeholder="0"
+                />
               </div>
 
               {/* Date Inputs */}

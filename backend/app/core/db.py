@@ -88,6 +88,7 @@ async def init_db():
                         start_date TIMESTAMP NOT NULL,
                         end_date TIMESTAMP NOT NULL,
                         activated_by INTEGER,
+                        price FLOAT DEFAULT 0.0,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
@@ -101,9 +102,16 @@ async def init_db():
                         start_date DATETIME NOT NULL,
                         end_date DATETIME NOT NULL,
                         activated_by INTEGER,
+                        price FLOAT DEFAULT 0.0,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+
+            await conn.execute(sa.text("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS price FLOAT DEFAULT 0.0;"))
+            
+            # Update existing prices based on tier if price is 0
+            await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
+            await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
 
             # Subscription & Admin columns
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
