@@ -259,6 +259,7 @@ class SalesService:
         
         # Soft delete
         sale.is_deleted = 1
+        sale.deleted_at = datetime.utcnow()
         self.db.add(sale)
         await self.db.commit()
         return {"status": "success", "message": "Sotuv o'chirildi (Soft Delete) va ombor yangilandi."}

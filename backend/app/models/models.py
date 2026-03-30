@@ -80,6 +80,7 @@ class Sale(Base):
     total_amount = Column(Float, nullable=False, default=0.0)
     profit = Column(Float, nullable=False, default=0.0)
     is_deleted = Column(Integer, default=0)  # 0=active, 1=deleted
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     owner = relationship("User", back_populates="sales")

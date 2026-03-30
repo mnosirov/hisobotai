@@ -90,21 +90,26 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
             
             <div className="space-y-3">
               {sales.map((sale) => (
-                <div key={sale.id} className={`glass-card overflow-hidden group ${sale.is_deleted ? 'opacity-60 bg-slate-800/10' : ''}`}>
+                <div key={sale.id} className={`glass-card overflow-hidden group ${sale.is_deleted ? 'opacity-70 bg-red-500/[0.02]' : ''}`}>
                   <div className="p-4 flex justify-between items-center bg-white/5 relative">
                     <div className="flex items-center space-x-3">
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        sale.is_deleted ? 'bg-slate-700 text-slate-500' : 'bg-indigo-500/20 text-indigo-400'
+                        sale.is_deleted ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'
                       }`}>
                         {getTime(sale.created_at)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className={`text-sm font-bold ${sale.is_deleted ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                          <p className={`text-sm font-bold ${sale.is_deleted ? 'text-slate-500' : 'text-slate-100'}`}>
                             {sale.items_json.length} xil mahsulot
                           </p>
                           {sale.is_deleted === 1 && (
-                            <span className="text-[8px] bg-red-500/20 text-red-400 px-1 py-0.5 rounded uppercase font-black tracking-tighter">O'chirilgan</span>
+                            <div className="flex flex-col">
+                              <span className="text-[8px] bg-red-500/20 text-red-400 px-1 py-0.5 rounded uppercase font-black tracking-tighter w-fit">O'chirilgan</span>
+                              {sale.deleted_at && (
+                                <span className="text-[7px] text-red-400/60 mt-0.5 font-medium">Soat: {getTime(sale.deleted_at)}</span>
+                              )}
+                            </div>
                           )}
                         </div>
                         <p className="text-[10px] text-slate-500">Sotuv: #{sale.id.toString().slice(-4)}</p>

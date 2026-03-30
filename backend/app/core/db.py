@@ -69,6 +69,7 @@ async def init_db():
             await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
             await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
             await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_deleted INTEGER DEFAULT 0;"))
+            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;"))
             
             # Debts table
             await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
