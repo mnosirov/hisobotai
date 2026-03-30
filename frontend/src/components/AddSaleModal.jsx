@@ -44,17 +44,19 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
     setCart(cart.map(item => {
       if (item.product_id === productId) {
         const newQty = Math.max(0.1, item.quantity + delta);
-        return { ...item, quantity: newQty, revenue: newQty * item.unit_price };
+        // Limit quantity to 6 digits
+        const qtyToSet = newQty > 999999 ? 999999 : newQty;
+        return { ...item, quantity: qtyToSet, revenue: qtyToSet * item.unit_price };
       }
       return item;
     }));
   };
 
   const updateUnitPrice = (productId, newPrice) => {
-    // Limit to 9 digits
-    const priceStr = newPrice.toString();
-    const limitedPrice = priceStr.length > 9 ? priceStr.slice(0, 9) : priceStr;
-    const price = parseFloat(limitedPrice) || 0;
+    // Limit to 9 digits (max 999,999,999)
+    let priceStr = newPrice.toString();
+    if (priceStr.length > 9) priceStr = priceStr.slice(0, 9);
+    const price = parseFloat(priceStr) || 0;
     
     setCart(cart.map(item => {
       if (item.product_id === productId) {

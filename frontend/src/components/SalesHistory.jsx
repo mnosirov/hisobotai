@@ -104,16 +104,20 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()} UZS</p>
-                        <p className="text-[10px] text-slate-500">Foyda: {itemProfit(sale).toLocaleString()} UZS</p>
+                    <div className="flex items-center space-x-3 shrink-0 ml-2">
+                      <div className="text-right flex flex-col items-end max-w-[120px]">
+                        <p className="text-sm font-black text-emerald-400 truncate w-full">
+                          +{sale.total_amount.toLocaleString()} UZS
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate w-full">
+                          Foyda: {itemProfit(sale).toLocaleString()} UZS
+                        </p>
                       </div>
                       <button 
                         onClick={() => handleDelete(sale.id)}
-                        className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center transition-opacity hover:bg-red-500/20"
+                        className="h-9 w-9 shrink-0 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition-all hover:bg-red-500/20 active:scale-90"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>

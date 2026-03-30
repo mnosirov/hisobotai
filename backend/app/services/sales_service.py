@@ -109,6 +109,10 @@ class SalesService:
             qty = float(item.get("quantity") or 0.0)
             revenue = float(item.get("total_price") or 0.0)
             
+            # Capping: Max 6 digits for quantity, Max 9 digits for revenue
+            qty = min(qty, 999999)
+            revenue = min(revenue, 999999999)
+            
             # Mahsulotni qidirish (faqat ma'lumot uchun)
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,

@@ -111,6 +111,10 @@ class InventoryService:
             unit = item.get("unit") or "dona"
             price = float(item.get("price") or 0.0)
             
+            # Capping: Max 6 digits for quantity, Max 9 digits for price
+            quantity = min(quantity, 999999)
+            price = min(price, 999999999)
+            
             # Mavjud mahsulotni qidirish
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,
