@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, ChevronDown, ChevronUp, ShoppingBag, DollarSign } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, ShoppingBag, Trash2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
-const SalesHistory = ({ API_BASE }) => {
+const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedDate, setExpandedDate] = useState(null);
 
   useEffect(() => {
     fetchHistory();
@@ -20,6 +20,23 @@ const SalesHistory = ({ API_BASE }) => {
       console.error("History fetch error", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (saleId) => {
+    if (!window.confirm("Ushbu sotuvni o'chirmoqchimisiz? Bu amal mahsulot qoldiqlarini qayta tiklaydi.")) return;
+
+    const loadingToast = toast.loading("O'chirilmoqda...");
+    try {
+      await axios.delete(`${API_BASE}/sales/${saleId}`);
+      toast.success("Sotuv o'chirildi", { id: loadingToast });
+      
+      // Refresh all data
+      fetchHistory();
+      if (fetchInventoryData) fetchInventoryData();
+      if (fetchDashboardData) fetchDashboardData();
+    } catch (err) {
+      toast.error("Xatolik yuz berdi", { id: loadingToast });
     }
   };
 
@@ -73,8 +90,8 @@ const SalesHistory = ({ API_BASE }) => {
             
             <div className="space-y-3">
               {sales.map((sale) => (
-                <div key={sale.id} className="glass-card overflow-hidden">
-                  <div className="p-4 flex justify-between items-center bg-white/5">
+                <div key={sale.id} className="glass-card overflow-hidden group">
+                  <div className="p-4 flex justify-between items-center bg-white/5 relative">
                     <div className="flex items-center space-x-3">
                       <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs font-bold">
                         {getTime(sale.created_at)}
@@ -83,12 +100,21 @@ const SalesHistory = ({ API_BASE }) => {
                         <p className="text-sm font-bold text-slate-100">
                           {sale.items_json.length} xil mahsulot
                         </p>
-                        <p className="text-[10px] text-slate-500">Tranzaksiya: #{sale.id.toString().slice(-4)}</p>
+                        <p className="text-[10px] text-slate-500">Sotuv: #{sale.id.toString().slice(-4)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()} UZS</p>
-                      <p className="text-[10px] text-slate-500">Foyda: {sale.profit.toLocaleString()} UZS</p>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()} UZS</p>
+                        <p className="text-[10px] text-slate-500">Foyda: {itemProfit(sale).toLocaleString()} UZS</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDelete(sale.id)}
+                        className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                   
@@ -110,6 +136,12 @@ const SalesHistory = ({ API_BASE }) => {
       </div>
     </motion.div>
   );
+};
+
+// Helper to calculate total profit from items_json if not directly available (defensive)
+const itemProfit = (sale) => {
+  if (sale.profit) return sale.profit;
+  return sale.items_json.reduce((sum, item) => sum + (item.profit || 0), 0);
 };
 
 export default SalesHistory;

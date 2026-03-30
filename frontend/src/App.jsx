@@ -239,7 +239,11 @@ const MainApp = () => {
           )}
 
           {activeTab === 'history' && (
-            <SalesHistory API_BASE={API_BASE} />
+            <SalesHistory 
+              API_BASE={API_BASE} 
+              fetchInventoryData={fetchInventoryData} 
+              fetchDashboardData={fetchDashboardData} 
+            />
           )}
 
           {activeTab === 'pricing' && (
