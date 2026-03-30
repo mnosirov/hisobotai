@@ -420,7 +420,7 @@ async def admin_get_stats(admin: User = Depends(get_admin_user), db: AsyncSessio
     service = SubscriptionService(db)
     return await service.get_system_stats()
 
-@app.patch("/api/admin/users/{user_id}/block", response_model=Dict)
+@app.patch("/api/admin/users/{user_id}/block", response_model=Dict[str, Any])
 async def admin_toggle_block(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
     query = select(User).where(User.id == user_id)
     result = await db.execute(query)
@@ -433,7 +433,7 @@ async def admin_toggle_block(user_id: int, admin: User = Depends(get_admin_user)
     status_msg = "bloklandi" if user.is_blocked == 1 else "blokdan chiqarildi"
     return {"status": "success", "message": f"{user.username} {status_msg}"}
 
-@app.delete("/api/admin/users/{user_id}", response_model=Dict)
+@app.delete("/api/admin/users/{user_id}", response_model=Dict[str, Any])
 async def admin_delete_user(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
     query = select(User).where(User.id == user_id)
     result = await db.execute(query)

@@ -134,12 +134,13 @@ const AdminPanel = ({ API_BASE }) => {
     if (!confirm(`${username} foydalanuvchisini ${action}moqchimisiz?`)) return;
     
     try {
-      await axios.patch(`${API_BASE}/admin/users/${userId}/block`);
-      toast.success(`${username} muvaffaqiyatli ${currentStatus === 1 ? "blokdan chiqarildi" : "bloklandi"}`);
-      fetchUsers();
-      fetchStats();
+      const { data } = await axios.patch(`${API_BASE}/admin/users/${userId}/block`);
+      toast.success(data.message || `${username} statusi o'zgardi`);
+      await fetchUsers();
+      await fetchStats();
     } catch (err) {
-      toast.error("Xatolik yuz berdi");
+      console.error("Block toggle error", err);
+      toast.error(err.response?.data?.detail || "Xatolik yuz berdi");
     }
   };
 
@@ -149,12 +150,13 @@ const AdminPanel = ({ API_BASE }) => {
 
     const loadingToast = toast.loading("O'chirilmoqda...");
     try {
-      await axios.delete(`${API_BASE}/admin/users/${userId}`);
-      toast.success(`${username} muvaffaqiyatli o'chirildi`, { id: loadingToast });
-      fetchUsers();
-      fetchStats();
+      const { data } = await axios.delete(`${API_BASE}/admin/users/${userId}`);
+      toast.success(data.message || `${username} o'chirildi`, { id: loadingToast });
+      await fetchUsers();
+      await fetchStats();
     } catch (err) {
-      toast.error("Xatolik: O'chirib bo'lmadi", { id: loadingToast });
+      console.error("Delete user error", err);
+      toast.error(err.response?.data?.detail || "O'chirib bo'lmadi", { id: loadingToast });
     }
   };
 
@@ -166,9 +168,14 @@ const AdminPanel = ({ API_BASE }) => {
       const { data } = await axios.post(`${API_BASE}/admin/users/${userId}/impersonate`);
       loginWithToken(data.access_token);
       toast.success(`${username} profiliga kirildi`, { id: loadingToast });
-      window.location.href = "/"; // Go to dashboard
+      
+      // Delay redirect slightly to ensure toast and storage are set
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
     } catch (err) {
-      toast.error("Kirib bo'lmadi", { id: loadingToast });
+      console.error("Impersonate error", err);
+      toast.error(err.response?.data?.detail || "Kirib bo'lmadi", { id: loadingToast });
     }
   };
 
