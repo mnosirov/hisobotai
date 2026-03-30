@@ -22,7 +22,18 @@ const Inventory = ({ inventory, setShowAddModal }) => {
         className="space-y-6 pt-4"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Sklad (Zaxira)</h2>
+          <div>
+            <h2 className="text-2xl font-bold">Sklad (Zaxira)</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
+                inventory.length >= 15 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+              }`}>
+                {inventory.length} / { 
+                  inventory.length <= 15 ? 15 : (inventory.length <= 100 ? 100 : 5000) 
+                } mahsulot
+              </span>
+            </div>
+          </div>
           <button 
             onClick={() => setShowAddModal(true)}
             className="h-10 w-10 glass-card flex items-center justify-center text-indigo-400 hover:bg-indigo-500/10 transition-colors"

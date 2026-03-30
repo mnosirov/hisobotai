@@ -143,6 +143,34 @@ class SalesService:
 
     async def commit_sales(self, items: List[Dict]) -> Dict:
         """Tasdiqlangan yoki qo'lda kiritilgan sotuvlarni bazaga saqlaydi."""
+        from app.services.subscription_service import TIER_LIMITS
+        from fastapi import HTTPException
+        from sqlalchemy import func
+        from app.models.models import User
+        
+        # Check current month limits
+        user_res = await self.db.get(User, self.tenant_id)
+        if user_res and user_res.is_admin != 1:
+            tier = user_res.subscription_tier or "free"
+            max_s = TIER_LIMITS.get(tier, TIER_LIMITS["free"])["max_monthly_sales"]
+            
+            # Count sales in current month (Tashkent time)
+            today = self.get_tashkent_today()
+            first_day = today.replace(day=1)
+            
+            q_count = select(func.count(Sale.id)).where(
+                Sale.tenant_id == self.tenant_id,
+                cast(Sale.created_at + timedelta(hours=5), Date) >= first_day
+            )
+            r_count = await self.db.execute(q_count)
+            current_month_sales = r_count.scalar() or 0
+            
+            if current_month_sales >= max_s:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Sizning oylik sotuvlar limiti ({max_s}) tugagan. Iltimos, tarifni yangilang."
+                )
+
         total_revenue = 0.0
         total_profit = 0.0
         sold_items_records = []

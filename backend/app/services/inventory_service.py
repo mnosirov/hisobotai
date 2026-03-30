@@ -18,6 +18,9 @@ class InventoryService:
         return result.scalars().all()
 
     async def add_or_update_product(self, product_data: Dict, source: str, image_url: Optional[str] = None) -> Product:
+        from app.services.subscription_service import TIER_LIMITS
+        from fastapi import HTTPException
+        
         name = product_data.get("name", "Noma'lum")
         category = product_data.get("category", "Umumiy")
         quantity = float(product_data.get("quantity") or 0.0)
@@ -25,7 +28,7 @@ class InventoryService:
         price = float(product_data.get("price") or 0.0)
         sell_price = float(product_data.get("sell_price") or 0.0)
 
-        # Exact case-insensitive search to avoid fuzzy match accidents
+        # Exact case-insensitive search
         query = select(Product).where(
             Product.tenant_id == self.tenant_id,
             Product.name.ilike(name)
@@ -33,6 +36,28 @@ class InventoryService:
         result = await self.db.execute(query)
         product = result.scalar_one_or_none()
 
+        if not product:
+            # Check limits for NEW product
+            # We need the user object to see the tier. 
+            # I'll fetch the user from DB or update the service to hold it.
+            from app.models.models import User
+            user_res = await self.db.get(User, self.tenant_id)
+            if user_res and user_res.is_admin != 1:
+                tier = user_res.subscription_tier or "free"
+                max_p = TIER_LIMITS.get(tier, TIER_LIMITS["free"])["max_products"]
+                
+                # Count current products
+                from sqlalchemy import func
+                count_q = select(func.count(Product.id)).where(Product.tenant_id == self.tenant_id)
+                count_res = await self.db.execute(count_q)
+                current_count = count_res.scalar() or 0
+                
+                if current_count >= max_p:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail=f"Sizning tarifingizda mahsulotlar limiti ({max_p}) tugagan. Iltimos, tarifni yangilang."
+                    )
+        
         if product:
             product.stock += quantity
             if category and category != "Umumiy":

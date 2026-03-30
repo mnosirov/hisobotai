@@ -9,6 +9,24 @@ from app.schemas import schemas
 # Tashkent timezone offset (UTC+5)
 TASHKENT_OFFSET = timezone(timedelta(hours=5))
 
+TIER_LIMITS = {
+    "free": {
+        "max_products": 15,
+        "max_monthly_sales": 50,
+        "max_monthly_ai": 5,
+    },
+    "standard": {
+        "max_products": 100,
+        "max_monthly_sales": 500,
+        "max_monthly_ai": 100,
+    },
+    "premium": {
+        "max_products": 5000,
+        "max_monthly_sales": 10000,
+        "max_monthly_ai": 2000,
+    }
+}
+
 def now_tashkent():
     return datetime.now(TASHKENT_OFFSET).replace(tzinfo=None)
 
