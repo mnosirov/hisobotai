@@ -141,13 +141,48 @@ async def global_exception_handler(request: Request, exc: Exception):
 def read_root():
     return {"status": "ok", "version": "2.1 Pro — Debug Active", "app": "Hisobot AI"}
 
-@app.get("/api/debug/file")
-async def debug_file():
-    path = "app/services/ai_service.py"
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return {"path": path, "content": f.read()[-500:]}
-    return {"error": "File not found"}
+@app.get("/api/admin/debug/storage")
+async def debug_storage_config(admin: User = Depends(get_admin_user)):
+    """Cloudinary sozlamalarini tekshirish (Faqat Admin)"""
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    api_key = os.getenv("CLOUDINARY_API_KEY", "")
+    api_secret = os.getenv("CLOUDINARY_API_SECRET", "")
+    
+    def mask(s): return f"{s[:1]}***{s[-1:]}" if len(s) > 2 else "***"
+    
+    return {
+        "is_configured": bool(cloud_name and api_key and api_secret),
+        "cloud_name": mask(cloud_name),
+        "api_key": mask(api_key),
+        "has_secret": len(api_secret) > 0,
+        "env_check": {
+            "CLOUDINARY_CLOUD_NAME": "SET" if "CLOUDINARY_CLOUD_NAME" in os.environ else "MISSING",
+            "CLOUDINARY_API_KEY": "SET" if "CLOUDINARY_API_KEY" in os.environ else "MISSING"
+        }
+    }
+
+@app.get("/api/admin/debug/cloudinary_test")
+async def debug_cloudinary_test(admin: User = Depends(get_admin_user)):
+    """Real vaqtda Cloudinary yuklashni test qilish"""
+    import cloudinary.uploader
+    from io import BytesIO
+    from PIL import Image
+    
+    try:
+        # Create a 1x1 test image
+        img = Image.new('RGB', (1, 1), color = 'red')
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG")
+        buffer.seek(0)
+        
+        res = cloudinary.uploader.upload(
+            buffer,
+            folder="debug_test",
+            public_id="test_pixel"
+        )
+        return {"status": "success", "url": res.get("secure_url"), "result": res}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/telegram/setup")
 async def setup_webhook():
