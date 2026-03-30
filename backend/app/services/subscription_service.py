@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+import sqlalchemy as sa
 from fastapi import HTTPException, status
 from datetime import datetime, timedelta, timezone
 from app.models.models import User, Subscription
@@ -152,7 +153,6 @@ class SubscriptionService:
         
         # Growth last 7 days
         growth_7d = []
-        import sqlalchemy as sa
         for i in range(6, -1, -1):
             d = now - timedelta(days=i)
             d_start = d.replace(hour=0, minute=0, second=0, microsecond=0)
