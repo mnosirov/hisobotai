@@ -166,8 +166,8 @@ async def debug_storage_config(admin: User = Depends(get_admin_user)):
     }
 
 @app.get("/api/admin/debug/env_keys")
-async def debug_env_keys(admin: User = Depends(get_admin_user)):
-    """Serverdagi barcha o'zgaruvchilar NOMINI tekshirish (Faqat Admin)"""
+async def debug_env_keys():
+    """Serverdagi barcha o'zgaruvchilar NOMINI tekshirish (Vaqtinchalik ochiq)"""
     import os
     keys = list(os.environ.keys())
     cloud_keys = [k for k in keys if "CLOUDINARY" in k]
@@ -178,20 +178,19 @@ async def debug_env_keys(admin: User = Depends(get_admin_user)):
     }
 
 @app.get("/api/admin/debug/test_upload")
-async def debug_cloudinary_test(admin: User = Depends(get_admin_user)):
-    """Real vaqtda Cloudinary yuklashni test qilish"""
+async def debug_cloudinary_test():
+    """Real vaqtda Cloudinary yuklashni test qilish (Vaqtinchalik ochiq)"""
     import cloudinary.uploader
     from io import BytesIO
     from PIL import Image
+    import os
     
     try:
-        # Create a 1x1 test image
         img = Image.new('RGB', (1, 1), color = 'red')
         buffer = BytesIO()
         img.save(buffer, format="JPEG")
         buffer.seek(0)
         
-        # Explicit test with environment variables
         res = cloudinary.uploader.upload(
             buffer,
             folder="debug_test",
@@ -200,9 +199,9 @@ async def debug_cloudinary_test(admin: User = Depends(get_admin_user)):
             api_key=os.getenv("CLOUDINARY_API_KEY"),
             api_secret=os.getenv("CLOUDINARY_API_SECRET")
         )
-        return {"status": "success", "url": res.get("secure_url"), "result": "UPLOADED"}
+        return {"status": "success", "url": res.get("secure_url")}
     except Exception as e:
-        return {"status": "error", "message": str(e), "env_exists": bool(os.getenv("CLOUDINARY_CLOUD_NAME"))}
+        return {"status": "error", "message": str(e), "keys_found": [k for k in os.environ.keys() if "CLOUDINARY" in k]}
 
 @app.get("/api/telegram/setup")
 async def setup_webhook():
