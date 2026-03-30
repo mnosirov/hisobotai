@@ -16,6 +16,7 @@ class User(Base):
     subscription_tier = Column(String, default="free")  # "free", "standard", "premium"
     subscription_start = Column(DateTime, nullable=True)
     subscription_end = Column(DateTime, nullable=True)
+    is_blocked = Column(Integer, default=0)  # 0=aktiv, 1=bloklangan
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

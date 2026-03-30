@@ -4,8 +4,10 @@ import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock,
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useAuth } from '../context/AuthContext';
 
 const AdminPanel = ({ API_BASE }) => {
+  const { loginWithToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [stats, setStats] = useState(null);
@@ -113,11 +115,61 @@ const AdminPanel = ({ API_BASE }) => {
     const labels = { free: 'Bepul', standard: 'Standart', premium: 'Premium' };
     
     return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border ${styles[tier]}`}>
-        {icons[tier]} {labels[tier]}
-        {!isActive && tier !== 'free' && <span className="text-red-400 ml-1">(muddati o'tgan)</span>}
-      </span>
+      <div className="flex flex-col items-end gap-1">
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border ${styles[tier]}`}>
+          {icons[tier]} {labels[tier]}
+          {!isActive && tier !== 'free' && <span className="text-red-400 ml-1">(muddati o'tgan)</span>}
+        </span>
+        {selectedUser?.is_blocked === 1 && (
+          <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+            Bloklangan
+          </span>
+        )}
+      </div>
     );
+  };
+
+  const handleToggleBlock = async (userId, username, currentStatus) => {
+    const action = currentStatus === 1 ? "blokdan chiqarish" : "bloklash";
+    if (!confirm(`${username} foydalanuvchisini ${action}moqchimisiz?`)) return;
+    
+    try {
+      await axios.patch(`${API_BASE}/admin/users/${userId}/block`);
+      toast.success(`${username} muvaffaqiyatli ${currentStatus === 1 ? "blokdan chiqarildi" : "bloklandi"}`);
+      fetchUsers();
+      fetchStats();
+    } catch (err) {
+      toast.error("Xatolik yuz berdi");
+    }
+  };
+
+  const handleDeleteUser = async (userId, username) => {
+    if (!confirm(`DIQQAT! ${username} va uning barcha MAHSULOTLARI, SOTUVLARI butunlay o'chib ketadi. Rozimisiz?`)) return;
+    if (!confirm(`TASDIQLASH: Haqiqatan ham o'chirib tashlamoqchimisiz?`)) return;
+
+    const loadingToast = toast.loading("O'chirilmoqda...");
+    try {
+      await axios.delete(`${API_BASE}/admin/users/${userId}`);
+      toast.success(`${username} muvaffaqiyatli o'chirildi`, { id: loadingToast });
+      fetchUsers();
+      fetchStats();
+    } catch (err) {
+      toast.error("Xatolik: O'chirib bo'lmadi", { id: loadingToast });
+    }
+  };
+
+  const handleImpersonate = async (userId, username) => {
+    if (!confirm(`${username} profili orqali tizimga kirmoqchimisiz?`)) return;
+    
+    const loadingToast = toast.loading("Kirilmoqda...");
+    try {
+      const { data } = await axios.post(`${API_BASE}/admin/users/${userId}/impersonate`);
+      loginWithToken(data.access_token);
+      toast.success(`${username} profiliga kirildi`, { id: loadingToast });
+      window.location.href = "/"; // Go to dashboard
+    } catch (err) {
+      toast.error("Kirib bo'lmadi", { id: loadingToast });
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -289,7 +341,14 @@ const AdminPanel = ({ API_BASE }) => {
                       </div>
                       <p className="text-slate-400 text-xs mt-0.5">{u.email}</p>
                     </div>
-                    {tierBadge(u.subscription_tier, u.is_active)}
+                    <div className="flex flex-col items-end gap-1.5">
+                      {tierBadge(u.subscription_tier, u.is_active, u)}
+                      {u.is_blocked === 1 && (
+                        <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                          <XCircle size={10} /> BLOKLANGAN
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   {u.subscription_tier !== 'free' && (
@@ -324,6 +383,32 @@ const AdminPanel = ({ API_BASE }) => {
                         <XCircle size={14} /> Bekor qilish
                       </button>
                     )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/5">
+                    <button
+                      onClick={() => handleToggleBlock(u.id, u.username, u.is_blocked)}
+                      className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold transition border ${
+                        u.is_blocked === 1 
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' 
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'
+                      }`}
+                    >
+                      {u.is_blocked === 1 ? <CheckCircle size={14} /> : <Shield size={14} />}
+                      {u.is_blocked === 1 ? 'OCHISH' : 'BLOK'}
+                    </button>
+                    <button
+                      onClick={() => handleImpersonate(u.id, u.username)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-[10px] font-bold hover:bg-indigo-500/20 transition border border-indigo-500/20"
+                    >
+                      <UserIcon size={14} /> KIRISH
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(u.id, u.username)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/20 text-red-400 text-[10px] font-bold hover:bg-red-500/30 transition border border-red-500/30"
+                    >
+                      <X size={14} /> O'CHIRISH
+                    </button>
                   </div>
                 </motion.div>
               ))}

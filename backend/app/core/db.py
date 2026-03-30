@@ -115,6 +115,7 @@ async def init_db():
 
             # Subscription & Admin columns
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
+            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked INTEGER DEFAULT 0;"))
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR DEFAULT 'free';"))
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMP;"))
             await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMP;"))

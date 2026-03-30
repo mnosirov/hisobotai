@@ -47,6 +47,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     # Avtomatik obuna muddati tekshiruvi
     await SubscriptionService.check_and_expire(user, db)
     
+    if user.is_blocked == 1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hisobingiz bloklangan. Iltimos, admin bilan bog'laning."
+        )
+        
     return user
 
 async def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
@@ -413,3 +419,44 @@ async def admin_get_subscriptions(admin: User = Depends(get_admin_user), db: Asy
 async def admin_get_stats(admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
     service = SubscriptionService(db)
     return await service.get_system_stats()
+
+@app.patch("/api/admin/users/{user_id}/block", response_model=Dict)
+async def admin_toggle_block(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+    
+    user.is_blocked = 1 if user.is_blocked == 0 else 0
+    await db.commit()
+    status_msg = "bloklandi" if user.is_blocked == 1 else "blokdan chiqarildi"
+    return {"status": "success", "message": f"{user.username} {status_msg}"}
+
+@app.delete("/api/admin/users/{user_id}", response_model=Dict)
+async def admin_delete_user(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+    
+    await db.delete(user)
+    await db.commit()
+    return {"status": "success", "message": f"Foydalanuvchi {user.username} va uning barcha ma'lumotlari o'chirildi"}
+
+@app.post("/api/admin/users/{user_id}/impersonate", response_model=schemas.Token)
+async def admin_impersonate_user(user_id: int, admin: User = Depends(get_admin_user), db: AsyncSession = Depends(get_db)):
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Foydalanuvchi topilmadi")
+    
+    from app.core.security import create_access_token
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user
+    }

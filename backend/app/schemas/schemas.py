@@ -62,6 +62,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     is_admin: Optional[int] = 0
+    is_blocked: Optional[int] = 0
     subscription_tier: Optional[str] = "free"
     subscription_start: Optional[datetime] = None
     subscription_end: Optional[datetime] = None
@@ -101,6 +102,7 @@ class UserAdminResponse(BaseModel):
     username: str
     email: str
     is_admin: int
+    is_blocked: int
     subscription_tier: str
     subscription_start: Optional[datetime] = None
     subscription_end: Optional[datetime] = None

@@ -33,9 +33,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (newToken, userData) => {
+    localStorage.setItem('token', newToken);
     setToken(newToken);
     setUser(userData);
+  };
+
+  const loginWithToken = (newToken) => {
     localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setUser(null); // Force refetch of new user
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };
 
   const logout = () => {
@@ -46,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, API_BASE, BACKEND_URL }}>
+    <AuthContext.Provider value={{ user, token, login, loginWithToken, logout, loading, API_BASE, BACKEND_URL }}>
       {children}
     </AuthContext.Provider>
   );
