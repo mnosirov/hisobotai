@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
 import httpx
 from contextlib import asynccontextmanager
