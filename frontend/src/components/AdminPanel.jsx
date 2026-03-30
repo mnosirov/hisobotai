@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
+import { Users, Crown, Shield, X, Calendar, CheckCircle, XCircle, Search, Clock, Award, BarChart, TrendingUp, DollarSign } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -34,6 +34,7 @@ const AdminPanel = ({ API_BASE }) => {
       setStats(data);
     } catch (err) {
       console.error("Stats fetch error", err);
+      toast.error("Statistikalarni yuklashda xatolik");
     }
   };
 
@@ -158,7 +159,7 @@ const AdminPanel = ({ API_BASE }) => {
               : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'
           }`}
         >
-          <BarChart3 size={16} /> Tahlil
+          <BarChart size={16} /> Tahlil
         </button>
         <button
           onClick={() => setActiveView('users')}
@@ -183,8 +184,13 @@ const AdminPanel = ({ API_BASE }) => {
       </div>
 
       {/* Stats View */}
-      {activeView === 'stats' && stats && (
-        <div className="space-y-6">
+      {activeView === 'stats' && (
+        !stats ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500"></div>
+          </div>
+        ) : (
+          <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="glass-card p-4 space-y-2">
               <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
@@ -239,7 +245,8 @@ const AdminPanel = ({ API_BASE }) => {
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
+          </div>
+        )
       )}
 
       {/* Users View */}
