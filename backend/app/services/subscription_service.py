@@ -35,6 +35,7 @@ class SubscriptionService:
                 username=u.username,
                 email=u.email,
                 is_admin=u.is_admin or 0,
+                is_blocked=u.is_blocked or 0,
                 subscription_tier=u.subscription_tier or "free",
                 subscription_start=u.subscription_start,
                 subscription_end=u.subscription_end,
