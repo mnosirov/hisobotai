@@ -16,6 +16,10 @@ from app.services.sales_service import SalesService
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Cloudinary configuration
 cloudinary.config( 
