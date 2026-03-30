@@ -207,6 +207,8 @@ async def add_product_manual(
         res = await service.add_or_update_product(product_data, source="Qo'lda (Manual)", image_url=image_url)
         return res
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/inventory/analyze", response_model=List[Dict])

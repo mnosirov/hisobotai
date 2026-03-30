@@ -91,7 +91,9 @@ class InventoryService:
             img = img.convert('RGB')
             
         max_size = (500, 500)
-        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        # Compatibility fix for Pillow < 10.0.0
+        resample_filter = getattr(Image, 'Resampling', Image).LANCZOS
+        img.thumbnail(max_size, resample=resample_filter)
         
         img.save(save_path, "JPEG", quality=85, optimize=True)
         
