@@ -1,6 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import Dict, List
+from typing import Dict, List, Optional
+import os
+import uuid
+from PIL import Image
 from app.models.models import Product, InventoryLog
 from app.services.ai_service import AIService
 
@@ -14,7 +17,7 @@ class InventoryService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def add_or_update_product(self, product_data: Dict, source: str) -> Product:
+    async def add_or_update_product(self, product_data: Dict, source: str, image_url: Optional[str] = None) -> Product:
         name = product_data.get("name", "Noma'lum")
         category = product_data.get("category", "Umumiy")
         quantity = float(product_data.get("quantity") or 0.0)
@@ -38,6 +41,8 @@ class InventoryService:
                 product.last_purchase_price = price
             if sell_price > 0:
                 product.sell_price = sell_price
+            if image_url:
+                product.image_url = image_url
         else:
             if sell_price == 0:
                 sell_price = price * 1.2  # Default 20% margin
@@ -48,7 +53,8 @@ class InventoryService:
                 unit=unit,
                 stock=quantity,
                 last_purchase_price=price,
-                sell_price=sell_price
+                sell_price=sell_price,
+                image_url=image_url
             )
             self.db.add(product)
             await self.db.flush()
@@ -63,6 +69,33 @@ class InventoryService:
         await self.db.commit()
         await self.db.refresh(product)
         return product
+
+    @staticmethod
+    def process_product_image(image_bytes: bytes, filename: str) -> str:
+        """Katta rasmlarni kichraytirib, formatini to'g'irlab beradi (Pillow)."""
+        upload_dir = "static/uploads/products"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Unique filename
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
+            ext = '.jpg'
+        new_filename = f"{uuid.uuid4()}{ext}"
+        save_path = os.path.join(upload_dir, new_filename)
+        
+        from io import BytesIO
+        img = Image.open(BytesIO(image_bytes))
+        
+        # Resize logic: 500px max dimension
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+            
+        max_size = (500, 500)
+        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        img.save(save_path, "JPEG", quality=85, optimize=True)
+        
+        return f"/static/uploads/products/{new_filename}"
 
     async def analyze_invoice_upload(self, image_path: str) -> List[Dict]:
         """AI orqali fakturadan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""

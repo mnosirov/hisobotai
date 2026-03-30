@@ -9,6 +9,7 @@ class ProductBase(BaseModel):
     stock: float = Field(default=0.0)
     last_purchase_price: float = Field(default=0.0)
     sell_price: float = Field(default=0.0)
+    image_url: Optional[str] = Field(default=None)
 
 class ProductCreate(ProductBase):
     pass
@@ -16,6 +17,7 @@ class ProductCreate(ProductBase):
 class ProductResponse(ProductBase):
     id: int
     tenant_id: int
+    image_url: Optional[str] = None
     created_at: datetime
 
     class Config:

@@ -94,17 +94,26 @@ const MainApp = () => {
     
     const loadingToast = toast.loading("Qo'shilmoqda...");
     try {
-      await axios.post(`${API_BASE}/inventory`, {
-        name: newProduct.name,
-        category: newProduct.category,
-        unit: newProduct.unit,
-        stock: parseFloat(newProduct.stock) || 0,
-        last_purchase_price: parseFloat(newProduct.buyPrice) || 0,
-        sell_price: parseFloat(newProduct.sellPrice) || 0
+      const formData = new FormData();
+      formData.append('name', newProduct.name);
+      formData.append('category', newProduct.category);
+      formData.append('unit', newProduct.unit);
+      formData.append('stock', parseFloat(newProduct.stock) || 0);
+      formData.append('last_purchase_price', parseFloat(newProduct.buyPrice) || 0);
+      formData.append('sell_price', parseFloat(newProduct.sellPrice) || 0);
+      
+      if (newProduct.imageFile) {
+        formData.append('image', newProduct.imageFile);
+      }
+
+      await axios.post(`${API_BASE}/inventory`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       toast.success("Muvaffaqiyatli qo'shildi!", { id: loadingToast });
       setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
+      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '', imageFile: null });
       fetchInventoryData(); 
       fetchDashboardData(); // Refresh dashboard for low stock alerts
     } catch (err) {

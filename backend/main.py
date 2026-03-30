@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Request, status
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Request, status, Form
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -98,6 +99,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
@@ -171,18 +174,34 @@ async def get_inventory(current_user: User = Depends(get_current_user), db: Asyn
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/inventory", response_model=schemas.ProductResponse)
-async def add_product_manual(product: schemas.ProductCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def add_product_manual(
+    name: str = Form(...),
+    category: str = Form("Umumiy"),
+    unit: str = Form("dona"),
+    stock: float = Form(0.0),
+    last_purchase_price: float = Form(0.0),
+    sell_price: float = Form(0.0),
+    image: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     try:
         service = InventoryService(db, current_user.id)
+        
+        image_url = None
+        if image:
+            content = await image.read()
+            image_url = service.process_product_image(content, image.filename)
+
         product_data = {
-            "name": product.name,
-            "category": product.category,
-            "quantity": product.stock,
-            "unit": product.unit,
-            "price": product.last_purchase_price,
-            "sell_price": product.sell_price
+            "name": name,
+            "category": category,
+            "quantity": stock,
+            "unit": unit,
+            "price": last_purchase_price,
+            "sell_price": sell_price
         }
-        res = await service.add_or_update_product(product_data, source="Qo'lda (Manual)")
+        res = await service.add_or_update_product(product_data, source="Qo'lda (Manual)", image_url=image_url)
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

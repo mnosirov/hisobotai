@@ -25,6 +25,13 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewProduct({ ...newProduct, imageFile: file });
+    }
+  };
+
   return (
     <AnimatePresence>
       {showAddModal && (
@@ -38,7 +45,7 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="w-full max-w-sm glass-card p-6 bg-[#1e293b]"
+            className="w-full max-w-sm glass-card p-6 bg-[#1e293b] max-h-[90vh] overflow-y-auto no-scrollbar"
           >
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-lg">Yangi mahsulot</h3>
@@ -46,6 +53,7 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                 onClick={() => {
                   setShowAddModal(false);
                   setMatchFound(false);
+                  if (newProduct.imageFile) setNewProduct({ ...newProduct, imageFile: null });
                 }} 
                 className="text-slate-400 hover:text-white"
               >
@@ -54,6 +62,29 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
             </div>
             
             <div className="space-y-4">
+              {/* Image Upload/Preview */}
+              <div className="flex flex-col items-center justify-center mb-4">
+                <label className="cursor-pointer group relative">
+                  <div className="h-24 w-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 group-hover:border-indigo-500/50 transition-all flex items-center justify-center overflow-hidden">
+                    {newProduct.imageFile ? (
+                      <img 
+                        src={URL.createObjectURL(newProduct.imageFile)} 
+                        alt="Preview" 
+                        className="h-full w-full object-cover" 
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-indigo-400 mb-1 flex justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase">Rasm yuklash</span>
+                      </div>
+                    )}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              </div>
+
               <div>
                 <div className="flex justify-between items-end mb-1">
                   <label className="text-xs text-slate-400 block">Nomi</label>

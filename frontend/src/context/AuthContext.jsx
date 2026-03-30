@@ -8,7 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = "https://hisobotai-production.up.railway.app/api";
+  const BACKEND_URL = "https://hisobotai-production.up.railway.app";
+  const API_BASE = `${BACKEND_URL}/api`;
 
   useEffect(() => {
     if (token) {
@@ -45,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading, API_BASE }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, API_BASE, BACKEND_URL }}>
       {children}
     </AuthContext.Provider>
   );

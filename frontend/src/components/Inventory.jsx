@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Plus } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Inventory = ({ inventory, setShowAddModal }) => {
+  const { BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
 
   const filteredInventory = selectedCategory === 'Barchasi' 
@@ -51,10 +53,18 @@ const Inventory = ({ inventory, setShowAddModal }) => {
         {filteredInventory.map((item) => (
           <div key={item.id} className="glass-card p-4 flex items-center justify-between relative overflow-hidden group">
             <div className="flex items-center space-x-4">
-              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+              <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden ${
                 item.stock < item.threshold ? 'bg-rose-500/20' : 'bg-emerald-500/20'
               }`}>
-                <Package className={item.stock < item.threshold ? 'text-rose-400' : 'text-emerald-400'} size={24} />
+                {item.image_url ? (
+                  <img 
+                    src={`${BACKEND_URL}${item.image_url}`} 
+                    alt={item.name} 
+                    className="h-full w-full object-cover" 
+                  />
+                ) : (
+                  <Package className={item.stock < item.threshold ? 'text-rose-400' : 'text-emerald-400'} size={24} />
+                )}
               </div>
               <div>
                 <div className="flex items-center space-x-2">
