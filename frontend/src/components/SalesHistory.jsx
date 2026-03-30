@@ -111,7 +111,7 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
                       </div>
                       <button 
                         onClick={() => handleDelete(sale.id)}
-                        className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                        className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center transition-opacity hover:bg-red-500/20"
                       >
                         <Trash2 size={16} />
                       </button>

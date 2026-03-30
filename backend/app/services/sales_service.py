@@ -192,21 +192,25 @@ class SalesService:
         }
 
     async def delete_sale(self, sale_id: int) -> Dict:
-        """Sotuvni o'chiradi va mahsulot qoldiqlarini (stock) qaytaradi."""
+        """Sotuvni o'chirish va mahsulot qoldig'ini qaytarish"""
         query = select(Sale).where(Sale.id == sale_id, Sale.tenant_id == self.tenant_id)
         res = await self.db.execute(query)
         sale = res.scalar_one_or_none()
-
+        
         if not sale:
             return {"status": "error", "message": "Sotuv topilmadi."}
-
-        # Items_json dan qoldiqlarni qaytarish
-        for item in sale.items_json:
+            
+        # Mahsulotlarni qaytarish
+        items = sale.items_json
+        if isinstance(items, str):
+            import json
+            items = json.loads(items)
+            
+        for item in items:
             p_id = item.get("product_id")
             p_name = item.get("product")
             qty = float(item.get("quantity") or 0.0)
-
-            # Mahsulotni topish (id yoki nomi orqali)
+            
             if p_id:
                 p_query = select(Product).where(Product.id == p_id, Product.tenant_id == self.tenant_id)
             else:
@@ -214,12 +218,10 @@ class SalesService:
             
             p_res = await self.db.execute(p_query)
             product = p_res.scalar_one_or_none()
-
             if product:
                 product.stock += qty
                 self.db.add(product)
-
+        
         await self.db.delete(sale)
         await self.db.commit()
-
-        return {"status": "success", "message": "Sotuv o'chirildi va qoldiqlar tiklandi."}
+        return {"status": "success", "message": "Sotuv o'chirildi va ombor yangilandi."}
