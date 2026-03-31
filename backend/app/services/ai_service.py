@@ -176,20 +176,47 @@ class AIService:
 
     @classmethod
     async def transcribe_audio(cls, file_path: str) -> str:
-        """Uses OpenAI Whisper (Async) to transcribe audio file to text."""
+        """Uses Google Gemini (Flash) to transcribe audio file to text."""
+        tried_models = set()
+        last_error = "Noma'lum xatolik"
+        
+        # 1. Prepare audio part
         try:
-            with open(file_path, "rb") as audio_file:
-                # transcribe is not fully async in the official older SDK versions, 
-                # but AsyncOpenAI handle it now.
-                response = await client.audio.transcriptions.create(
-                    model="whisper-1", 
-                    file=audio_file,
-                    language="uz"
-                )
-                return response.text
+            with open(file_path, "rb") as f:
+                audio_data = f.read()
+            
+            # We assume the file is small enough to pass directly or via upload_file
+            # For robustness in local/server environments, we'll try direct parts first
+            # but Gemini preferred way is genai.upload_file for non-image media.
+            # However, for 10-30s clips, parts work well.
         except Exception as e:
-            print(f"Whisper Transcription Error: {e}")
-            raise ValueError(f"Ovozni matnga o'girishda xatolik: {str(e)}")
+            raise ValueError(f"Faylni o'qib bo'lmadi: {e}")
+
+        prompt = "Ushbu ovozli xabarni o'zbek tilida matnga o'gir (transkripsiya qil). Faqat matnni o'zini qaytar."
+
+        for _ in range(3):
+            model_name = await cls._get_best_model(exclude=tried_models)
+            tried_models.add(model_name)
+            
+            try:
+                model = genai.GenerativeModel(model_name)
+                # MIME type discovery
+                mime_type = "audio/webm" 
+                if file_path.endswith(".mp4"): mime_type = "audio/mp4"
+                if file_path.endswith(".wav"): mime_type = "audio/wav"
+                
+                response = await asyncio.to_thread(
+                    model.generate_content, 
+                    [{"mime_type": mime_type, "data": audio_data}, prompt]
+                )
+                return response.text.strip()
+            except Exception as e:
+                last_error = str(e)
+                print(f"Gemini Transcription failed with {model_name}: {e}")
+                # Fallback to OpenAI IF quota was present? No, user explicitly has quota error.
+                continue
+                
+        raise ValueError(f"Ovozni matnga o'girishda xatolik (Gemini): {last_error}")
 
     @classmethod
     async def parse_voice_intent(cls, transcribed_text: str, mode: str = "inventory") -> List[Dict]:
