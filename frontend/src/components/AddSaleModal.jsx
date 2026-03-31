@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Minus, ShoppingCart, Search, Check, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Search, Check, Trash2, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -146,13 +146,33 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
                   <button
                     key={p.id}
                     onClick={() => addToCart(p)}
-                    className="w-full p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex justify-between items-center group"
+                    className="w-full p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex items-center justify-between group text-left"
                   >
-                    <div className="text-left">
-                      <p className="font-bold text-sm">{p.name}</p>
-                      <p className="text-xs text-slate-500">{p.category} | {p.sell_price.toLocaleString()} UZS</p>
+                    <div className="flex items-center space-x-3 flex-1 overflow-hidden">
+                      <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/10 group-hover:border-indigo-500/30 transition-colors">
+                        {p.image_url ? (
+                          <img 
+                            src={p.image_url.startsWith('http') ? p.image_url : `${API_BASE}${p.image_url}`} 
+                            alt={p.name} 
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.parentElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package text-slate-400"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg>';
+                            }}
+                          />
+                        ) : (
+                          <Package size={20} className="text-indigo-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 truncate pr-2">
+                        <p className="font-bold text-sm truncate text-slate-100 group-hover:text-indigo-300 transition-colors">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{p.category} • {p.stock} qoldiq</p>
+                      </div>
                     </div>
-                    <Plus size={18} className="text-indigo-400 group-hover:scale-125 transition" />
+                    <div className="flex flex-col items-end shrink-0 pl-2 border-l border-white/5">
+                      <span className="text-xs font-black text-emerald-400">+{p.sell_price.toLocaleString()}</span>
+                      <span className="text-[9px] text-slate-500 uppercase">UZS</span>
+                    </div>
                   </button>
                 ))}
               </div>
