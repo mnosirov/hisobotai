@@ -4,6 +4,8 @@ import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag }
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
+import VoiceRecorder from './VoiceRecorder';
+import { Mic, Camera } from 'lucide-react';
 
 const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -11,6 +13,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
+  const [interactionType, setInteractionType] = useState('camera'); // 'camera' or 'voice'
 
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -43,6 +46,30 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
       }
     };
     fileInput.click();
+  };
+
+  const handleVoiceComplete = async (audioBlob) => {
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+    
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'voice_command.webm');
+    
+    setIsAnalyzing(true);
+    const loadingToast = toast.loading('Ovoz tahlil qilinmoqda...');
+    
+    try {
+      const endpoint = captureMode === 'sales' ? '/sales/voice-analyze' : '/inventory/voice-analyze';
+      const res = await axios.post(`${API_BASE}${endpoint}`, formData);
+      
+      setAnalyzedItems(res.data);
+      setShowConfirm(true);
+      toast.dismiss(loadingToast);
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || "Ovozli tahlilda xatolik yuz berdi.";
+      toast.error(errorMsg, { id: loadingToast });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleFinalConfirm = async () => {
@@ -110,28 +137,74 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
         </button>
       </div>
 
-      {/* Central Action Button */}
-      <div className="pt-4 flex flex-col items-center justify-center space-y-6">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleCapture}
-          disabled={isAnalyzing}
-          className={`w-40 h-40 rounded-full bg-gradient-to-tr ${
-            captureMode === 'sales' ? 'from-blue-600 to-indigo-600' : 'from-emerald-600 to-teal-600'
-          } shadow-[0_0_50px_rgba(79,70,229,0.3)] flex items-center justify-center text-white relative`}
+      {/* Interaction Type Toggle */}
+      <div className="flex justify-center space-x-2 pt-2">
+        <button 
+          onClick={() => setInteractionType('camera')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition font-bold text-xs ${
+            interactionType === 'camera' 
+              ? 'bg-white/10 border-white/20 text-white' 
+              : 'border-transparent text-slate-500'
+          }`}
         >
-          {isAnalyzing ? (
-            <div className="h-16 w-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Camera size={56} />
-          )}
-        </motion.button>
+          <Camera size={14} />
+          <span>Rasm</span>
+        </button>
+        <button 
+          onClick={() => setInteractionType('voice')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition font-bold text-xs ${
+            interactionType === 'voice' 
+              ? 'bg-white/10 border-white/20 text-white' 
+              : 'border-transparent text-slate-500'
+          }`}
+        >
+          <Mic size={14} />
+          <span>Ovoz</span>
+        </button>
+      </div>
+
+      {/* Central Action Button / Voice Recorder */}
+      <div className="pt-4 flex flex-col items-center justify-center space-y-6">
+        {interactionType === 'camera' ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleCapture}
+            disabled={isAnalyzing}
+            className={`w-40 h-40 rounded-full bg-gradient-to-tr ${
+              captureMode === 'sales' ? 'from-blue-600 to-indigo-600' : 'from-emerald-600 to-teal-600'
+            } shadow-[0_0_50px_rgba(79,70,229,0.3)] flex items-center justify-center text-white relative`}
+          >
+            {isAnalyzing ? (
+              <div className="h-16 w-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Camera size={56} />
+            )}
+          </motion.button>
+        ) : (
+          <div className="h-40 flex items-center justify-center">
+            <VoiceRecorder 
+              onRecordingComplete={handleVoiceComplete} 
+              isAnalyzing={isAnalyzing} 
+            />
+          </div>
+        )}
+        
         <div className="text-center">
-          <h3 className="text-xl font-bold">{captureMode === 'sales' ? 'Sotuvlarni tahlil qilish' : 'Xaridlarni tahlil qilish'}</h3>
-          <p className="text-slate-500 text-sm mb-4">{captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling'}</p>
+          <h3 className="text-xl font-bold">
+            {interactionType === 'camera' 
+              ? (captureMode === 'sales' ? 'Sotuvlarni tahlil qilish' : 'Xaridlarni tahlil qilish')
+              : (captureMode === 'sales' ? 'Sotuvli ovozli buyruq' : 'Xaridli ovozli buyruq')
+            }
+          </h3>
+          <p className="text-slate-500 text-sm mb-4">
+            {interactionType === 'camera' 
+              ? (captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling')
+              : (captureMode === 'sales' ? 'Sotuvni aytib bering (masalan: 10ta non)' : 'Xaridni aytib bering (masalan: 5ta sut 5000dan)')
+            }
+          </p>
           
-          {captureMode === 'sales' && (
+          {captureMode === 'sales' && interactionType === 'camera' && (
             <button 
               onClick={() => setShowAddSaleModal(true)}
               className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-indigo-400 text-xs font-bold hover:bg-indigo-500/10 transition pb-2.5"

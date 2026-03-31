@@ -294,6 +294,17 @@ async def analyze_invoice(image: UploadFile = File(...), current_user: User = De
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/inventory/voice-analyze", response_model=List[Dict])
+async def analyze_voice_inventory(audio: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    temp_path = f"/tmp/{audio.filename}"
+    with open(temp_path, "wb") as f:
+        f.write(await audio.read())
+    try:
+        service = InventoryService(db, current_user.id)
+        return await service.analyze_voice_upload(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/inventory/confirm", response_model=Dict)
 async def confirm_invoice(items: List[Dict], current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
@@ -328,6 +339,17 @@ async def analyze_handwritten_ledger(image: UploadFile = File(...), current_user
     try:
         service = SalesService(db, current_user.id)
         return await service.analyze_handwritten_sales(temp_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sales/voice-analyze", response_model=List[Dict])
+async def analyze_voice_sales_endpoint(audio: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    temp_path = f"/tmp/{audio.filename}"
+    with open(temp_path, "wb") as f:
+        f.write(await audio.read())
+    try:
+        service = SalesService(db, current_user.id)
+        return await service.analyze_voice_sales(temp_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

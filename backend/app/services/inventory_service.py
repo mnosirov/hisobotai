@@ -148,11 +148,14 @@ class InventoryService:
             traceback.print_exc()
             return ""
 
-    async def analyze_invoice_upload(self, image_path: str) -> List[Dict]:
-        """AI orqali fakturadan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
-        raw_items = await AIService.extract_invoice_data(image_path)
-        analyzed_items = []
+        return analyzed_items
+
+    async def analyze_voice_upload(self, audio_path: str) -> List[Dict]:
+        """AI orqali ovozli xabardan mahsulotlarni o'qiydi."""
+        text = await AIService.transcribe_audio(audio_path)
+        raw_items = await AIService.parse_voice_intent(text, mode="inventory")
         
+        analyzed_items = []
         for item in raw_items:
             name = item.get("name", "Noma'lum")
             category = item.get("category", "Umumiy")
@@ -160,11 +163,9 @@ class InventoryService:
             unit = item.get("unit") or "dona"
             price = float(item.get("price") or 0.0)
             
-            # Capping: Max 6 digits for quantity, Max 9 digits for price
             quantity = min(quantity, 999999)
             price = min(price, 999999999)
             
-            # Mavjud mahsulotni qidirish
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,
                 Product.name.ilike(f"%{name}%")

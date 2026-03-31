@@ -173,3 +173,62 @@ class AIService:
                 continue
                 
         return f"Kechirasiz, barcha AI modellarida limit tugagan ko'rinadi. So'nggi xato: {last_error} 😔"
+
+    @classmethod
+    async def transcribe_audio(cls, file_path: str) -> str:
+        """Uses OpenAI Whisper (Async) to transcribe audio file to text."""
+        try:
+            with open(file_path, "rb") as audio_file:
+                # transcribe is not fully async in the official older SDK versions, 
+                # but AsyncOpenAI handle it now.
+                response = await client.audio.transcriptions.create(
+                    model="whisper-1", 
+                    file=audio_file,
+                    language="uz"
+                )
+                return response.text
+        except Exception as e:
+            print(f"Whisper Transcription Error: {e}")
+            raise ValueError(f"Ovozni matnga o'girishda xatolik: {str(e)}")
+
+    @classmethod
+    async def parse_voice_intent(cls, transcribed_text: str, mode: str = "inventory") -> List[Dict]:
+        """Uses Gemini to parse transcribed text into structured JSON data."""
+        if mode == "sales":
+            prompt = (
+                f"Ushbu matndan sotilgan mahsulotlar ro'yxatini ajratib ber: '{transcribed_text}'. "
+                "Faqat JSON ro'yxat qaytar. "
+                "Format: [{\"name\": \"...\", \"quantity\": ..., \"total_price\": ...}] "
+                "O'zbek tilidagi qisqartmalarni tushun (2ta choy -> name: 'choy', quantity: 2). "
+                "Agar narx aytilmagan bo'lsa, total_price: 0 qoldir."
+            )
+        else:
+            prompt = (
+                f"Ushbu matndan omborga kelgan mahsulotlarni ajratib ber: '{transcribed_text}'. "
+                "Faqat JSON ro'yxat qaytar. "
+                "Format: [{\"name\": \"...\", \"category\": \"...\", \"quantity\": ..., \"unit\": \"...\", \"price\": ...}] "
+                "Toifasini (kategoriyasini) mantiqan top. Narx aytilgan bo'lsa 'price' (sotib olish narxi) ga yoz. "
+                "Price aytilmagan bo'lsa 0 qoldir."
+            )
+
+        tried_models = set()
+        last_error = "Noma'lum xatolik"
+        
+        for _ in range(3):
+            model_name = await cls._get_best_model(exclude=tried_models)
+            tried_models.add(model_name)
+            
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = await asyncio.to_thread(model.generate_content, prompt)
+                content = response.text
+                
+                json_match = re.search(r'\[.*\]', content, re.DOTALL)
+                if json_match:
+                    return json.loads(json_match.group(0))
+                raise ValueError("JSON topilmadi")
+            except Exception as e:
+                last_error = str(e)
+                continue
+                
+        raise ValueError(f"NLP tahlilda xatolik: {last_error}")

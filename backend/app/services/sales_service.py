@@ -102,21 +102,22 @@ class SalesService:
             history.append(f"{dt}: {items} - {int(s.total_amount)} UZS")
         return history
 
-    async def analyze_handwritten_sales(self, image_path: str) -> List[Dict]:
-        """AI orqali rasmdan ma'lumotlarni o'qiydi, lekin bazaga saqlamaydi."""
-        raw_items = await AIService.extract_handwritten_sales(image_path)
-        analyzed_items = []
+        return analyzed_items
+
+    async def analyze_voice_sales(self, audio_path: str) -> List[Dict]:
+        """AI orqali ovozli xabardan sotuvlarni o'qiydi."""
+        text = await AIService.transcribe_audio(audio_path)
+        raw_items = await AIService.parse_voice_intent(text, mode="sales")
         
+        analyzed_items = []
         for item in raw_items:
             name = item.get("name", "Noma'lum")
             qty = float(item.get("quantity") or 0.0)
             revenue = float(item.get("total_price") or 0.0)
             
-            # Capping: Max 6 digits for quantity, Max 9 digits for revenue
             qty = min(qty, 999999)
             revenue = min(revenue, 999999999)
             
-            # Mahsulotni qidirish (faqat ma'lumot uchun)
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,
                 Product.name.ilike(f"%{name}%")
