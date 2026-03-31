@@ -100,10 +100,6 @@ const VoiceRecorder = ({ onRecordingComplete, isAnalyzing }) => {
           <Mic className="text-white" size={32} />
         )}
       </motion.button>
-      
-      <p className="text-slate-500 text-xs text-center max-w-[200px]">
-        {isRecording ? "To'xtatish uchun bosing" : "Ovozli buyruq berish uchun bosing"}
-      </p>
     </div>
   );
 };

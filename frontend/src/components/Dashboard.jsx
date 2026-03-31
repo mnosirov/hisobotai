@@ -6,18 +6,12 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal, initialType = 'camera' }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
-  const [interactionType, setInteractionType] = useState(initialType); // 'camera' or 'voice'
-
-  // Effect to sync prop if needed (when switching from bottom nav)
-  useEffect(() => {
-    setInteractionType(initialType);
-  }, [initialType]);
 
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -103,31 +97,6 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6 pt-4"
     >
-      {/* Interaction Type Toggle at the very top */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800/50 rounded-2xl border border-white/5">
-        <button 
-          onClick={() => setInteractionType('camera')}
-          className={`flex items-center justify-center space-x-2 py-3 rounded-xl transition font-bold text-sm ${
-            interactionType === 'camera' 
-              ? 'bg-indigo-600 text-white shadow-lg' 
-              : 'text-slate-500 hover:text-slate-300'
-          }`}
-        >
-          <Camera size={18} />
-          <span>Rasm Orqali</span>
-        </button>
-        <button 
-          onClick={() => setInteractionType('voice')}
-          className={`flex items-center justify-center space-x-2 py-3 rounded-xl transition font-bold text-sm ${
-            interactionType === 'voice' 
-              ? 'bg-indigo-600 text-white shadow-lg' 
-              : 'text-slate-500 hover:text-slate-300'
-          }`}
-        >
-          <Mic size={18} />
-          <span>Ovoz Orqali</span>
-        </button>
-      </div>
 
       {/* Daily Profit Card */}
       <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
@@ -167,53 +136,49 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
         </button>
       </div>
 
-      {/* Central Action Button / Voice Recorder */}
+      {/* Central Action Area: Camera & Voice side-by-side */}
       <div className="pt-4 flex flex-col items-center justify-center space-y-6">
-        {interactionType === 'camera' ? (
+        <div className="flex items-center justify-center space-x-8">
+          {/* Camera Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleCapture}
             disabled={isAnalyzing}
-            className={`w-40 h-40 rounded-full bg-gradient-to-tr ${
+            className={`w-32 h-32 rounded-full bg-gradient-to-tr ${
               captureMode === 'sales' ? 'from-blue-600 to-indigo-600' : 'from-emerald-600 to-teal-600'
-            } shadow-[0_0_50px_rgba(79,70,229,0.3)] flex items-center justify-center text-white relative`}
+            } shadow-[0_0_40px_rgba(79,70,229,0.2)] flex items-center justify-center text-white relative`}
           >
             {isAnalyzing ? (
-              <div className="h-16 w-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="h-12 w-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <Camera size={56} />
+              <Camera size={44} />
             )}
           </motion.button>
-        ) : (
-          <div className="h-40 flex items-center justify-center">
+
+          {/* Voice Button */}
+          <div className="w-32 h-32 flex items-center justify-center">
             <VoiceRecorder 
               onRecordingComplete={handleVoiceComplete} 
               isAnalyzing={isAnalyzing} 
             />
           </div>
-        )}
+        </div>
         
         <div className="text-center">
           <h3 className="text-xl font-bold">
-            {interactionType === 'camera' 
-              ? (captureMode === 'sales' ? 'Sotuvlarni tahlil qilish' : 'Xaridlarni tahlil qilish')
-              : (captureMode === 'sales' ? 'Sotuvli ovozli buyruq' : 'Xaridli ovozli buyruq')
-            }
+            {captureMode === 'sales' ? 'Sotuvlarni kiritish' : 'Xaridlarni kiritish'}
           </h3>
-          <p className="text-slate-500 text-sm mb-4">
-            {interactionType === 'camera' 
-              ? (captureMode === 'sales' ? 'Daftar varog\'ini rasmga oling' : 'Faktura (chekka) rasmga oling')
-              : (captureMode === 'sales' ? 'Sotuvni aytib bering (masalan: 10ta non)' : 'Xaridni aytib bering (masalan: 5ta sut 5000dan)')
-            }
+          <p className="text-slate-500 text-xs mt-1 mb-4 max-w-[250px] mx-auto">
+            Rasmga oling yoki ovozli buyruq bering (masalan: 10ta non)
           </p>
           
-          {captureMode === 'sales' && interactionType === 'camera' && (
+          {captureMode === 'sales' && (
             <button 
               onClick={() => setShowAddSaleModal(true)}
-              className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-indigo-400 text-xs font-bold hover:bg-indigo-500/10 transition pb-2.5"
+              className="px-6 py-2 bg-white/5 border border-white/10 rounded-full text-indigo-400 text-xs font-bold hover:bg-white/10 transition pb-2.5"
             >
-              Qo'lda sotuv qo'shish +
+              Qo'lda qo'shish +
             </button>
           )}
         </div>
