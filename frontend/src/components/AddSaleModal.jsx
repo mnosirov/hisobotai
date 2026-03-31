@@ -43,10 +43,49 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
   const updateQuantity = (productId, delta) => {
     setCart(cart.map(item => {
       if (item.product_id === productId) {
-        const newQty = Math.max(0.1, item.quantity + delta);
-        // Limit quantity to 6 digits
+        const isDiscrete = item.unit === 'dona' || item.unit === 'quti';
+        let currentQty = item.quantity === '' ? 0 : parseFloat(item.quantity) || 0;
+        let newQty = currentQty + (isDiscrete ? Math.round(delta) : delta);
+        
+        if (isDiscrete) {
+          newQty = Math.max(1, Math.round(newQty));
+        } else {
+          newQty = Math.max(0.1, newQty);
+          newQty = Math.round(newQty * 100) / 100;
+        }
+        
         const qtyToSet = newQty > 999999 ? 999999 : newQty;
         return { ...item, quantity: qtyToSet, revenue: qtyToSet * item.unit_price };
+      }
+      return item;
+    }));
+  };
+
+  const handleQuantityInput = (productId, val) => {
+    setCart(cart.map(item => {
+      if (item.product_id === productId) {
+        const isDiscrete = item.unit === 'dona' || item.unit === 'quti';
+        let strVal = val;
+        
+        if (isDiscrete) {
+          strVal = strVal.replace(/[^0-9]/g, '');
+        }
+        
+        if (strVal === '') {
+          return { ...item, quantity: '', revenue: 0 };
+        }
+
+        let qtyToSet = parseFloat(strVal);
+        if (isNaN(qtyToSet)) qtyToSet = 1;
+        
+        if (isDiscrete) {
+          qtyToSet = Math.max(1, Math.round(qtyToSet));
+        } else {
+          qtyToSet = Math.max(0, qtyToSet);
+        }
+        
+        const finalQty = qtyToSet > 999999 ? 999999 : qtyToSet;
+        return { ...item, quantity: finalQty, revenue: finalQty * item.unit_price };
       }
       return item;
     }));
@@ -200,7 +239,18 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
                         <button onClick={() => updateQuantity(item.product_id, -1)} className="p-1.5 hover:bg-white/10 rounded-md transition">
                           <Minus size={14} />
                         </button>
-                        <span className="px-3 font-mono font-bold text-indigo-400">{item.quantity}</span>
+                        <input 
+                          type="number"
+                          value={item.quantity}
+                          onKeyDown={e => {
+                            const isDiscrete = item.unit === 'dona' || item.unit === 'quti';
+                            if (isDiscrete && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onChange={e => handleQuantityInput(item.product_id, e.target.value)}
+                          className="w-16 bg-transparent text-center font-mono font-bold text-indigo-400 focus:outline-none"
+                        />
                         <button onClick={() => updateQuantity(item.product_id, 1)} className="p-1.5 hover:bg-white/10 rounded-md transition">
                           <Plus size={14} />
                         </button>

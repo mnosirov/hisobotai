@@ -135,7 +135,18 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   <input 
                     type="number" 
                     value={newProduct.stock} 
-                    onChange={e => setNewProduct({...newProduct, stock: limitDigits(e.target.value)})} 
+                    onKeyDown={e => {
+                      if ((newProduct.unit === 'dona' || newProduct.unit === 'quti') && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={e => {
+                      let val = e.target.value;
+                      if (newProduct.unit === 'dona' || newProduct.unit === 'quti') {
+                        val = val.replace(/[^0-9]/g, '');
+                      }
+                      setNewProduct({...newProduct, stock: limitDigits(val)});
+                    }}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
