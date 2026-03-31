@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag } from 'lucide-react';
+import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
-import { Mic, Camera } from 'lucide-react';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal, initialType = 'camera' }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
-  const [interactionType, setInteractionType] = useState('camera'); // 'camera' or 'voice'
+  const [interactionType, setInteractionType] = useState(initialType); // 'camera' or 'voice'
+
+  // Effect to sync prop if needed (when switching from bottom nav)
+  useEffect(() => {
+    setInteractionType(initialType);
+  }, [initialType]);
 
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -99,6 +103,32 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6 pt-4"
     >
+      {/* Interaction Type Toggle at the very top */}
+      <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800/50 rounded-2xl border border-white/5">
+        <button 
+          onClick={() => setInteractionType('camera')}
+          className={`flex items-center justify-center space-x-2 py-3 rounded-xl transition font-bold text-sm ${
+            interactionType === 'camera' 
+              ? 'bg-indigo-600 text-white shadow-lg' 
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <Camera size={18} />
+          <span>Rasm Orqali</span>
+        </button>
+        <button 
+          onClick={() => setInteractionType('voice')}
+          className={`flex items-center justify-center space-x-2 py-3 rounded-xl transition font-bold text-sm ${
+            interactionType === 'voice' 
+              ? 'bg-indigo-600 text-white shadow-lg' 
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <Mic size={18} />
+          <span>Ovoz Orqali</span>
+        </button>
+      </div>
+
       {/* Daily Profit Card */}
       <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
         <span className="text-slate-400 text-sm font-medium">Bugungi Foyda</span>
@@ -134,32 +164,6 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
         >
           <ShoppingBag size={18} />
           <span className="text-sm font-bold">Xarid (Faktura)</span>
-        </button>
-      </div>
-
-      {/* Interaction Type Toggle */}
-      <div className="flex justify-center space-x-2 pt-2">
-        <button 
-          onClick={() => setInteractionType('camera')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition font-bold text-xs ${
-            interactionType === 'camera' 
-              ? 'bg-white/10 border-white/20 text-white' 
-              : 'border-transparent text-slate-500'
-          }`}
-        >
-          <Camera size={14} />
-          <span>Rasm</span>
-        </button>
-        <button 
-          onClick={() => setInteractionType('voice')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-full border transition font-bold text-xs ${
-            interactionType === 'voice' 
-              ? 'bg-white/10 border-white/20 text-white' 
-              : 'border-transparent text-slate-500'
-          }`}
-        >
-          <Mic size={14} />
-          <span>Ovoz</span>
         </button>
       </div>
 

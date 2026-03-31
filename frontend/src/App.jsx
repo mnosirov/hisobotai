@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Mic } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -228,6 +228,21 @@ const MainApp = () => {
               fetchInventoryData={fetchInventoryData}
               API_BASE={API_BASE}
               setShowAddSaleModal={setShowAddSaleModal}
+              initialType="camera"
+            />
+          )}
+
+          {activeTab === 'voice' && (
+            <Dashboard 
+              profit={profit} 
+              profitGrowth={profitGrowth}
+              lowStockItems={lowStockItems}
+              tg={tg} 
+              fetchDashboardData={fetchDashboardData} 
+              fetchInventoryData={fetchInventoryData}
+              API_BASE={API_BASE}
+              setShowAddSaleModal={setShowAddSaleModal}
+              initialType="voice"
             />
           )}
 
@@ -300,6 +315,18 @@ const MainApp = () => {
             <TrendingUp size={22} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-tight">Xulosa</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('voice')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'voice' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'voice' ? 'bg-indigo-500/20' : ''}`}>
+            <Mic size={22} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Ovoz</span>
         </button>
         
         <button 
