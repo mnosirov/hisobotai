@@ -49,63 +49,68 @@ async def init_db():
     from app.core.security import get_password_hash
     import sqlalchemy as sa
     
-    # 1. Create tables
+    # 1. Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-        # 1.5 Auto-migrate missing columns for existing Phase 1 database
-        # Define a helper to run safe migrations
-        async def safe_migrate(sql):
+    # 1.5 Auto-migrate missing columns for existing Phase 1 database
+    # Define a helper to run safe migrations in individual transactions
+    async def safe_migrate(sql):
+        # Using connect() followed by begin() ensures a fresh transaction for each step
+        async with engine.connect() as conn:
             try:
-                await conn.execute(sa.text(sql))
+                async with conn.begin():
+                    await conn.execute(sa.text(sql))
             except Exception:
                 pass # Already exists or syntax error
 
-        # Users table
-        await safe_migrate("ALTER TABLE users ADD COLUMN telegram_chat_id VARCHAR")
-        await safe_migrate("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        await safe_migrate("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
-        await safe_migrate("ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0")
-        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_tier VARCHAR DEFAULT 'free'")
-        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_start TIMESTAMP")
-        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_end TIMESTAMP")
-        
-        # Products table
-        await safe_migrate("ALTER TABLE products ADD COLUMN category VARCHAR DEFAULT 'Umumiy'")
-        await safe_migrate("ALTER TABLE products ADD COLUMN tenant_id INTEGER")
-        await safe_migrate("ALTER TABLE products ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        await safe_migrate("ALTER TABLE products ADD COLUMN image_url VARCHAR")
-        await safe_migrate("ALTER TABLE products ADD COLUMN color VARCHAR")
-        await safe_migrate("ALTER TABLE products ADD COLUMN condition VARCHAR")
-        
-        # Sales table
-        await safe_migrate("ALTER TABLE sales ADD COLUMN tenant_id INTEGER")
-        await safe_migrate("ALTER TABLE sales ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        await safe_migrate("ALTER TABLE sales ADD COLUMN is_deleted INTEGER DEFAULT 0")
-        await safe_migrate("ALTER TABLE sales ADD COLUMN deleted_at TIMESTAMP")
-        
-        # Debts table
-        await safe_migrate("ALTER TABLE debts ADD COLUMN tenant_id INTEGER")
-        await safe_migrate("ALTER TABLE debts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        
-        # Inventory Logs table
-        await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN tenant_id INTEGER")
-        await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        
-        # Subscriptions table
+    # Users table
+    await safe_migrate("ALTER TABLE users ADD COLUMN telegram_chat_id VARCHAR")
+    await safe_migrate("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    await safe_migrate("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE users ADD COLUMN subscription_tier VARCHAR DEFAULT 'free'")
+    await safe_migrate("ALTER TABLE users ADD COLUMN subscription_start TIMESTAMP")
+    await safe_migrate("ALTER TABLE users ADD COLUMN subscription_end TIMESTAMP")
+    
+    # Products table
+    await safe_migrate("ALTER TABLE products ADD COLUMN category VARCHAR DEFAULT 'Umumiy'")
+    await safe_migrate("ALTER TABLE products ADD COLUMN tenant_id INTEGER")
+    await safe_migrate("ALTER TABLE products ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    await safe_migrate("ALTER TABLE products ADD COLUMN image_url VARCHAR")
+    await safe_migrate("ALTER TABLE products ADD COLUMN color VARCHAR")
+    await safe_migrate("ALTER TABLE products ADD COLUMN condition VARCHAR")
+    
+    # Sales table
+    await safe_migrate("ALTER TABLE sales ADD COLUMN tenant_id INTEGER")
+    await safe_migrate("ALTER TABLE sales ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    await safe_migrate("ALTER TABLE sales ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE sales ADD COLUMN deleted_at TIMESTAMP")
+    
+    # Debts table
+    await safe_migrate("ALTER TABLE debts ADD COLUMN tenant_id INTEGER")
+    await safe_migrate("ALTER TABLE debts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    
+    # Inventory Logs table
+    await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN tenant_id INTEGER")
+    await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    
+    # Subscriptions table
+    async with engine.connect() as conn:
         try:
-            await conn.execute(sa.text("""
-                CREATE TABLE IF NOT EXISTS subscriptions (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    tier VARCHAR NOT NULL,
-                    start_date TIMESTAMP NOT NULL,
-                    end_date TIMESTAMP NOT NULL,
-                    activated_by INTEGER,
-                    price FLOAT DEFAULT 0.0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
+            async with conn.begin():
+                await conn.execute(sa.text("""
+                    CREATE TABLE IF NOT EXISTS subscriptions (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        tier VARCHAR NOT NULL,
+                        start_date TIMESTAMP NOT NULL,
+                        end_date TIMESTAMP NOT NULL,
+                        activated_by INTEGER,
+                        price FLOAT DEFAULT 0.0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
         except Exception:
             # Fallback for SQLite
             await safe_migrate("""
@@ -121,12 +126,14 @@ async def init_db():
                 );
             """)
 
-        await safe_migrate("ALTER TABLE subscriptions ADD COLUMN price FLOAT DEFAULT 0.0")
-        
-        # Update existing prices based on tier if price is 0
+    await safe_migrate("ALTER TABLE subscriptions ADD COLUMN price FLOAT DEFAULT 0.0")
+    
+    # Update existing prices based on tier if price is 0
+    async with engine.connect() as conn:
         try:
-            await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
-            await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
+            async with conn.begin():
+                await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
+                await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
         except Exception:
             pass
         
