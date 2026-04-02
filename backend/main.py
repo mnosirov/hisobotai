@@ -129,12 +129,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    traceback.print_exc()
+    err_msg = traceback.format_exc()
+    print(f"GLOBAL ERROR: {err_msg}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error. Please contact admin.", "error": str(exc)},
+        content={"detail": "Internal server error.", "error": str(exc), "traceback": err_msg},
         headers={
-            "Access-Control-Allow-Origin": "https://hisobotai.vercel.app",
+            "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Methods": "*",
             "Access-Control-Allow-Headers": "*"
@@ -284,8 +285,9 @@ async def add_product_manual(
         return res
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        err_msg = traceback.format_exc()
+        print(f"Error in add_product_manual: {err_msg}")
+        return JSONResponse(status_code=500, content={"detail": str(e), "traceback": err_msg})
 
 @app.put("/api/inventory/{product_id}", response_model=schemas.ProductResponse)
 async def update_product(
