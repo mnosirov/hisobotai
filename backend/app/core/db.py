@@ -54,78 +54,81 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all)
         
         # 1.5 Auto-migrate missing columns for existing Phase 1 database
-        try:
-            # Users table
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR;"))
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-            
-            # Products table
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'Umumiy';"))
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR;"))
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS color VARCHAR;"))
-            await conn.execute(sa.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS condition VARCHAR;"))
-            
-            # Sales table
-            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
-            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_deleted INTEGER DEFAULT 0;"))
-            await conn.execute(sa.text("ALTER TABLE sales ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;"))
-            
-            # Debts table
-            await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
-            await conn.execute(sa.text("ALTER TABLE debts ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-            
-            # Inventory Logs table
-            # Inventory Logs table
-            await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;"))
-            await conn.execute(sa.text("ALTER TABLE inventory_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-            
-            # Subscriptions table (Postgres-friendly SERIAL, fallback for SQLite)
+        # Define a helper to run safe migrations
+        async def safe_migrate(sql):
             try:
-                await conn.execute(sa.text("""
-                    CREATE TABLE IF NOT EXISTS subscriptions (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL,
-                        tier VARCHAR NOT NULL,
-                        start_date TIMESTAMP NOT NULL,
-                        end_date TIMESTAMP NOT NULL,
-                        activated_by INTEGER,
-                        price FLOAT DEFAULT 0.0,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
+                await conn.execute(sa.text(sql))
             except Exception:
-                # Fallback for SQLite (AUTOINCREMENT)
-                await conn.execute(sa.text("""
-                    CREATE TABLE IF NOT EXISTS subscriptions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        tier VARCHAR NOT NULL,
-                        start_date DATETIME NOT NULL,
-                        end_date DATETIME NOT NULL,
-                        activated_by INTEGER,
-                        price FLOAT DEFAULT 0.0,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
+                pass # Already exists or syntax error
 
-            await conn.execute(sa.text("ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS price FLOAT DEFAULT 0.0;"))
-            
-            # Update existing prices based on tier if price is 0
+        # Users table
+        await safe_migrate("ALTER TABLE users ADD COLUMN telegram_chat_id VARCHAR")
+        await safe_migrate("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        await safe_migrate("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
+        await safe_migrate("ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0")
+        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_tier VARCHAR DEFAULT 'free'")
+        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_start TIMESTAMP")
+        await safe_migrate("ALTER TABLE users ADD COLUMN subscription_end TIMESTAMP")
+        
+        # Products table
+        await safe_migrate("ALTER TABLE products ADD COLUMN category VARCHAR DEFAULT 'Umumiy'")
+        await safe_migrate("ALTER TABLE products ADD COLUMN tenant_id INTEGER")
+        await safe_migrate("ALTER TABLE products ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        await safe_migrate("ALTER TABLE products ADD COLUMN image_url VARCHAR")
+        await safe_migrate("ALTER TABLE products ADD COLUMN color VARCHAR")
+        await safe_migrate("ALTER TABLE products ADD COLUMN condition VARCHAR")
+        
+        # Sales table
+        await safe_migrate("ALTER TABLE sales ADD COLUMN tenant_id INTEGER")
+        await safe_migrate("ALTER TABLE sales ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        await safe_migrate("ALTER TABLE sales ADD COLUMN is_deleted INTEGER DEFAULT 0")
+        await safe_migrate("ALTER TABLE sales ADD COLUMN deleted_at TIMESTAMP")
+        
+        # Debts table
+        await safe_migrate("ALTER TABLE debts ADD COLUMN tenant_id INTEGER")
+        await safe_migrate("ALTER TABLE debts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        
+        # Inventory Logs table
+        await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN tenant_id INTEGER")
+        await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        
+        # Subscriptions table
+        try:
+            await conn.execute(sa.text("""
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    tier VARCHAR NOT NULL,
+                    start_date TIMESTAMP NOT NULL,
+                    end_date TIMESTAMP NOT NULL,
+                    activated_by INTEGER,
+                    price FLOAT DEFAULT 0.0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+        except Exception:
+            # Fallback for SQLite
+            await safe_migrate("""
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    tier VARCHAR NOT NULL,
+                    start_date DATETIME NOT NULL,
+                    end_date DATETIME NOT NULL,
+                    activated_by INTEGER,
+                    price FLOAT DEFAULT 0.0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+        await safe_migrate("ALTER TABLE subscriptions ADD COLUMN price FLOAT DEFAULT 0.0")
+        
+        # Update existing prices based on tier if price is 0
+        try:
             await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
             await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
-
-            # Subscription & Admin columns
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked INTEGER DEFAULT 0;"))
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR DEFAULT 'free';"))
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMP;"))
-            await conn.execute(sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMP;"))
-            
-        except Exception as e:
-            print(f"Schema auto-migration skipped or failed: {e}")
+        except Exception:
+            pass
         
     # 2. Seed Default User securely
     async with AsyncSessionLocal() as session:

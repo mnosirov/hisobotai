@@ -68,6 +68,10 @@ class InventoryService:
                 product.last_purchase_price = price
             if sell_price > 0:
                 product.sell_price = sell_price
+            if color:
+                product.color = color
+            if condition:
+                product.condition = condition
             if image_url:
                 product.image_url = image_url
         else:
