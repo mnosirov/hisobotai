@@ -28,7 +28,16 @@ const MainApp = () => {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSaleModal, setShowAddSaleModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '' });
+  const [newProduct, setNewProduct] = useState({ 
+    name: '', 
+    category: 'Umumiy', 
+    unit: 'dona', 
+    stock: '', 
+    buyPrice: '', 
+    sellPrice: '',
+    color: '',
+    condition: ''
+  });
 
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([
@@ -101,6 +110,8 @@ const MainApp = () => {
       formData.append('stock', parseFloat(newProduct.stock) || 0);
       formData.append('last_purchase_price', parseFloat(newProduct.buyPrice) || 0);
       formData.append('sell_price', parseFloat(newProduct.sellPrice) || 0);
+      if (newProduct.color) formData.append('color', newProduct.color);
+      if (newProduct.condition) formData.append('condition', newProduct.condition);
       
       if (newProduct.imageFile) {
         formData.append('image', newProduct.imageFile);
@@ -113,7 +124,7 @@ const MainApp = () => {
       });
       toast.success("Muvaffaqiyatli qo'shildi!", { id: loadingToast });
       setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '', imageFile: null });
+      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '', color: '', condition: '', imageFile: null });
       fetchInventoryData(); 
       fetchDashboardData(); // Refresh dashboard for low stock alerts
     } catch (err) {
@@ -153,6 +164,8 @@ const MainApp = () => {
       if (productData.stock !== undefined) formData.append('stock', parseFloat(productData.stock) || 0);
       if (productData.buyPrice !== undefined) formData.append('last_purchase_price', parseFloat(productData.buyPrice) || 0);
       if (productData.sellPrice !== undefined) formData.append('sell_price', parseFloat(productData.sellPrice) || 0);
+      if (productData.color !== undefined) formData.append('color', productData.color);
+      if (productData.condition !== undefined) formData.append('condition', productData.condition);
       
       if (productData.imageFile) {
         formData.append('image', productData.imageFile);

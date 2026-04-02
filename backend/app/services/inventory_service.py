@@ -27,6 +27,8 @@ class InventoryService:
         unit = product_data.get("unit") or "dona"
         price = float(product_data.get("price") or 0.0)
         sell_price = float(product_data.get("sell_price") or 0.0)
+        color = product_data.get("color")
+        condition = product_data.get("condition")
 
         # Exact case-insensitive search
         query = select(Product).where(
@@ -79,6 +81,8 @@ class InventoryService:
                 stock=quantity,
                 last_purchase_price=price,
                 sell_price=sell_price,
+                color=color,
+                condition=condition,
                 image_url=image_url
             )
             self.db.add(product)
@@ -207,6 +211,8 @@ class InventoryService:
         if "unit" in data: product.unit = data["unit"]
         if "last_purchase_price" in data: product.last_purchase_price = float(data["last_purchase_price"])
         if "sell_price" in data: product.sell_price = float(data["sell_price"])
+        if "color" in data: product.color = data["color"]
+        if "condition" in data: product.condition = data["condition"]
         if image_url: product.image_url = image_url
 
         await self.db.commit()

@@ -188,6 +188,39 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   />
                 </div>
               </div>
+
+              {/* Optional Fields: Color and Condition */}
+              <div className="pt-2 border-t border-white/5 space-y-4">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Qo'shimcha</p>
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="text-xs text-slate-400 mb-1 block">Rangi</label>
+                    <input 
+                      type="text" 
+                      value={newProduct.color || ''} 
+                      onChange={e => setNewProduct({...newProduct, color: e.target.value})} 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                      placeholder="Masalan: Qizil" 
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-slate-400 mb-1 block">Holati</label>
+                    <input 
+                      type="text" 
+                      list="condition-suggestions"
+                      value={newProduct.condition || ''} 
+                      onChange={e => setNewProduct({...newProduct, condition: e.target.value})} 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                      placeholder="Yangi/Eski" 
+                    />
+                    <datalist id="condition-suggestions">
+                      <option value="Yangi" />
+                      <option value="Ishlatilgan" />
+                      <option value="A'lo" />
+                    </datalist>
+                  </div>
+                </div>
+              </div>
               
               <button 
                 onClick={handleAddProduct} 

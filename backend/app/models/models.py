@@ -52,6 +52,8 @@ class Product(Base):
     stock = Column(Float, nullable=False, default=0.0)
     last_purchase_price = Column(Float, nullable=False, default=0.0)
     sell_price = Column(Float, nullable=False, default=0.0)
+    color = Column(String, nullable=True)
+    condition = Column(String, nullable=True) # e.g., Yangi, Ishlatilgan
     image_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     

@@ -9,6 +9,8 @@ class ProductBase(BaseModel):
     stock: float = Field(default=0.0)
     last_purchase_price: float = Field(default=0.0)
     sell_price: float = Field(default=0.0)
+    color: Optional[str] = Field(default=None)
+    condition: Optional[str] = Field(default=None) # e.g., Yangi, Ishlatilgan
     image_url: Optional[str] = Field(default=None)
 
 class ProductCreate(ProductBase):

@@ -99,9 +99,19 @@ const Inventory = ({ inventory, setShowAddModal, user, onUpdate, onDelete }) => 
                 <div>
                   <div className="flex items-center space-x-2">
                     <h4 className="font-bold">{item.name}</h4>
-                    <span className="text-[9px] px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20">
-                      {item.category || 'Umumiy'}
-                    </span>
+                    <p className="text-xs text-slate-400 mb-1">{item.category}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {item.color && (
+                        <span className="text-[9px] font-bold bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-slate-300">
+                          Rang: {item.color}
+                        </span>
+                      )}
+                      {item.condition && (
+                        <span className="text-[9px] font-bold bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400">
+                          Holat: {item.condition}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-slate-500 text-xs">{item.unit} | Olish: {item.last_purchase_price} | Sotish: {item.sell_price}</p>
                 </div>

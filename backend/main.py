@@ -256,6 +256,8 @@ async def add_product_manual(
     stock: float = Form(0.0),
     last_purchase_price: float = Form(0.0),
     sell_price: float = Form(0.0),
+    color: Optional[str] = Form(None),
+    condition: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user), 
     db: AsyncSession = Depends(get_db)
@@ -274,7 +276,9 @@ async def add_product_manual(
             "quantity": stock,
             "unit": unit,
             "price": last_purchase_price,
-            "sell_price": sell_price
+            "sell_price": sell_price,
+            "color": color,
+            "condition": condition
         }
         res = await service.add_or_update_product(product_data, source="Qo'lda (Manual)", image_url=image_url)
         return res
@@ -292,6 +296,8 @@ async def update_product(
     stock: float = Form(None),
     last_purchase_price: float = Form(None),
     sell_price: float = Form(None),
+    color: Optional[str] = Form(None),
+    condition: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -310,6 +316,8 @@ async def update_product(
         if stock is not None: data["stock"] = stock
         if last_purchase_price is not None: data["last_purchase_price"] = last_purchase_price
         if sell_price is not None: data["sell_price"] = sell_price
+        if color is not None: data["color"] = color
+        if condition is not None: data["condition"] = condition
 
         return await service.update_product(product_id, data, image_url)
     except Exception as e:

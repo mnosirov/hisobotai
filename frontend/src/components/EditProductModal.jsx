@@ -10,6 +10,8 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventor
     stock: '',
     buyPrice: '',
     sellPrice: '',
+    color: '',
+    condition: '',
     imageFile: null
   });
 
@@ -22,6 +24,8 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventor
         stock: product.stock || 0,
         buyPrice: product.last_purchase_price || 0,
         sellPrice: product.sell_price || 0,
+        color: product.color || '',
+        condition: product.condition || '',
         imageFile: null
       });
     }
@@ -178,6 +182,39 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventor
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
+                </div>
+              </div>
+
+              {/* Optional Fields: Color and Condition */}
+              <div className="pt-2 border-t border-white/5 space-y-4">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Qo'shimcha</p>
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="text-xs text-slate-400 mb-1 block">Rangi</label>
+                    <input 
+                      type="text" 
+                      value={formData.color || ''} 
+                      onChange={e => setFormData({...formData, color: e.target.value})} 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                      placeholder="Masalan: Qizil" 
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-slate-400 mb-1 block">Holati</label>
+                    <input 
+                      type="text" 
+                      list="edit-condition-suggestions"
+                      value={formData.condition || ''} 
+                      onChange={e => setFormData({...formData, condition: e.target.value})} 
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                      placeholder="Yangi/Eski" 
+                    />
+                    <datalist id="edit-condition-suggestions">
+                      <option value="Yangi" />
+                      <option value="Ishlatilgan" />
+                      <option value="A'lo" />
+                    </datalist>
+                  </div>
                 </div>
               </div>
               
