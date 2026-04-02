@@ -64,6 +64,31 @@ const Chat = ({ showChat, setShowChat, chatMessages, isTyping, chatInput, setCha
             <div ref={chatEndRef} />
           </div>
 
+          {/* Quick Suggestions Chips */}
+          {!isTyping && chatMessages.length < 3 && (
+            <div className="flex overflow-x-auto px-6 pb-4 space-x-2 no-scrollbar">
+              {[
+                "Eng ko'p sotilgan narsa?",
+                "Foydani qanday oshiraman?",
+                "Skladimda nima kam?",
+                "Omborimda qancha mol bor?",
+                "Bugungi savdo haqida tahlil"
+              ].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => {
+                    setChatInput(q);
+                    // Use setTimeout to ensure state is updated before sending
+                    setTimeout(() => handleSendMessage(q), 0);
+                  }}
+                  className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-xs font-bold text-indigo-400 whitespace-nowrap active:scale-95 transition-transform"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="p-6 pb-10 flex items-center space-x-2">
             <input 
               type="text" 

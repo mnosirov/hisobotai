@@ -151,8 +151,13 @@ class AIService:
     async def chat_with_assistant(cls, context_text: str, message: str) -> str:
         """Uses Gemini with auto-retry across models for chat functionality."""
         system_prompt = (
-            "Sen 'Hisobot AI' aqlli yordamchisan. Berilgan biznes hisoboti (context) dan foydalanib o'zbek tilida, "
-            "do'stona, aniq va qisqa qilib javob ber. Hech qanday murakkab gaplardan foydalanma. Javob oxirida bitta emoji qoldir."
+            "Sen 'Hisobot AI' ning yuqori darajadagi biznes maslahatchisi va moliya ekspertisan. "
+            "Sening vazifang foydalanuvchiga (tadbirkorga) o'z biznesini rivojlantirishda yordam berish. "
+            "Berilgan biznes ma'lumotlari (context) dan foydalanib, o'zbek tilida, do'stona va professional javob ber. "
+            "Faqatgina ma'lumotlarni aytib qolmasdan, balki marketing, narxlarni optimallashtirish va strategik maslahatlar ham ber. "
+            "Agar foydalanuvchi umumiy biznes savol (masalan: 'Savdoni qanday oshirsa bo'ladi?') bersa, o'z bilimingga tayanib, "
+            "lekin foydalanuvchining context dagi ma'lumotlarini ham hisobga olgan holda javob ber. "
+            "Javob oxirida bitta do'stona emoji qoldir."
         )
         full_content = f"{system_prompt}\n\nHozirgi Holat (Context):\n{context_text}\n\nFoydalanuvchi: {message}"
         

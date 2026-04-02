@@ -438,11 +438,12 @@ async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = De
     try:
         sales_service = SalesService(db, current_user.id)
         inv_service = InventoryService(db, current_user.id)
+        bi_service = BIService(db, current_user.id)
         
         summary = await sales_service.get_sales_summary()
         products = await inv_service.get_all_products()
-        todays_sales = await sales_service.get_todays_sales()
         recent_history = await sales_service.get_recent_sales_full(limit=10)
+        biz_health = await bi_service.get_business_summary()
         
         low_stock = [f"{p.name} ({p.stock} qoldi)" for p in products if p.stock < 10]
         
@@ -452,6 +453,10 @@ async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = De
         context += f"Yaqinda sotilgan mahsulotlar:\n{history_text}\n"
         if low_stock:
             context += f"Tugab qolayotgan mahsulotlar: {', '.join(low_stock)}.\n"
+        
+        context += f"Ombordagi mahsulot turlari: {biz_health['total_product_types']} xil.\n"
+        context += f"Ombordagi jami mollar qiymati: {biz_health['total_stock_value']} UZS.\n"
+        context += f"Eng ko'p sotilayotgan mahsulotlar: {', '.join(biz_health['top_selling_products'])}.\n"
             
         reply = await AIService.chat_with_assistant(context, chat.message)
         return {"reply": reply}

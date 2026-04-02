@@ -121,17 +121,18 @@ const MainApp = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!chatInput.trim()) return;
+  const handleSendMessage = async (optionalMsg) => {
+    const messageToSend = optionalMsg || chatInput;
+    if (!messageToSend.trim()) return;
     
-    const newMessages = [...chatMessages, { role: 'user', content: chatInput }];
+    const newMessages = [...chatMessages, { role: 'user', content: messageToSend }];
     setChatMessages(newMessages);
     setChatInput("");
     setIsTyping(true);
 
     try {
       const res = await axios.post(`${API_BASE}/chat`, {
-        message: chatInput
+        message: messageToSend
       });
       setChatMessages([...newMessages, { role: 'assistant', content: res.data.reply }]);
     } catch (err) {

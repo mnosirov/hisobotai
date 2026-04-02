@@ -8,6 +8,45 @@ class BIService:
         self.db = db
         self.tenant_id = tenant_id
 
+    async def get_business_summary(self) -> Dict:
+        """AI va BI uchun biznesning umumiy holatini hisoblaydi."""
+        from app.models.models import Product, Sale
+        from sqlalchemy import func
+        
+        # 1. Omborxonadagi jami mahsulotlar qiymati (investitsiya)
+        q_stock = select(func.sum(Product.stock * Product.last_purchase_price)).where(Product.tenant_id == self.tenant_id)
+        res_stock = await self.db.execute(q_stock)
+        total_stock_value = res_stock.scalar() or 0.0
+        
+        # 2. Jami mahsulotlar soni (turlar bo'yicha)
+        q_count = select(func.count(Product.id)).where(Product.tenant_id == self.tenant_id)
+        res_count = await self.db.execute(q_count)
+        total_products = res_count.scalar() or 0
+        
+        # 3. Eng ko'p sotilgan mahsulotlar (oxirgi 30 kunda)
+        # SQLite/Postgres JSON tahlili murakkab bo'lgani uchun oxirgi 50 ta sotuvdan hisoblaymiz
+        q_sales = select(Sale).where(Sale.tenant_id == self.tenant_id, Sale.is_deleted == 0).order_by(Sale.created_at.desc()).limit(50)
+        res_sales = await self.db.execute(q_sales)
+        recent_sales = res_sales.scalars().all()
+        
+        product_stats = {}
+        for sale in recent_sales:
+            items = sale.items_json
+            if isinstance(items, str):
+                import json
+                items = json.loads(items)
+            for item in items:
+                p_name = item.get("product", "Noma'lum")
+                product_stats[p_name] = product_stats.get(p_name, 0) + item.get("quantity", 0)
+        
+        top_products = sorted(product_stats.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        return {
+            "total_stock_value": int(total_stock_value),
+            "total_product_types": total_products,
+            "top_selling_products": [f"{name} ({qty} ta)" for name, qty in top_products]
+        }
+
     async def get_weekly_insights(self) -> List[Dict]:
         return [
             {"day": "Dushanba", "profit": 150000},
