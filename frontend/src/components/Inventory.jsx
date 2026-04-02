@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Plus } from 'lucide-react';
+import { Package, Plus, Edit2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import EditProductModal from './EditProductModal';
 
-const Inventory = ({ inventory, setShowAddModal, user }) => {
+const Inventory = ({ inventory, setShowAddModal, user, onUpdate, onDelete }) => {
   const { BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const isAdmin = user?.is_admin === 1;
   const tier = user?.subscription_tier || 'free';
@@ -112,6 +114,15 @@ const Inventory = ({ inventory, setShowAddModal, user }) => {
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-tighter">Qoldiq</p>
               </div>
+
+              {/* Edit Button overlay on hover or always on touch */}
+              <button 
+                onClick={() => setEditingProduct(item)}
+                className="ml-4 h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center hover:bg-indigo-500/20 transition-colors"
+              >
+                <Edit2 size={16} />
+              </button>
+
               {item.stock < item.threshold && (
                 <div className="absolute top-0 right-0 py-1 px-2 bg-rose-500 text-[8px] font-black rounded-bl-lg uppercase">
                   Kam qoldi
@@ -146,6 +157,14 @@ const Inventory = ({ inventory, setShowAddModal, user }) => {
           </motion.div>
         )}
       </AnimatePresence>
+      <EditProductModal 
+        show={!!editingProduct} 
+        onClose={() => setEditingProduct(null)} 
+        product={editingProduct} 
+        onUpdate={onUpdate} 
+        onDelete={onDelete}
+        inventory={inventory}
+      />
     </>
   );
 };

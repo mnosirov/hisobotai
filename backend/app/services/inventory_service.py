@@ -192,3 +192,37 @@ class InventoryService:
             processed_products.append(product)
         return processed_products
 
+    async def update_product(self, product_id: int, data: Dict, image_url: Optional[str] = None) -> Product:
+        """Mavjud mahsulot ma'lumotlarini tahrirlaydi."""
+        from fastapi import HTTPException
+        query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
+        result = await self.db.execute(query)
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Mahsulot topilmadi")
+
+        if "name" in data: product.name = data["name"]
+        if "category" in data: product.category = data["category"]
+        if "stock" in data: product.stock = float(data["stock"])
+        if "unit" in data: product.unit = data["unit"]
+        if "last_purchase_price" in data: product.last_purchase_price = float(data["last_purchase_price"])
+        if "sell_price" in data: product.sell_price = float(data["sell_price"])
+        if image_url: product.image_url = image_url
+
+        await self.db.commit()
+        await self.db.refresh(product)
+        return product
+
+    async def delete_product(self, product_id: int):
+        """Mahsulotni o'chiradi."""
+        from fastapi import HTTPException
+        query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
+        result = await self.db.execute(query)
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Mahsulot topilmadi")
+
+        await self.db.delete(product)
+        await self.db.commit()
+        return True
+

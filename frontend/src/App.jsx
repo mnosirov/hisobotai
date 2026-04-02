@@ -142,6 +142,44 @@ const MainApp = () => {
     }
   };
 
+  const handleUpdateProduct = async (productId, productData) => {
+    const loadingToast = toast.loading("Yangilanmoqda...");
+    try {
+      const formData = new FormData();
+      if (productData.name) formData.append('name', productData.name);
+      if (productData.category) formData.append('category', productData.category);
+      if (productData.unit) formData.append('unit', productData.unit);
+      if (productData.stock !== undefined) formData.append('stock', parseFloat(productData.stock) || 0);
+      if (productData.buyPrice !== undefined) formData.append('last_purchase_price', parseFloat(productData.buyPrice) || 0);
+      if (productData.sellPrice !== undefined) formData.append('sell_price', parseFloat(productData.sellPrice) || 0);
+      
+      if (productData.imageFile) {
+        formData.append('image', productData.imageFile);
+      }
+
+      await axios.put(`${API_BASE}/inventory/${productId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success("Muvaffaqiyatli yangilandi!", { id: loadingToast });
+      fetchInventoryData();
+      fetchDashboardData();
+    } catch (err) {
+      toast.error("Yangilashda xatolik yuz berdi", { id: loadingToast });
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    const loadingToast = toast.loading("O'chirilmoqda...");
+    try {
+      await axios.delete(`${API_BASE}/inventory/${productId}`);
+      toast.success("Mahsulot o'chirildi!", { id: loadingToast });
+      fetchInventoryData();
+      fetchDashboardData();
+    } catch (err) {
+      toast.error("O'chirishda xatolik yuz berdi", { id: loadingToast });
+    }
+  };
+
   if (loading) return (
     <div className="h-screen bg-[#0F172A] flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -236,6 +274,8 @@ const MainApp = () => {
               inventory={inventory} 
               setShowAddModal={setShowAddModal} 
               user={user}
+              onUpdate={handleUpdateProduct}
+              onDelete={handleDeleteProduct}
             />
           )}
 

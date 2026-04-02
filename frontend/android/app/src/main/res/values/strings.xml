@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HisobotAI</string>
+    <string name="title_activity_main">HisobotAI</string>
+    <string name="package_name">com.hisobotai.app</string>
+    <string name="custom_url_scheme">com.hisobotai.app</string>
+</resources>

@@ -283,6 +283,51 @@ async def add_product_manual(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.put("/api/inventory/{product_id}", response_model=schemas.ProductResponse)
+async def update_product(
+    product_id: int,
+    name: str = Form(None),
+    category: str = Form(None),
+    unit: str = Form(None),
+    stock: float = Form(None),
+    last_purchase_price: float = Form(None),
+    sell_price: float = Form(None),
+    image: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        service = InventoryService(db, current_user.id)
+        image_url = None
+        if image:
+            content = await image.read()
+            image_url = service.process_product_image(content, image.filename)
+        
+        data = {}
+        if name is not None: data["name"] = name
+        if category is not None: data["category"] = category
+        if unit is not None: data["unit"] = unit
+        if stock is not None: data["stock"] = stock
+        if last_purchase_price is not None: data["last_purchase_price"] = last_purchase_price
+        if sell_price is not None: data["sell_price"] = sell_price
+
+        return await service.update_product(product_id, data, image_url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/inventory/{product_id}")
+async def delete_product(
+    product_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        service = InventoryService(db, current_user.id)
+        await service.delete_product(product_id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/inventory/analyze", response_model=List[Dict])
 async def analyze_invoice(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     temp_path = f"/tmp/{image.filename}"
