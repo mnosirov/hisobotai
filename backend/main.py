@@ -60,8 +60,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     if user is None:
         raise credentials_exception
     
-    # Avtomatik obuna muddati tekshiruvi
-    await SubscriptionService.check_and_expire(user, db)
+    # Avtomatik obuna muddati tekshiruvi (Admin bo'lmasa)
+    if user.is_admin != 1:
+        await SubscriptionService.check_and_expire(user, db)
     
     if user.is_blocked == 1:
         raise HTTPException(
@@ -379,10 +380,15 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/sales/history", response_model=List[schemas.SaleResponse])
-async def get_sales_history(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_sales_history(
+    page: int = 1,
+    size: int = 50,
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     try:
         service = SalesService(db, current_user.id)
-        return await service.get_sales_history()
+        return await service.get_sales_history(page=page, size=size)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -447,22 +453,22 @@ async def get_insights(current_user: User = Depends(get_current_user), db: Async
 async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
         sales_service = SalesService(db, current_user.id)
-        inv_service = InventoryService(db, current_user.id)
         bi_service = BIService(db, current_user.id)
         
+        # Summary and recent history are usually faster
         summary = await sales_service.get_sales_summary()
-        products = await inv_service.get_all_products()
-        recent_history = await sales_service.get_recent_sales_full(limit=10)
+        recent_history = await sales_service.get_recent_sales_full(limit=5) # Reduced limit
         biz_health = await bi_service.get_business_summary()
-        
-        low_stock = [f"{p.name} ({p.stock} qoldi)" for p in products if p.stock < 10]
         
         history_text = "\n".join(recent_history)
         context = f"Foydalanuvchi: {current_user.username}\n"
         context += f"Bugungi jami foyda: {int(summary.get('today_profit', 0))} UZS.\n"
         context += f"Yaqinda sotilgan mahsulotlar:\n{history_text}\n"
+        
+        low_stock = summary.get("low_stock_items", [])
         if low_stock:
-            context += f"Tugab qolayotgan mahsulotlar: {', '.join(low_stock)}.\n"
+            low_text = ", ".join([f"{i['name']} ({i['stock']} {i['unit']})" for i in low_stock])
+            context += f"Tugab qolayotgan mahsulotlar: {low_text}.\n"
         
         context += f"Ombordagi mahsulot turlari: {biz_health['total_product_types']} xil.\n"
         context += f"Ombordagi jami mollar qiymati: {biz_health['total_stock_value']} UZS.\n"

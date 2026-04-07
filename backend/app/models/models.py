@@ -55,7 +55,7 @@ class Product(Base):
     color = Column(String, nullable=True)
     condition = Column(String, nullable=True) # e.g., Yangi, Ishlatilgan
     image_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     owner = relationship("User", back_populates="products")
     logs = relationship("InventoryLog", back_populates="product", cascade="all, delete-orphan")
@@ -68,7 +68,7 @@ class InventoryLog(Base):
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     change_amount = Column(Float, nullable=False)
     source = Column(String, nullable=False)  # Example: "invoice", "voice", "manual"
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     owner = relationship("User", back_populates="inventory_logs")
     product = relationship("Product", back_populates="logs")
@@ -81,9 +81,9 @@ class Sale(Base):
     items_json = Column(JSON, nullable=False)  # List of dicts representing sold items
     total_amount = Column(Float, nullable=False, default=0.0)
     profit = Column(Float, nullable=False, default=0.0)
-    is_deleted = Column(Integer, default=0)  # 0=active, 1=deleted
+    is_deleted = Column(Integer, default=0, index=True)  # 0=active, 1=deleted
     deleted_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     owner = relationship("User", back_populates="sales")
 
@@ -96,6 +96,6 @@ class Debt(Base):
     amount = Column(Float, nullable=False)
     due_date = Column(DateTime, nullable=True)
     is_paid = Column(Integer, default=0) # 0 for unpaid, 1 for paid
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     owner = relationship("User", back_populates="debts")

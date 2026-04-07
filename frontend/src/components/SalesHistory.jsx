@@ -7,19 +7,46 @@ import { toast } from 'react-hot-toast';
 const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory(1, true);
   }, []);
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (pageNumber = 1, isInitial = false) => {
     try {
-      const { data } = await axios.get(`${API_BASE}/sales/history?t=${Date.now()}`);
-      setHistory(data);
+      if (isInitial) setLoading(true);
+      else setLoadingMore(true);
+      
+      const { data } = await axios.get(`${API_BASE}/sales/history?page=${pageNumber}&size=20&t=${Date.now()}`);
+      
+      if (isInitial) {
+        setHistory(data);
+      } else {
+        setHistory(prev => [...prev, ...data]);
+      }
+      
+      if (data.length < 20) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+      
+      setPage(pageNumber);
     } catch (err) {
       console.error("History fetch error", err);
+      toast.error("Ma'lumotlarni yuklashda xatolik");
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
+      else setLoadingMore(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchHistory(page + 1);
     }
   };
 
@@ -31,8 +58,9 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
       await axios.delete(`${API_BASE}/sales/${saleId}`);
       toast.success("Sotuv o'chirildi", { id: loadingToast });
       
-      // Refresh all data
-      fetchHistory();
+      // Refresh all data - keep current page or reset?
+      // For simplicity, reset to page 1 to ensure data integrity
+      fetchHistory(1, true);
       if (fetchInventoryData) fetchInventoryData();
       if (fetchDashboardData) fetchDashboardData();
     } catch (err) {
@@ -156,6 +184,17 @@ const SalesHistory = ({ API_BASE, fetchInventoryData, fetchDashboardData }) => {
             </div>
           </div>
         ))}
+        {hasMore && (
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-6 py-2 rounded-xl bg-indigo-500/10 text-indigo-400 text-sm font-bold border border-indigo-500/20 hover:bg-indigo-500/20 transition-all disabled:opacity-50"
+            >
+              {loadingMore ? "Yuklanmoqda..." : "Yana ko'proq yuklash"}
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   );

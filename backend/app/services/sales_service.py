@@ -82,9 +82,15 @@ class SalesService:
             all_items.extend(s.items_json)
         return all_items
 
-    async def get_sales_history(self) -> List[Sale]:
-        """Barcha sotuvlar tarixini qaytaradi."""
-        query = select(Sale).where(Sale.tenant_id == self.tenant_id).order_by(Sale.created_at.desc())
+    async def get_sales_history(self, page: int = 1, size: int = 50) -> List[Sale]:
+        """Sotuvlar tarixini sahifalash (Pagination) orqali qaytaradi."""
+        offset = (page - 1) * size
+        query = select(Sale).where(
+            Sale.tenant_id == self.tenant_id
+        ).order_by(
+            Sale.created_at.desc()
+        ).offset(offset).limit(size)
+        
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -101,8 +107,6 @@ class SalesService:
             items = ", ".join([f"{i.get('product')} ({i.get('quantity')} ta)" for i in s.items_json])
             history.append(f"{dt}: {items} - {int(s.total_amount)} UZS")
         return history
-
-        return analyzed_items
 
     async def analyze_voice_sales(self, audio_path: str) -> List[Dict]:
         """AI orqali ovozli xabardan sotuvlarni o'qiydi."""
