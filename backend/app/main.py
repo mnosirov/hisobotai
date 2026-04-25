@@ -1,3 +1,8 @@
+import sys
+import os
+# Add the project root to sys.path to allow absolute imports from 'app'
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Request, status, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
