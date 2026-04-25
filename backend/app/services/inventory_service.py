@@ -155,9 +155,6 @@ class InventoryService:
             import traceback
             traceback.print_exc()
             return ""
-
-        return analyzed_items
-
     async def analyze_voice_upload(self, audio_path: str) -> List[Dict]:
         """AI orqali ovozli xabardan mahsulotlarni o'qiydi."""
         text = await AIService.transcribe_audio(audio_path)
