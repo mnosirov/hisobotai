@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const BACKEND_URL = "https://hisobotai-production.up.railway.app";
+  const BACKEND_URL = "https://hisobotai.onrender.com";
   const API_BASE = `${BACKEND_URL}/api`;
 
   useEffect(() => {

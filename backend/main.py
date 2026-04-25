@@ -95,7 +95,7 @@ async def lifespan(app: FastAPI):
     if bot_token and "dummy" not in bot_token:
         try:
             # We use the current production domain name
-            webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
+            webhook_url = "https://hisobotai.onrender.com/api/telegram/webhook"
             async with httpx.AsyncClient() as client:
                 res = await client.post(
                     f"https://api.telegram.org/bot{bot_token}/setWebhook",
@@ -213,7 +213,7 @@ async def setup_webhook():
     if not bot_token or "dummy" in bot_token:
         return {"status": "error", "message": "TELEGRAM_BOT_TOKEN kiritilmagan yoki xato."}
     
-    webhook_url = "https://hisobotai-production.up.railway.app/api/telegram/webhook"
+    webhook_url = "https://hisobotai.onrender.com/api/telegram/webhook"
     try:
         async with httpx.AsyncClient() as client:
             res = await client.post(
