@@ -13,3 +13,7 @@ aiosqlite
 Pillow
 pyjwt
 python-multipart
+cloudinary
+python-barcode
+python-jose[cryptography]
+passlib[bcrypt]
