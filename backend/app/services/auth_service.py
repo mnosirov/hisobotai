@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from fastapi import HTTPException, status
 from app.models.models import User
 from app.core.security import get_password_hash, verify_password, create_access_token
@@ -14,7 +14,10 @@ class AuthService:
         email = user_data.email.lower().strip()
         username = user_data.username.strip()
         
-        query = select(User).where((User.email == email) | (User.username == username))
+        query = select(User).where(
+            (func.lower(User.email) == email) | 
+            (func.lower(User.username) == username.lower())
+        )
         result = await self.db.execute(query)
         if result.first():
             raise HTTPException(
@@ -34,7 +37,7 @@ class AuthService:
 
     async def authenticate_user(self, login_data: schemas.UserLogin) -> dict:
         email = login_data.email.lower().strip()
-        query = select(User).where(User.email == email)
+        query = select(User).where(func.lower(User.email) == email)
         result = await self.db.execute(query)
         user = result.scalar_one_or_none()
         
