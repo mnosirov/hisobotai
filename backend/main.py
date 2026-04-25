@@ -114,8 +114,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "http://localhost:5555",
         "https://hisobotai.vercel.app",
-        "https://hisobot-ai.vercel.app"
+        "https://hisobot-ai.vercel.app",
+        "https://hisobotai-git-main-mnosirovs-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
