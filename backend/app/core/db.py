@@ -242,8 +242,10 @@ async def init_db():
             async with conn.begin():
                 await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
                 await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
-        except Exception:
-            pass
+                # Clean up orphaned payment logs from previous bug
+                await conn.execute(sa.text("DELETE FROM supplier_payment_logs WHERE debt_id IS NULL;"))
+        except Exception as e:
+            print(f"Migration/Cleanup error: {e}")
         
     # 2. Seed Default User securely
     async with AsyncSessionLocal() as session:
