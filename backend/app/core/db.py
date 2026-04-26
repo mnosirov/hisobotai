@@ -140,58 +140,70 @@ async def init_db():
     await safe_migrate("ALTER TABLE subscriptions ADD COLUMN price FLOAT DEFAULT 0.0")
     
     # 1.6 Create Supplier and SupplierDebt tables explicitly if they don't exist
-    async with engine.connect() as conn:
-        try:
-            async with conn.begin():
-                # Suppliers table
-                await conn.execute(sa.text("""
-                    CREATE TABLE IF NOT EXISTS suppliers (
-                        id SERIAL PRIMARY KEY,
-                        tenant_id INTEGER NOT NULL,
-                        name VARCHAR NOT NULL,
-                        phone VARCHAR,
-                        address VARCHAR,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-                # Supplier Debts table
-                await conn.execute(sa.text("""
-                    CREATE TABLE IF NOT EXISTS supplier_debts (
-                        id SERIAL PRIMARY KEY,
-                        tenant_id INTEGER NOT NULL,
-                        supplier_id INTEGER NOT NULL,
-                        product_id INTEGER,
-                        total_amount FLOAT NOT NULL,
-                        remaining_amount FLOAT NOT NULL,
-                        notes TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE CASCADE
-                    );
-                """))
-        except Exception:
-            # Fallback for SQLite
-            await safe_migrate("""
-                CREATE TABLE IF NOT EXISTS suppliers (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    tenant_id INTEGER NOT NULL,
-                    name VARCHAR NOT NULL,
-                    phone VARCHAR,
-                    address VARCHAR,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
-            await safe_migrate("""
-                CREATE TABLE IF NOT EXISTS supplier_debts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    tenant_id INTEGER NOT NULL,
-                    supplier_id INTEGER NOT NULL,
-                    product_id INTEGER,
-                    total_amount FLOAT NOT NULL,
-                    remaining_amount FLOAT NOT NULL,
-                    notes TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
+    # We detect the dialect to use correct SQL
+    is_postgres = "postgresql" in DATABASE_URL
+    
+    async def ensure_suppliers_table():
+        sql = """
+            CREATE TABLE IF NOT EXISTS suppliers (
+                id SERIAL PRIMARY KEY,
+                tenant_id INTEGER NOT NULL,
+                name VARCHAR NOT NULL,
+                phone VARCHAR,
+                address VARCHAR,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """ if is_postgres else """
+            CREATE TABLE IF NOT EXISTS suppliers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                name VARCHAR NOT NULL,
+                phone VARCHAR,
+                address VARCHAR,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        async with engine.connect() as conn:
+            try:
+                async with conn.begin():
+                    await conn.execute(sa.text(sql))
+            except Exception as e:
+                print(f"Suppliers table creation error: {e}")
+
+    async def ensure_supplier_debts_table():
+        sql = """
+            CREATE TABLE IF NOT EXISTS supplier_debts (
+                id SERIAL PRIMARY KEY,
+                tenant_id INTEGER NOT NULL,
+                supplier_id INTEGER NOT NULL,
+                product_id INTEGER,
+                total_amount FLOAT NOT NULL,
+                remaining_amount FLOAT NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE CASCADE
+            );
+        """ if is_postgres else """
+            CREATE TABLE IF NOT EXISTS supplier_debts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                supplier_id INTEGER NOT NULL,
+                product_id INTEGER,
+                total_amount FLOAT NOT NULL,
+                remaining_amount FLOAT NOT NULL,
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        """
+        async with engine.connect() as conn:
+            try:
+                async with conn.begin():
+                    await conn.execute(sa.text(sql))
+            except Exception as e:
+                print(f"SupplierDebts table creation error: {e}")
+
+    await ensure_suppliers_table()
+    await ensure_supplier_debts_table()
 
     # Update existing prices based on tier if price is 0
     async with engine.connect() as conn:

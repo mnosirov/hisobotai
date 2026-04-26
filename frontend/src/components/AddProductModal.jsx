@@ -214,7 +214,8 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                             await fetchSuppliers();
                             setNewProduct({...newProduct, supplierId: data.id});
                           } catch (e) {
-                            alert("Xatolik yuz berdi");
+                            const errorMsg = e.response?.data?.detail || e.message;
+                            alert("Xatolik yuz berdi: " + errorMsg);
                           }
                         }
                       }}
