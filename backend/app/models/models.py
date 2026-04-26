@@ -127,7 +127,7 @@ class SupplierDebt(Base):
     supplier = relationship("Supplier", back_populates="debts")
     product = relationship("Product")
 
-class SupplierPaymentLog(BaseModel):
+class SupplierPaymentLog(Base):
     __tablename__ = "supplier_payment_logs"
     
     id = Column(Integer, primary_key=True, index=True)
