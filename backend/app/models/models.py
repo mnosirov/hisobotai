@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import declarative_base, relationship
-from datetime import datetime
+from datetime import datetime, timedelta
+
+def uzb_now():
+    return datetime.utcnow() + timedelta(hours=5)
 
 Base = declarative_base()
 
@@ -17,7 +20,7 @@ class User(Base):
     subscription_start = Column(DateTime, nullable=True)
     subscription_end = Column(DateTime, nullable=True)
     is_blocked = Column(Integer, default=0)  # 0=aktiv, 1=bloklangan
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=uzb_now)
     
     # Relationships
     products = relationship("Product", back_populates="owner", cascade="all, delete-orphan")
@@ -37,7 +40,7 @@ class Subscription(Base):
     end_date = Column(DateTime, nullable=False)
     activated_by = Column(Integer, nullable=True)  # admin user id
     price = Column(Float, nullable=False, default=0.0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=uzb_now)
     
     user = relationship("User", back_populates="subscriptions")
 
@@ -55,7 +58,7 @@ class Product(Base):
     color = Column(String, nullable=True)
     condition = Column(String, nullable=True) # e.g., Yangi, Ishlatilgan
     image_url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="products")
     logs = relationship("InventoryLog", back_populates="product", cascade="all, delete-orphan")
@@ -68,7 +71,7 @@ class InventoryLog(Base):
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     change_amount = Column(Float, nullable=False)
     source = Column(String, nullable=False)  # Example: "invoice", "voice", "manual"
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="inventory_logs")
     product = relationship("Product", back_populates="logs")
@@ -83,7 +86,7 @@ class Sale(Base):
     profit = Column(Float, nullable=False, default=0.0)
     is_deleted = Column(Integer, default=0, index=True)  # 0=active, 1=deleted
     deleted_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="sales")
 
@@ -96,7 +99,7 @@ class Debt(Base):
     amount = Column(Float, nullable=False)
     due_date = Column(DateTime, nullable=True)
     is_paid = Column(Integer, default=0) # 0 for unpaid, 1 for paid
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="debts")
 
@@ -108,7 +111,7 @@ class Supplier(Base):
     name = Column(String, index=True, nullable=False)
     phone = Column(String, nullable=True)
     address = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=uzb_now)
 
     debts = relationship("SupplierDebt", back_populates="supplier", cascade="all, delete-orphan")
 
@@ -122,7 +125,7 @@ class SupplierDebt(Base):
     total_amount = Column(Float, nullable=False)
     remaining_amount = Column(Float, nullable=False)
     notes = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
     
     supplier = relationship("Supplier", back_populates="debts")
     product = relationship("Product")
@@ -135,7 +138,7 @@ class SupplierPaymentLog(Base):
     supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), index=True, nullable=False)
     debt_id = Column(Integer, ForeignKey("supplier_debts.id", ondelete="SET NULL"), nullable=True)
     amount = Column(Float, nullable=False)
-    payment_date = Column(DateTime, default=datetime.utcnow, index=True)
+    payment_date = Column(DateTime, default=uzb_now, index=True)
     notes = Column(String, nullable=True)
     
     supplier = relationship("Supplier")
