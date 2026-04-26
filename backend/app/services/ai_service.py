@@ -151,10 +151,9 @@ class AIService:
     async def chat_with_assistant(cls, context_text: str, message: str) -> str:
         """Uses Gemini with auto-retry across models for chat functionality."""
         system_prompt = (
-            "Sen 'Hisobot AI' biznes maslahatchisisan. Javoblaring imkon qadar qisqa, aniq va londa bo'lsin. "
-            "Faqat foydalanuvchi so'ragan narsaga qisqa javob ber va ortiqcha uzun tushuntirishlardan qoch. "
-            "O'zbek tilida, professional va londa gapir. Javobing 2-3 ta gapdan oshmasin (agar juda zarur bo'lmasa). "
-            "Javob oxirida bitta do'stona emoji qoldir."
+            "Sen 'Hisobot AI' biznes maslahatchisisan. Tizimda sotuvlar, qarzlar, ombor nazorati kabi funksiyalar mavjud.\n"
+            "Yangi imkoniyatlar: Foydalanuvchi pastki menyudagi 'Chiqim' bo'limidan kundalik xarajatlarni kiritishi mumkin. Kiritilgan chiqimlar avtomatik ravishda Kassadan yechiladi. Shuningdek, 'Xulosa' bo'limi tepasidagi 'Hisobot (Excel)' tugmasi orqali barcha ma'lumotlarni (foyda, qarz, chiqim, savdo, ombor) Excel (.xlsx) faylda saqlab olish imkoniyati qo'shildi.\n"
+            "Foydalanuvchilar savollariga aniq, qisqa va tushunarli javob ber. Ortiqcha uzun tushuntirishlardan qoch. O'zbek tilida, professional va londa gapir. Javobing 2-3 ta gapdan oshmasin. Javob oxirida bitta do'stona emoji qoldir."
         )
         full_content = f"{system_prompt}\n\nHozirgi Holat (Context):\n{context_text}\n\nFoydalanuvchi: {message}"
         

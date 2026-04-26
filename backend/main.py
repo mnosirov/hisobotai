@@ -557,9 +557,15 @@ async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = De
             low_text = ", ".join([f"{i['name']} ({i['stock']} {i['unit']})" for i in low_stock])
             context += f"Tugab qolayotgan mahsulotlar: {low_text}.\n"
         
-        context += f"Ombordagi mahsulot turlari: {biz_health['total_product_types']} xil.\n"
-        context += f"Ombordagi jami mollar qiymati: {biz_health['total_stock_value']} UZS.\n"
-        context += f"Eng ko'p sotilayotgan mahsulotlar: {', '.join(biz_health['top_selling_products'])}.\n"
+        context += f"Ombordagi mahsulot turlari: {biz_health.get('total_product_types', 0)} xil.\n"
+        context += f"Ombordagi jami mollar qiymati: {biz_health.get('total_stock_value', 0)} UZS.\n"
+        
+        # Add Expenses info to AI context
+        from app.services.expense_service import ExpenseService
+        expense_service = ExpenseService(db, current_user.id)
+        total_exp = await expense_service.get_total_expenses()
+        today_exp = await expense_service.get_today_expenses()
+        context += f"Bugungi xarajatlar (chiqim): {today_exp} UZS. Jami chiqimlar: {total_exp} UZS.\n"
             
         reply = await AIService.chat_with_assistant(context, chat.message)
         return {"reply": reply}
@@ -621,7 +627,14 @@ async def telegram_webhook(update: Dict):
                         context = f"Foydalanuvchi: {user.username}\n"
                         context += f"Bugungi jami foyda: {int(summary.get('today_profit', 0))} UZS.\n"
                         context += f"Yaqinda sotilgan mahsulotlar:\n{history_text}\n"
-                        context += f"Kam qolganlar: {', '.join(low_stock[:5])}"
+                        context += f"Kam qolganlar: {', '.join(low_stock[:5])}\n"
+                        
+                        # Add Expenses info to AI context
+                        from app.services.expense_service import ExpenseService
+                        expense_service = ExpenseService(db, user.id)
+                        total_exp = await expense_service.get_total_expenses()
+                        today_exp = await expense_service.get_today_expenses()
+                        context += f"Bugungi xarajatlar: {today_exp} UZS. Jami xarajatlar: {total_exp} UZS.\n"
                         
                         reply = await AIService.chat_with_assistant(context, text)
                     except Exception as e:
