@@ -242,7 +242,10 @@ async def init_db():
             async with conn.begin():
                 await conn.execute(sa.text("UPDATE subscriptions SET price = 79000 WHERE tier = 'standard' AND (price IS NULL OR price = 0);"))
                 await conn.execute(sa.text("UPDATE subscriptions SET price = 149000 WHERE tier = 'premium' AND (price IS NULL OR price = 0);"))
-                # Clean up orphaned payment logs from previous bug
+                
+                # Clean up orphaned debts (where product was manually deleted)
+                await conn.execute(sa.text("DELETE FROM supplier_debts WHERE product_id IS NULL;"))
+                # Clean up orphaned payment logs from previous bug or orphaned debts
                 await conn.execute(sa.text("DELETE FROM supplier_payment_logs WHERE debt_id IS NULL;"))
         except Exception as e:
             print(f"Migration/Cleanup error: {e}")
