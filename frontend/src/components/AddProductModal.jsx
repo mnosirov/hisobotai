@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import axios from 'axios';
 
-const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [], suppliers = [], fetchSuppliers }) => {
+const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [], suppliers = [], fetchSuppliers, API_BASE }) => {
   const categories = [...new Set(inventory.map(i => i.category || 'Umumiy'))];
   const [matchFound, setMatchFound] = React.useState(false);
   

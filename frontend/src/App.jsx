@@ -364,6 +364,7 @@ const MainApp = () => {
         inventory={inventory}
         suppliers={suppliers}
         fetchSuppliers={fetchSuppliers}
+        API_BASE={API_BASE}
       />
 
       <ImportModal 
