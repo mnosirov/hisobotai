@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, History, CheckCircle, Clock, ChevronRight, Search } from 'lucide-react';
+import { CreditCard, History, CheckCircle, Clock, ChevronRight, Search, ChevronDown, ChevronUp, Store } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -10,6 +10,7 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [selectedDebt, setSelectedDebt] = useState(null);
+  const [expandedSuppliers, setExpandedSuppliers] = useState({});
 
   const fetchDebts = async () => {
     try {
@@ -45,27 +46,52 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
     }
   };
 
-  const filteredDebts = debts.filter(d => 
-    d.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Group debts by supplier
+  const groupedDebts = debts.reduce((acc, debt) => {
+    const supplierId = debt.supplier_id;
+    const supplierName = debt.supplier?.name || "Noma'lum do'kon";
+    
+    if (!acc[supplierId]) {
+      acc[supplierId] = {
+        id: supplierId,
+        name: supplierName,
+        totalRemaining: 0,
+        items: []
+      };
+    }
+    
+    acc[supplierId].totalRemaining += debt.remaining_amount;
+    acc[supplierId].items.push(debt);
+    return acc;
+  }, {});
+
+  const supplierList = Object.values(groupedDebts).filter(s => 
+    s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const toggleExpand = (id) => {
+    setExpandedSuppliers(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-6 pt-4 pb-12">
       {/* Search and Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
         <div>
           <h2 className="text-2xl font-black text-white flex items-center gap-2">
-            <CreditCard className="text-red-400" />
-            Do'konlardan qarzlar
+            <Store className="text-indigo-400" />
+            Do'konlar kesimida qarzlar
           </h2>
-          <p className="text-slate-400 text-sm">Yetkazib beruvchilar oldidagi jami qarzdorliklar</p>
+          <p className="text-slate-400 text-sm">Har bir yetkazib beruvchi bo'yicha umumiy qarzdorlik</p>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text"
-            placeholder="Do'kon nomi bo'yicha qidirish..."
+            placeholder="Do'kon nomi..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-64 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-all"
@@ -77,7 +103,7 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
         </div>
-      ) : filteredDebts.length === 0 ? (
+      ) : supplierList.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <CheckCircle className="mx-auto text-emerald-400 mb-4" size={48} />
           <h3 className="text-lg font-bold text-white">Qarzlar yo'q!</h3>
@@ -85,48 +111,81 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredDebts.map((debt) => (
-            <motion.div 
-              key={debt.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-5 group hover:bg-white/5 transition-all"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex gap-4">
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${debt.remaining_amount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                    <Clock size={24} />
+          {supplierList.map((supplier) => (
+            <div key={supplier.id} className="glass-card overflow-hidden border border-white/5">
+              {/* Supplier Header */}
+              <div 
+                onClick={() => toggleExpand(supplier.id)}
+                className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-all bg-white/[0.02]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                    <Store size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-white group-hover:text-indigo-400 transition-colors">
-                      {debt.supplier?.name}
-                    </h4>
-                    <p className="text-sm text-slate-400 line-clamp-1">{debt.notes}</p>
-                    <div className="flex items-center gap-3 mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                      <span>{new Date(debt.created_at).toLocaleDateString('uz-UZ')}</span>
-                      <span>•</span>
-                      <span className={debt.remaining_amount === 0 ? 'text-emerald-500' : 'text-red-500'}>
-                        {debt.remaining_amount === 0 ? 'To\'langan' : 'To\'lanmagan'}
-                      </span>
+                    <h4 className="font-bold text-lg text-white">{supplier.name}</h4>
+                    <p className="text-xs text-slate-500">{supplier.items.length} ta xarid bo'yicha</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">Umumiy qarz</p>
+                    <div className="text-xl font-black text-rose-400">
+                      {supplier.totalRemaining.toLocaleString('uz-UZ')} <span className="text-xs font-normal text-slate-500">UZS</span>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-white">
-                    {debt.remaining_amount.toLocaleString('uz-UZ')} <span className="text-[10px] font-normal text-slate-400">UZS</span>
+                  <div className="text-slate-500">
+                    {expandedSuppliers[supplier.id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-1">Umumiy: {debt.total_amount.toLocaleString()} UZS</p>
-                  {debt.remaining_amount > 0 && (
-                    <button 
-                      onClick={() => setSelectedDebt(debt)}
-                      className="mt-3 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all active:scale-95"
-                    >
-                      To'lash
-                    </button>
-                  )}
                 </div>
               </div>
-            </motion.div>
+
+              {/* Individual Debts List */}
+              <AnimatePresence>
+                {expandedSuppliers[supplier.id] && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-t border-white/5 bg-black/20"
+                  >
+                    <div className="p-4 space-y-3">
+                      {supplier.items.map((debt) => (
+                        <div key={debt.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${debt.remaining_amount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                              <Clock size={16} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-200">{debt.notes}</p>
+                              <p className="text-[10px] text-slate-500">{new Date(debt.created_at).toLocaleDateString('uz-UZ')}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="text-sm font-bold text-white">
+                                {debt.remaining_amount.toLocaleString()} <span className="text-[10px] text-slate-500 font-normal">UZS</span>
+                              </div>
+                            </div>
+                            {debt.remaining_amount > 0 && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDebt(debt);
+                                }}
+                                className="px-3 py-1 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white text-[10px] font-bold rounded-lg transition-all"
+                              >
+                                To'lash
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ))}
         </div>
       )}
@@ -148,7 +207,7 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
             >
               <h3 className="text-xl font-bold text-white mb-2">Qarzni yopish</h3>
               <p className="text-slate-400 text-sm mb-6">
-                <span className="font-bold text-indigo-400">{selectedDebt.supplier?.name}</span> oldidagi qarzni to'lash.
+                <span className="font-bold text-indigo-400">{selectedDebt.supplier?.name}</span> do'koniga to'lov qilish.
               </p>
               
               <form onSubmit={handlePay} className="space-y-4">
