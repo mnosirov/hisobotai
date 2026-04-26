@@ -97,6 +97,30 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6 pt-4"
     >
+      
+      {/* Top Actions */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => {
+            const loadingToast = toast.loading("Hisobot tayyorlanmoqda...");
+            axios.get(`${API_BASE}/export/excel`, { responseType: 'blob' })
+              .then(res => {
+                const url = window.URL.createObjectURL(new Blob([res.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                toast.success("Yuklab olindi!", { id: loadingToast });
+              })
+              .catch(() => toast.error("Hisobotni yuklashda xatolik yuz berdi", { id: loadingToast }));
+          }}
+          className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-indigo-500/20"
+        >
+          <span className="text-lg">📥</span>
+          <span>Hisobot (Excel)</span>
+        </button>
+      </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">

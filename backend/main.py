@@ -751,3 +751,16 @@ async def delete_expense(expense_id: int, current_user: User = Depends(get_curre
     if not deleted:
         raise HTTPException(status_code=404, detail="Chiqim topilmadi")
     return {"status": "success", "message": "Chiqim o'chirildi"}
+
+# --- EXPORT API ---
+from app.services.export_service import ExportService
+
+@app.get("/api/export/excel")
+async def export_excel(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = ExportService(db, current_user.id)
+        return await service.export_to_excel()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
