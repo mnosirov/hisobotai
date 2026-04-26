@@ -353,6 +353,8 @@ const MainApp = () => {
           {activeTab === 'history' && (
             <DailyArchive 
               API_BASE={API_BASE} 
+              fetchDashboardData={fetchDashboardData}
+              fetchInventoryData={fetchInventoryData}
             />
           )}
 

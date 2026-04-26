@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileText, ShoppingBag, Banknote, PackageOpen } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-const DailyArchive = ({ API_BASE }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
+const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +27,20 @@ const DailyArchive = ({ API_BASE }) => {
     }
   };
 
+  const handleDeleteSale = async (saleId) => {
+    if (!window.confirm("Ushbu sotuvni o'chirmoqchimisiz? Mahsulot qoldig'i qayta tiklanadi.")) return;
+    const loadingToast = toast.loading("O'chirilmoqda...");
+    try {
+      await axios.delete(`${API_BASE}/sales/${saleId}`);
+      toast.success("Sotuv o'chirildi!", { id: loadingToast });
+      fetchDailyReport(selectedDate);
+      if (fetchDashboardData) fetchDashboardData();
+      if (fetchInventoryData) fetchInventoryData();
+    } catch (err) {
+      toast.error("Xatolik yuz berdi", { id: loadingToast });
+    }
+  };
+
   const changeDate = (days) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + days);
@@ -34,8 +48,14 @@ const DailyArchive = ({ API_BASE }) => {
   };
 
   const formatDateDisplay = (dateStr) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const getTime = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -116,7 +136,7 @@ const DailyArchive = ({ API_BASE }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="glass-card p-4 bg-emerald-500/10 border border-emerald-500/20">
               <span className="text-emerald-400/70 text-[10px] font-bold uppercase">Kungi Sof Foyda</span>
-              <p className="text-xl font-black text-emerald-400 mt-1">{report.summary.total_sales_profit.toLocaleString()} UZS</p>
+              <p className="text-xl font-black text-emerald-400 mt-1">{(report.summary.total_sales_profit - report.summary.total_expenses).toLocaleString()} UZS</p>
             </div>
             <div className="glass-card p-4 bg-indigo-500/10 border border-indigo-500/20">
               <span className="text-indigo-400/70 text-[10px] font-bold uppercase">Jami Savdo (Tushum)</span>
@@ -133,12 +153,60 @@ const DailyArchive = ({ API_BASE }) => {
             </div>
           </div>
 
+          {/* Sales Transactions (Individual) */}
+          {report.sales_transactions && report.sales_transactions.length > 0 && (
+            <div className="glass-card overflow-hidden">
+              <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
+                <Clock size={18} className="text-indigo-400" />
+                <h3 className="font-bold text-sm">Savdo Tranzaksiyalari</h3>
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold ml-auto">{report.sales_transactions.length} ta</span>
+              </div>
+              <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+                {report.sales_transactions.map((sale) => (
+                  <div key={sale.id} className="p-4 hover:bg-white/5 transition">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-[10px] font-bold text-indigo-400">
+                          {getTime(sale.created_at)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-100">{sale.items_json.length} xil mahsulot</p>
+                          <p className="text-[10px] text-slate-500">Sotuv #{sale.id.toString().slice(-4)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-right">
+                          <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()}</p>
+                          <p className="text-[10px] text-slate-500">Foyda: {sale.profit.toLocaleString()}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteSale(sale.id)}
+                          className="h-9 w-9 shrink-0 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition hover:bg-red-500/20 active:scale-90"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
+                      {sale.items_json.map((item, idx) => (
+                        <div key={idx} className="shrink-0">
+                          <span className="text-[11px] font-bold text-slate-300">{item.product}</span>
+                          <span className="text-[9px] text-slate-500 ml-1">{item.quantity} ta | {(item.revenue || 0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Sold Items List */}
+            {/* Sold Items Summary */}
             <div className="glass-card overflow-hidden">
               <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
                 <ShoppingBag size={18} className="text-indigo-400" />
-                <h3 className="font-bold text-sm">Sotilgan Mahsulotlar</h3>
+                <h3 className="font-bold text-sm">Sotilgan Mahsulotlar (Jami)</h3>
               </div>
               <div className="p-0 max-h-[300px] overflow-y-auto">
                 {report.sold_items.length === 0 ? (
@@ -174,7 +242,7 @@ const DailyArchive = ({ API_BASE }) => {
                   <Banknote size={18} className="text-red-400" />
                   <h3 className="font-bold text-sm">Qilingan Chiqimlar</h3>
                 </div>
-                <div className="p-0 max-h-[150px] overflow-y-auto">
+                <div className="p-0 max-h-[200px] overflow-y-auto">
                   {report.expenses.length === 0 ? (
                     <p className="p-4 text-center text-xs text-slate-500">Chiqimlar yo'q.</p>
                   ) : (
@@ -199,7 +267,7 @@ const DailyArchive = ({ API_BASE }) => {
                   <PackageOpen size={18} className="text-orange-400" />
                   <h3 className="font-bold text-sm">Omborga Kirim (Xaridlar)</h3>
                 </div>
-                <div className="p-0 max-h-[150px] overflow-y-auto">
+                <div className="p-0 max-h-[200px] overflow-y-auto">
                   {report.purchases.length === 0 ? (
                     <p className="p-4 text-center text-xs text-slate-500">Kirim bo'lmagan.</p>
                   ) : (

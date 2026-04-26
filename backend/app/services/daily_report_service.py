@@ -120,5 +120,15 @@ class DailyReportService:
             },
             "sold_items": sold_items_list,
             "expenses": expenses_list,
-            "purchases": purchases_list
+            "purchases": purchases_list,
+            "sales_transactions": [
+                {
+                    "id": s.id,
+                    "total_amount": s.total_amount,
+                    "profit": s.profit,
+                    "items_json": s.items_json,
+                    "created_at": s.created_at.isoformat() if s.created_at else ""
+                }
+                for s in sales
+            ]
         }
