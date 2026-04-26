@@ -383,12 +383,7 @@ const MainApp = () => {
             />
           )}
 
-          {activeTab === 'expenses' && (
-            <Expenses 
-              API_BASE={API_BASE} 
-              fetchDashboardData={fetchDashboardData} 
-            />
-          )}
+
         </AnimatePresence>
       </main>
 
@@ -478,18 +473,6 @@ const MainApp = () => {
             <Wallet size={22} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-tight">Qarzlar</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('expenses')}
-          className={`flex flex-col items-center space-y-1 transition ${
-            activeTab === 'expenses' ? 'text-indigo-400' : 'text-slate-500'
-          }`}
-        >
-          <div className={`p-2 rounded-xl transition ${activeTab === 'expenses' ? 'bg-indigo-500/20' : ''}`}>
-            <Banknote size={22} />
-          </div>
-          <span className="text-[9px] font-bold uppercase tracking-tight">Chiqim</span>
         </button>
 
         <button 
