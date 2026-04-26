@@ -266,6 +266,16 @@ class InventoryService:
         debt = debt_result.scalar_one_or_none()
         
         if debt:
+            from app.models.models import SupplierPaymentLog
+            
+            # 2.1 Agar bu qarz uchun avval to'lov qilingan bo'lsa, u to'lovlarni tarixini o'chiramiz.
+            # Bu orqali pul avtomatik ravishda Kassaga qaytadi.
+            payment_query = select(SupplierPaymentLog).where(SupplierPaymentLog.debt_id == debt.id)
+            payment_result = await self.db.execute(payment_query)
+            payments = payment_result.scalars().all()
+            for payment in payments:
+                await self.db.delete(payment)
+                
             await self.db.delete(debt)
 
         # 3. Tarixga qaydni yozish
