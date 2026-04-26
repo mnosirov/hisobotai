@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.models import Sale, Expense, SupplierDebt, SupplierPaymentLog, InventoryItem
+from app.models.models import Sale, Expense, SupplierDebt, SupplierPaymentLog, Product
 
 class DailyReportService:
     def __init__(self, db: AsyncSession, tenant_id: int):
@@ -67,11 +67,11 @@ class DailyReportService:
 
         # 3. New Inventory Data (Items added to stock on this day)
         # Note: inventory created_at is when it was added
-        inv_query = select(InventoryItem).where(
+        inv_query = select(Product).where(
             and_(
-                InventoryItem.tenant_id == self.tenant_id,
-                InventoryItem.created_at >= start_dt,
-                InventoryItem.created_at <= end_dt
+                Product.tenant_id == self.tenant_id,
+                Product.created_at >= start_dt,
+                Product.created_at <= end_dt
             )
         )
         inv_result = await self.db.execute(inv_query)
