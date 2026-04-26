@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockValue, totalSalesRevenue, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -98,18 +98,41 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, tg, fetchDashboardData
       className="space-y-6 pt-4"
     >
 
-      {/* Daily Profit Card */}
-      <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
-        <span className="text-slate-400 text-sm font-medium">Bugungi Foyda</span>
-        <div className="flex items-end justify-between mt-2">
-          <h2 className="text-3xl font-black text-white">
-            {profit.toLocaleString('uz-UZ')} <span className="text-lg font-normal text-indigo-300">UZS</span>
-          </h2>
-          <div className={`flex items-center text-sm font-bold px-2 py-1 rounded-lg ${
-            profitGrowth >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
-          }`}>
-            {profitGrowth >= 0 ? '+' : ''}{profitGrowth}% 
-            {profitGrowth >= 0 ? <TrendingUp size={14} className="ml-1" /> : <TrendingDown size={14} className="ml-1" />}
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Daily Profit Card */}
+        <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
+          <span className="text-slate-400 text-sm font-medium">Bugungi Foyda</span>
+          <div className="flex items-end justify-between mt-2">
+            <h2 className="text-2xl font-black text-white">
+              {profit.toLocaleString('uz-UZ')} <span className="text-xs font-normal text-indigo-300">UZS</span>
+            </h2>
+            <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-lg ${
+              profitGrowth >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
+            }`}>
+              {profitGrowth >= 0 ? '+' : ''}{profitGrowth}% 
+              {profitGrowth >= 0 ? <TrendingUp size={12} className="ml-0.5" /> : <TrendingDown size={12} className="ml-0.5" />}
+            </div>
+          </div>
+        </div>
+
+        {/* Total Stock Value Card */}
+        <div className="glass-card p-6 bg-gradient-to-br from-emerald-500/20 to-teal-600/10">
+          <span className="text-slate-400 text-sm font-medium">Skladdagi Mol</span>
+          <div className="flex items-end justify-between mt-2">
+            <h2 className="text-2xl font-black text-white">
+              {(totalStockValue || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-emerald-300">UZS</span>
+            </h2>
+          </div>
+        </div>
+
+        {/* Total Sales Revenue Card */}
+        <div className="glass-card p-6 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
+          <span className="text-slate-400 text-sm font-medium">Jami Sotuv</span>
+          <div className="flex items-end justify-between mt-2">
+            <h2 className="text-2xl font-black text-white">
+              {(totalSalesRevenue || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-amber-300">UZS</span>
+            </h2>
           </div>
         </div>
       </div>

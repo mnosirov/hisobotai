@@ -14,6 +14,7 @@ import AdminPanel from './components/AdminPanel';
 import PricingPage from './components/PricingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ImportModal from './components/ImportModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const MainApp = () => {
@@ -23,11 +24,14 @@ const MainApp = () => {
   
   const [profit, setProfit] = useState(0); 
   const [profitGrowth, setProfitGrowth] = useState(0);
+  const [totalStockValue, setTotalStockValue] = useState(0);
+  const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSaleModal, setShowAddSaleModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ 
     name: '', 
     category: 'Umumiy', 
@@ -66,6 +70,8 @@ const MainApp = () => {
       const { data } = await axios.get(`${API_BASE}/sales/summary?t=${Date.now()}`);
       setProfit(data.today_profit || 0);
       setProfitGrowth(data.profit_growth || 0);
+      setTotalStockValue(data.total_stock_value || 0);
+      setTotalSalesRevenue(data.total_sales_revenue || 0);
       setLowStockItems(data.low_stock_items || []);
     } catch (e) {
       console.error("Dashboard fetch error", e);
@@ -274,6 +280,8 @@ const MainApp = () => {
             <Dashboard 
               profit={profit} 
               profitGrowth={profitGrowth}
+              totalStockValue={totalStockValue}
+              totalSalesRevenue={totalSalesRevenue}
               lowStockItems={lowStockItems}
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
@@ -287,6 +295,7 @@ const MainApp = () => {
             <Inventory 
               inventory={inventory} 
               setShowAddModal={setShowAddModal} 
+              setShowImportModal={setShowImportModal}
               user={user}
               onUpdate={handleUpdateProduct}
               onDelete={handleDeleteProduct}
@@ -321,6 +330,13 @@ const MainApp = () => {
         setNewProduct={setNewProduct} 
         handleAddProduct={handleAddProduct} 
         inventory={inventory}
+      />
+
+      <ImportModal 
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        API_BASE={API_BASE}
+        fetchInventoryData={fetchInventoryData}
       />
 
       <AddSaleModal 

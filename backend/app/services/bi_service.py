@@ -41,8 +41,14 @@ class BIService:
         
         top_products = sorted(product_stats.items(), key=lambda x: x[1], reverse=True)[:5]
         
+        # 4. Sotilgan mahsulotlar jami summasi
+        q_sales_total = select(func.sum(Sale.total_amount)).where(Sale.tenant_id == self.tenant_id, Sale.is_deleted == 0)
+        res_sales_total = await self.db.execute(q_sales_total)
+        total_sales_revenue = res_sales_total.scalar() or 0.0
+
         return {
             "total_stock_value": int(total_stock_value),
+            "total_sales_revenue": int(total_sales_revenue),
             "total_product_types": total_products,
             "top_selling_products": [f"{name} ({qty} ta)" for name, qty in top_products]
         }

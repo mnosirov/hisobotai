@@ -1,0 +1,41 @@
+import asyncio
+import os
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from dotenv import load_dotenv
+
+# Load local .env
+load_dotenv()
+
+# Path: backend/app/models/models.py (assuming for classes)
+# But I'll just use a raw query for speed
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+asyncpg://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+async def check_user():
+    engine = create_async_engine(DATABASE_URL, connect_args={"ssl": "require"})
+    async with engine.connect() as conn:
+        # Check all users
+        result = await conn.execute(sa_text("SELECT email, username FROM users"))
+        users = result.fetchall()
+        print(f"Bazada jami {len(users)} ta foydalanuvchi bor.")
+        for u in users:
+            print(f"- {u.email} ({u.username})")
+            
+        # Target check
+        target = "pholine@mail.com"
+        result = await conn.execute(
+            sa_text("SELECT * FROM users WHERE LOWER(email) = :e"),
+            {"e": target.lower()}
+        )
+        user = result.fetchone()
+        if user:
+            print(f"\nSUCCESS: '{target}' bazada topildi!")
+        else:
+            print(f"\nERROR: '{target}' bazada topilmadi.")
+
+from sqlalchemy import text as sa_text
+asyncio.run(check_user())

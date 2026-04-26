@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Request, status, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,6 +13,7 @@ from app.core.db import get_db, init_db
 from app.core.security import ALGORITHM, SECRET_KEY
 from app.services.inventory_service import InventoryService
 from app.services.sales_service import SalesService
+from app.services.excel_service import ExcelService
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -341,6 +342,49 @@ async def delete_product(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/inventory/export")
+async def export_inventory(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = InventoryService(db, current_user.id)
+        products = await service.get_all_products()
+        excel_data = ExcelService.export_products_to_excel(products)
+        
+        return Response(
+            content=excel_data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=hisobotai_inventory_{current_user.username}.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/inventory/import")
+async def import_inventory_excel(
+    file: UploadFile = File(...), 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        content = await file.read()
+        items = ExcelService.parse_products_from_excel(content)
+        service = InventoryService(db, current_user.id)
+        results = await service.bulk_upsert_products(items, source="Excel Import")
+        return {"status": "success", "processed_count": len(results)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/inventory/bulk")
+async def bulk_update_inventory(
+    items: List[Dict], 
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        service = InventoryService(db, current_user.id)
+        results = await service.bulk_upsert_products(items, source="Ommaviy yuklash (Web)")
+        return {"status": "success", "processed_count": len(results)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/inventory/analyze", response_model=List[Dict])
 async def analyze_invoice(image: UploadFile = File(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     temp_path = f"/tmp/{image.filename}"
@@ -376,8 +420,17 @@ async def confirm_invoice(items: List[Dict], current_user: User = Depends(get_cu
 @app.get("/api/sales/summary", response_model=Dict)
 async def get_sales_summary(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
-        service = SalesService(db, current_user.id)
-        return await service.get_sales_summary()
+        sales_service = SalesService(db, current_user.id)
+        bi_service = BIService(db, current_user.id)
+        
+        sales_summary = await sales_service.get_sales_summary()
+        bi_summary = await bi_service.get_business_summary()
+        
+        return {
+            **sales_summary,
+            "total_stock_value": bi_summary.get("total_stock_value", 0),
+            "total_sales_revenue": bi_summary.get("total_sales_revenue", 0)
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

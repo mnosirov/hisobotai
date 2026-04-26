@@ -17,3 +17,5 @@ cloudinary
 python-barcode
 python-jose[cryptography]
 passlib[bcrypt]
+pandas
+openpyxl

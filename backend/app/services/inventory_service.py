@@ -233,3 +233,16 @@ class InventoryService:
         await self.db.commit()
         return True
 
+    async def bulk_upsert_products(self, items: List[Dict], source: str = "Ommaviy yuklash") -> List[Product]:
+        """Bir nechta mahsulotni ommaviy qo'shadi yoki yangilaydi."""
+        results = []
+        for item in items:
+            try:
+                # add_or_update_product allaqachon limitlarni tekshiradi va commit qiladi
+                product = await self.add_or_update_product(item, source=source)
+                results.append(product)
+            except Exception as e:
+                print(f"Error bulk upserting item {item.get('name')}: {e}")
+                continue
+        return results
+

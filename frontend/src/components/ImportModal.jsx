@@ -13,11 +13,18 @@ const ImportModal = ({ show, onClose, API_BASE, fetchInventoryData }) => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      if (selectedFile.name.endsWith('.csv')) {
+      const isCSV = selectedFile.name.endsWith('.csv');
+      const isXLSX = selectedFile.name.endsWith('.xlsx');
+      
+      if (isCSV || isXLSX) {
         setFile(selectedFile);
-        parseCSV(selectedFile);
+        if (isCSV) {
+          parseCSV(selectedFile);
+        } else {
+          setDataPreview([]); // No preview for XLSX yet, but we'll show the file name
+        }
       } else {
-        toast.error("Iltimos, faqat .csv formatidagi faylni yuklang!");
+        toast.error("Iltimos, .csv yoki .xlsx formatidagi faylni yuklang!");
       }
     }
   };
@@ -27,13 +34,13 @@ const ImportModal = ({ show, onClose, API_BASE, fetchInventoryData }) => {
     reader.onload = (e) => {
       const text = e.target.result;
       const lines = text.split(/\r?\n/);
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      if (lines.length < 2) return;
       
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       const parsedData = lines.slice(1).filter(line => line.trim()).map(line => {
         const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
         const obj = {};
         headers.forEach((header, index) => {
-          // Normalize header names to match backend expectations
           let key = header;
           if (header.includes('nomi') || header.includes('name')) key = 'name';
           if (header.includes('kategoriya') || header.includes('category')) key = 'category';
@@ -42,30 +49,45 @@ const ImportModal = ({ show, onClose, API_BASE, fetchInventoryData }) => {
           if (header.includes('narx') || header.includes('buy_price')) key = 'buy_price';
           if (header.includes('sotish') || header.includes('sell_price')) key = 'sell_price';
           if (header.includes('shtrix') || header.includes('barcode')) key = 'barcode';
-          
           obj[key] = values[index];
         });
         return obj;
       });
-
       setDataPreview(parsedData);
     };
     reader.readAsText(file);
   };
 
   const handleImport = async () => {
-    if (dataPreview.length === 0) return;
+    if (!file) return;
     
     setIsProcessing(true);
-    const loadingToast = toast.loading("Mahsulotlar yuklanmoqda...");
+    const loadingToast = toast.loading("Ma'lumotlar yuklanmoqda...");
     
     try {
-      await axios.post(`${API_BASE}/inventory/bulk`, dataPreview);
+      if (file.name.endsWith('.xlsx')) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await axios.post(`${API_BASE}/inventory/import`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        // Fallback for CSV if preview was shown, or just use the file
+        if (dataPreview.length > 0) {
+          await axios.post(`${API_BASE}/inventory/bulk`, dataPreview);
+        } else {
+          const formData = new FormData();
+          formData.append('file', file);
+          await axios.post(`${API_BASE}/inventory/import`, formData);
+        }
+      }
+      
       toast.success("Muvaffaqiyatli yuklandi!", { id: loadingToast });
       fetchInventoryData();
       onClose();
     } catch (err) {
-      toast.error("Yuklashda xatolik yuz berdi", { id: loadingToast });
+      const errorMsg = err.response?.data?.detail || "Yuklashda xatolik yuz berdi";
+      toast.error(errorMsg, { id: loadingToast });
     } finally {
       setIsProcessing(false);
     }
@@ -89,9 +111,9 @@ const ImportModal = ({ show, onClose, API_BASE, fetchInventoryData }) => {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Upload className="text-indigo-400" size={24} /> 
-              Exceldan (CSV) mahsulotlarni yuklash
+              Exceldan mahsulotlarni yuklash
             </h2>
-            <p className="text-xs text-slate-400 mt-1">Jadvaldagi barcha mahsulotlarni ommaviy qo'shish</p>
+            <p className="text-xs text-slate-400 mt-1">Jadvaldagi barcha mahsulotlarni ommaviy qo'shish (.xlsx yoki .csv)</p>
           </div>
           <button onClick={onClose} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition">
             <X size={20} />
@@ -107,11 +129,11 @@ const ImportModal = ({ show, onClose, API_BASE, fetchInventoryData }) => {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Hali fayl tanlanmagan</h3>
                 <p className="text-sm text-slate-400 mb-6 max-w-md">
-                  Tayyorlab qo'ygan .csv faylingizni yuklang. Excelda tayyor bo'lsa, "Save As" qilib .csv formatida saqlab oling.
+                  Tayyorlab qo'ygan Excel (.xlsx) yoki CSV faylingizni yuklang.
                 </p>
                 <label className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-8 rounded-xl transition cursor-pointer">
                   Faylni tanlash
-                  <input type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
+                  <input type="file" accept=".csv,.xlsx" className="hidden" onChange={handleFileChange} />
                 </label>
                 <button 
                   onClick={downloadTemplate}

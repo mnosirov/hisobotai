@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Plus, Edit2 } from 'lucide-react';
+import { Package, Plus, Edit2, Download, Upload } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import EditProductModal from './EditProductModal';
 
-const Inventory = ({ inventory, setShowAddModal, user, onUpdate, onDelete }) => {
-  const { BACKEND_URL } = useAuth();
+const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete }) => {
+  const { API_BASE, BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -13,6 +15,26 @@ const Inventory = ({ inventory, setShowAddModal, user, onUpdate, onDelete }) => 
   const isAdmin = user?.is_admin === 1;
   const tier = user?.subscription_tier || 'free';
   const maxProducts = isAdmin ? 5000 : (tier === 'premium' ? 5000 : (tier === 'standard' ? 100 : 10));
+
+  const handleExport = async () => {
+    const loadingToast = toast.loading("Excel fayl tayyorlanmoqda...");
+    try {
+      const response = await axios.get(`${API_BASE}/inventory/export`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `hisobotai_inventory_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Muvaffaqiyatli yuklab olindi!", { id: loadingToast });
+    } catch (err) {
+      toast.error("Eksportda xatolik yuz berdi", { id: loadingToast });
+    }
+  };
 
   const filteredInventory = selectedCategory === 'Barchasi' 
     ? inventory 
@@ -40,12 +62,29 @@ const Inventory = ({ inventory, setShowAddModal, user, onUpdate, onDelete }) => 
               </span>
             </div>
           </div>
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="h-10 w-10 glass-card flex items-center justify-center text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-          >
-            <Plus size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleExport}
+              className="h-10 w-10 glass-card flex items-center justify-center text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+              title="Excelga eksport"
+            >
+              <Download size={20} />
+            </button>
+            <button 
+              onClick={() => setShowImportModal(true)}
+              className="h-10 w-10 glass-card flex items-center justify-center text-amber-400 hover:bg-amber-500/10 transition-colors"
+              title="Exceldan import"
+            >
+              <Upload size={20} />
+            </button>
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="h-10 w-10 glass-card flex items-center justify-center text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+              title="Yangi mahsulot"
+            >
+              <Plus size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Categories Filter Strip */}
