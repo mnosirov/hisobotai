@@ -428,7 +428,8 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         
         return {
             **sales_summary,
-            "total_stock_value": bi_summary.get("total_stock_value", 0),
+            "total_stock_cost": bi_summary.get("total_stock_cost", 0),
+            "total_stock_sell": bi_summary.get("total_stock_sell", 0),
             "total_sales_revenue": bi_summary.get("total_sales_revenue", 0)
         }
     except Exception as e:

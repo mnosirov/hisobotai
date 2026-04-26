@@ -13,10 +13,16 @@ class BIService:
         from app.models.models import Product, Sale
         from sqlalchemy import func
         
-        # 1. Omborxonadagi jami mahsulotlar qiymati (investitsiya)
-        q_stock = select(func.sum(Product.stock * Product.last_purchase_price)).where(Product.tenant_id == self.tenant_id)
-        res_stock = await self.db.execute(q_stock)
-        total_stock_value = res_stock.scalar() or 0.0
+        # 1. Omborxonadagi jami mahsulotlar qiymati
+        # Tan narxi (Xarid narxi bo'yicha)
+        q_stock_cost = select(func.sum(Product.stock * Product.last_purchase_price)).where(Product.tenant_id == self.tenant_id)
+        res_stock_cost = await self.db.execute(q_stock_cost)
+        total_stock_cost = res_stock_cost.scalar() or 0.0
+
+        # Sotish qiymati (Sotish narxi bo'yicha)
+        q_stock_sell = select(func.sum(Product.stock * Product.sell_price)).where(Product.tenant_id == self.tenant_id)
+        res_stock_sell = await self.db.execute(q_stock_sell)
+        total_stock_sell = res_stock_sell.scalar() or 0.0
         
         # 2. Jami mahsulotlar soni (turlar bo'yicha)
         q_count = select(func.count(Product.id)).where(Product.tenant_id == self.tenant_id)
@@ -47,7 +53,8 @@ class BIService:
         total_sales_revenue = res_sales_total.scalar() or 0.0
 
         return {
-            "total_stock_value": int(total_stock_value),
+            "total_stock_cost": int(total_stock_cost),
+            "total_stock_sell": int(total_stock_sell),
             "total_sales_revenue": int(total_sales_revenue),
             "total_product_types": total_products,
             "top_selling_products": [f"{name} ({qty} ta)" for name, qty in top_products]

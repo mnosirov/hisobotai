@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockValue, totalSalesRevenue, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -116,12 +116,22 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockValue, total
           </div>
         </div>
 
-        {/* Total Stock Value Card */}
+        {/* Total Stock Cost Card */}
         <div className="glass-card p-6 bg-gradient-to-br from-emerald-500/20 to-teal-600/10">
-          <span className="text-slate-400 text-sm font-medium">Skladdagi Mol</span>
+          <span className="text-slate-400 text-sm font-medium">Sklad (Tan narxi)</span>
           <div className="flex items-end justify-between mt-2">
             <h2 className="text-2xl font-black text-white">
-              {(totalStockValue || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-emerald-300">UZS</span>
+              {(totalStockCost || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-emerald-300">UZS</span>
+            </h2>
+          </div>
+        </div>
+
+        {/* Total Stock Sell Card */}
+        <div className="glass-card p-6 bg-gradient-to-br from-teal-500/20 to-cyan-600/10">
+          <span className="text-slate-400 text-sm font-medium">Sklad (Sotish narxi)</span>
+          <div className="flex items-end justify-between mt-2">
+            <h2 className="text-2xl font-black text-white">
+              {(totalStockSell || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-teal-300">UZS</span>
             </h2>
           </div>
         </div>

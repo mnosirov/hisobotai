@@ -24,7 +24,8 @@ const MainApp = () => {
   
   const [profit, setProfit] = useState(0); 
   const [profitGrowth, setProfitGrowth] = useState(0);
-  const [totalStockValue, setTotalStockValue] = useState(0);
+  const [totalStockCost, setTotalStockCost] = useState(0);
+  const [totalStockSell, setTotalStockSell] = useState(0);
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -70,7 +71,8 @@ const MainApp = () => {
       const { data } = await axios.get(`${API_BASE}/sales/summary?t=${Date.now()}`);
       setProfit(data.today_profit || 0);
       setProfitGrowth(data.profit_growth || 0);
-      setTotalStockValue(data.total_stock_value || 0);
+      setTotalStockCost(data.total_stock_cost || 0);
+      setTotalStockSell(data.total_stock_sell || 0);
       setTotalSalesRevenue(data.total_sales_revenue || 0);
       setLowStockItems(data.low_stock_items || []);
     } catch (e) {
@@ -280,7 +282,8 @@ const MainApp = () => {
             <Dashboard 
               profit={profit} 
               profitGrowth={profitGrowth}
-              totalStockValue={totalStockValue}
+              totalStockCost={totalStockCost}
+              totalStockSell={totalStockSell}
               totalSalesRevenue={totalSalesRevenue}
               lowStockItems={lowStockItems}
               tg={tg} 
