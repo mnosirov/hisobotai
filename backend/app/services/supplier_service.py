@@ -4,6 +4,8 @@ from typing import List, Dict, Optional
 from app.models.models import Supplier, SupplierDebt
 from app.schemas import schemas
 
+from sqlalchemy.orm import selectinload
+
 class SupplierService:
     def __init__(self, db: AsyncSession, tenant_id: int):
         self.db = db
@@ -27,7 +29,7 @@ class SupplierService:
         return supplier
 
     async def get_debts(self) -> List[SupplierDebt]:
-        query = select(SupplierDebt).where(SupplierDebt.tenant_id == self.tenant_id).order_by(SupplierDebt.created_at.desc())
+        query = select(SupplierDebt).options(selectinload(SupplierDebt.supplier)).where(SupplierDebt.tenant_id == self.tenant_id).order_by(SupplierDebt.created_at.desc())
         result = await self.db.execute(query)
         return result.scalars().all()
 
