@@ -232,9 +232,39 @@ async def init_db():
             except Exception as e:
                 print(f"SupplierPaymentLogs table creation error: {e}")
 
+    async def ensure_expenses_table():
+        sql = """
+            CREATE TABLE IF NOT EXISTS expenses (
+                id SERIAL PRIMARY KEY,
+                tenant_id INTEGER NOT NULL,
+                amount FLOAT NOT NULL,
+                category VARCHAR NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES users (id) ON DELETE CASCADE
+            );
+        """ if is_postgres else """
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                amount FLOAT NOT NULL,
+                category VARCHAR NOT NULL,
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (tenant_id) REFERENCES users (id) ON DELETE CASCADE
+            );
+        """
+        async with engine.connect() as conn:
+            try:
+                async with conn.begin():
+                    await conn.execute(sa.text(sql))
+            except Exception as e:
+                print(f"Expenses table creation error: {e}")
+
     await ensure_suppliers_table()
     await ensure_supplier_debts_table()
     await ensure_supplier_payment_logs_table()
+    await ensure_expenses_table()
 
     # Update existing prices based on tier if price is 0
     async with engine.connect() as conn:

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Wallet } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Wallet, Banknote } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ImportModal from './components/ImportModal';
 import SupplierDebts from './components/SupplierDebts';
+import Expenses from './components/Expenses';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const MainApp = () => {
@@ -30,6 +31,8 @@ const MainApp = () => {
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
   const [totalSupplierDebt, setTotalSupplierDebt] = useState(0);
   const [cashBalance, setCashBalance] = useState(0);
+  const [todayExpenses, setTodayExpenses] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -92,6 +95,8 @@ const MainApp = () => {
       setTotalSalesRevenue(data.total_sales_revenue || 0);
       setTotalSupplierDebt(data.total_supplier_debt || 0);
       setCashBalance(data.cash_balance || 0);
+      setTodayExpenses(data.today_expenses || 0);
+      setTotalExpenses(data.total_expenses || 0);
       setLowStockItems(data.low_stock_items || []);
     } catch (e) {
       console.error("Dashboard fetch error", e);
@@ -322,6 +327,8 @@ const MainApp = () => {
               totalSalesRevenue={totalSalesRevenue}
               totalSupplierDebt={totalSupplierDebt}
               cashBalance={cashBalance}
+              todayExpenses={todayExpenses}
+              totalExpenses={totalExpenses}
               lowStockItems={lowStockItems}
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
@@ -364,6 +371,20 @@ const MainApp = () => {
 
           {activeTab === 'debts' && (
             <SupplierDebts 
+              API_BASE={API_BASE} 
+              fetchDashboardData={fetchDashboardData} 
+            />
+          )}
+
+          {activeTab === 'expenses' && (
+            <Expenses 
+              API_BASE={API_BASE} 
+              fetchDashboardData={fetchDashboardData} 
+            />
+          )}
+
+          {activeTab === 'expenses' && (
+            <Expenses 
               API_BASE={API_BASE} 
               fetchDashboardData={fetchDashboardData} 
             />
@@ -457,6 +478,30 @@ const MainApp = () => {
             <Wallet size={22} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-tight">Qarzlar</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('expenses')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'expenses' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'expenses' ? 'bg-indigo-500/20' : ''}`}>
+            <Banknote size={22} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Chiqim</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('expenses')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'expenses' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'expenses' ? 'bg-indigo-500/20' : ''}`}>
+            <Banknote size={22} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Chiqim</span>
         </button>
 
         <button 

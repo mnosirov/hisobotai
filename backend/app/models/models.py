@@ -142,3 +142,15 @@ class SupplierPaymentLog(Base):
     notes = Column(String, nullable=True)
     
     supplier = relationship("Supplier")
+
+class Expense(Base):
+    __tablename__ = "expenses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    amount = Column(Float, nullable=False)
+    category = Column(String, index=True, nullable=False) # e.g. Tushlik, Svet, Ijara, Oylik, Boshqa
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime, default=uzb_now, index=True)
+    
+    owner = relationship("User")

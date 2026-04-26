@@ -441,9 +441,17 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         total_supplier_debt = await supplier_service.get_total_debt()
         total_supplier_payments = await supplier_service.get_total_payments()
         
+        from app.services.expense_service import ExpenseService
+        expense_service = ExpenseService(db, current_user.id)
+        total_expenses = await expense_service.get_total_expenses()
+        today_expenses = await expense_service.get_today_expenses()
+        
         # Calculate cash balance
         total_sales_revenue = bi_summary.get("total_sales_revenue", 0)
-        cash_balance = total_sales_revenue - total_supplier_payments
+        cash_balance = total_sales_revenue - total_supplier_payments - total_expenses
+        
+        # Adjust today profit
+        sales_summary["today_profit"] = sales_summary.get("today_profit", 0) - today_expenses
         
         return {
             **sales_summary,
@@ -451,7 +459,9 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
             "total_sales_revenue": total_sales_revenue,
             "total_supplier_debt": total_supplier_debt,
-            "cash_balance": cash_balance
+            "cash_balance": cash_balance,
+            "total_expenses": total_expenses,
+            "today_expenses": today_expenses
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -720,3 +730,24 @@ async def pay_supplier_debt(debt_id: int, amount: float = Form(...), current_use
 async def get_supplier_payment_history(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     service = SupplierService(db, current_user.id)
     return await service.get_payment_history()
+
+# --- EXPENSES API ---
+from app.services.expense_service import ExpenseService
+
+@app.get("/api/expenses", response_model=List[schemas.ExpenseResponse])
+async def get_expenses(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = ExpenseService(db, current_user.id)
+    return await service.get_expenses()
+
+@app.post("/api/expenses", response_model=schemas.ExpenseResponse)
+async def create_expense(data: schemas.ExpenseCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = ExpenseService(db, current_user.id)
+    return await service.create_expense(data)
+
+@app.delete("/api/expenses/{expense_id}")
+async def delete_expense(expense_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = ExpenseService(db, current_user.id)
+    deleted = await service.delete_expense(expense_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Chiqim topilmadi")
+    return {"status": "success", "message": "Chiqim o'chirildi"}

@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, todayExpenses, totalExpenses, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -99,11 +99,11 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
     >
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
         {/* Daily Profit Card */}
-        <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Bugungi Foyda</span>
-          <div className="flex items-end justify-between mt-1">
+        <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-blue-600/10 relative overflow-hidden">
+          <span className="text-slate-400 text-[10px] font-medium uppercase z-10 relative">Bugungi Sof Foyda</span>
+          <div className="flex items-end justify-between mt-1 z-10 relative">
             <h2 className="text-xl font-black text-white">
               {profit.toLocaleString('uz-UZ')}
             </h2>
@@ -132,7 +132,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Sales Revenue Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Sotuv (Tushum)</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Tushum (Savdo)</span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
@@ -156,6 +156,26 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white text-purple-400">
               {(cashBalance || 0).toLocaleString('uz-UZ')}
+            </h2>
+          </div>
+        </div>
+
+        {/* Today Expenses Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-orange-500/20 to-red-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Bugungi Chiqimlar</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white text-orange-400">
+              {(todayExpenses || 0).toLocaleString('uz-UZ')}
+            </h2>
+          </div>
+        </div>
+
+        {/* Total Expenses Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-slate-500/20 to-slate-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Chiqimlar</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white text-slate-300">
+              {(totalExpenses || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>
