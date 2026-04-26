@@ -439,13 +439,19 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         bi_summary = await bi_service.get_business_summary()
         supplier_service = SupplierService(db, current_user.id)
         total_supplier_debt = await supplier_service.get_total_debt()
+        total_supplier_payments = await supplier_service.get_total_payments()
+        
+        # Calculate cash balance
+        total_sales_revenue = bi_summary.get("total_sales_revenue", 0)
+        cash_balance = total_sales_revenue - total_supplier_payments
         
         return {
             **sales_summary,
             "total_stock_cost": bi_summary.get("total_stock_cost", 0),
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
-            "total_sales_revenue": bi_summary.get("total_sales_revenue", 0),
-            "total_supplier_debt": total_supplier_debt
+            "total_sales_revenue": total_sales_revenue,
+            "total_supplier_debt": total_supplier_debt,
+            "cash_balance": cash_balance
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

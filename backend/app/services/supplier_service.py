@@ -66,3 +66,8 @@ class SupplierService:
         query = select(func.sum(SupplierDebt.remaining_amount)).where(SupplierDebt.tenant_id == self.tenant_id)
         result = await self.db.execute(query)
         return result.scalar() or 0.0
+
+    async def get_total_payments(self) -> float:
+        query = select(func.sum(SupplierPaymentLog.amount)).where(SupplierPaymentLog.tenant_id == self.tenant_id)
+        result = await self.db.execute(query)
+        return result.scalar() or 0.0

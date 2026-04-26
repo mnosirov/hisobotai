@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -99,7 +99,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
     >
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {/* Daily Profit Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
           <span className="text-slate-400 text-[10px] font-medium uppercase">Bugungi Foyda</span>
@@ -130,6 +130,16 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </div>
         </div>
 
+        {/* Total Sales Revenue Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Sotuv (Tushum)</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white">
+              {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
+            </h2>
+          </div>
+        </div>
+
         {/* Total Supplier Debt Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-red-500/20 to-rose-600/10">
           <span className="text-slate-400 text-[10px] font-medium uppercase">Do'konlardan qarz</span>
@@ -140,12 +150,12 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </div>
         </div>
 
-        {/* Total Sales Revenue Card */}
-        <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Sotuv</span>
+        {/* Cash Balance Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-purple-500/20 to-pink-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Sof Kassa (Qoldiq)</span>
           <div className="flex items-end justify-between mt-1">
-            <h2 className="text-xl font-black text-white">
-              {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
+            <h2 className="text-xl font-black text-white text-purple-400">
+              {(cashBalance || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>

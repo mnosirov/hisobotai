@@ -29,6 +29,7 @@ const MainApp = () => {
   const [totalStockSell, setTotalStockSell] = useState(0);
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
   const [totalSupplierDebt, setTotalSupplierDebt] = useState(0);
+  const [cashBalance, setCashBalance] = useState(0);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -90,6 +91,7 @@ const MainApp = () => {
       setTotalStockSell(data.total_stock_sell || 0);
       setTotalSalesRevenue(data.total_sales_revenue || 0);
       setTotalSupplierDebt(data.total_supplier_debt || 0);
+      setCashBalance(data.cash_balance || 0);
       setLowStockItems(data.low_stock_items || []);
     } catch (e) {
       console.error("Dashboard fetch error", e);
@@ -319,6 +321,7 @@ const MainApp = () => {
               totalStockSell={totalStockSell}
               totalSalesRevenue={totalSalesRevenue}
               totalSupplierDebt={totalSupplierDebt}
+              cashBalance={cashBalance}
               lowStockItems={lowStockItems}
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
