@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -99,49 +99,53 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
     >
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {/* Daily Profit Card */}
-        <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
-          <span className="text-slate-400 text-sm font-medium">Bugungi Foyda</span>
-          <div className="flex items-end justify-between mt-2">
-            <h2 className="text-2xl font-black text-white">
-              {profit.toLocaleString('uz-UZ')} <span className="text-xs font-normal text-indigo-300">UZS</span>
+        <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-blue-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Bugungi Foyda</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white">
+              {profit.toLocaleString('uz-UZ')}
             </h2>
-            <div className={`flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-lg ${
-              profitGrowth >= 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
-            }`}>
-              {profitGrowth >= 0 ? '+' : ''}{profitGrowth}% 
-              {profitGrowth >= 0 ? <TrendingUp size={12} className="ml-0.5" /> : <TrendingDown size={12} className="ml-0.5" />}
-            </div>
           </div>
         </div>
 
         {/* Total Stock Cost Card */}
-        <div className="glass-card p-6 bg-gradient-to-br from-emerald-500/20 to-teal-600/10">
-          <span className="text-slate-400 text-sm font-medium">Sklad (Tan narxi)</span>
-          <div className="flex items-end justify-between mt-2">
-            <h2 className="text-2xl font-black text-white">
-              {(totalStockCost || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-emerald-300">UZS</span>
+        <div className="glass-card p-4 bg-gradient-to-br from-emerald-500/20 to-teal-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Sklad (Tan narxi)</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white">
+              {(totalStockCost || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>
 
         {/* Total Stock Sell Card */}
-        <div className="glass-card p-6 bg-gradient-to-br from-teal-500/20 to-cyan-600/10">
-          <span className="text-slate-400 text-sm font-medium">Sklad (Sotish narxi)</span>
-          <div className="flex items-end justify-between mt-2">
-            <h2 className="text-2xl font-black text-white">
-              {(totalStockSell || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-teal-300">UZS</span>
+        <div className="glass-card p-4 bg-gradient-to-br from-teal-500/20 to-cyan-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Sklad (Sotish)</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white">
+              {(totalStockSell || 0).toLocaleString('uz-UZ')}
+            </h2>
+          </div>
+        </div>
+
+        {/* Total Supplier Debt Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-red-500/20 to-rose-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Do'konlardan qarz</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white text-rose-400">
+              {(totalSupplierDebt || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>
 
         {/* Total Sales Revenue Card */}
-        <div className="glass-card p-6 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
-          <span className="text-slate-400 text-sm font-medium">Jami Sotuv</span>
-          <div className="flex items-end justify-between mt-2">
-            <h2 className="text-2xl font-black text-white">
-              {(totalSalesRevenue || 0).toLocaleString('uz-UZ')} <span className="text-xs font-normal text-amber-300">UZS</span>
+        <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Sotuv</span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white">
+              {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>

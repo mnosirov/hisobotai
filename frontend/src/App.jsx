@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Wallet } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ import PricingPage from './components/PricingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ImportModal from './components/ImportModal';
+import SupplierDebts from './components/SupplierDebts';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const MainApp = () => {
@@ -27,8 +28,10 @@ const MainApp = () => {
   const [totalStockCost, setTotalStockCost] = useState(0);
   const [totalStockSell, setTotalStockSell] = useState(0);
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
+  const [totalSupplierDebt, setTotalSupplierDebt] = useState(0);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [inventory, setInventory] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSaleModal, setShowAddSaleModal] = useState(false);
@@ -41,7 +44,9 @@ const MainApp = () => {
     buyPrice: '', 
     sellPrice: '',
     color: '',
-    condition: ''
+    condition: '',
+    supplierId: '',
+    isDebt: false
   });
 
   const [showChat, setShowChat] = useState(false);
@@ -62,8 +67,18 @@ const MainApp = () => {
     if (user) {
       fetchDashboardData();
       fetchInventoryData();
+      fetchSuppliers();
     }
   }, [user]);
+
+  const fetchSuppliers = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/suppliers`);
+      setSuppliers(data);
+    } catch (e) {
+      console.error("Suppliers fetch error", e);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -74,6 +89,7 @@ const MainApp = () => {
       setTotalStockCost(data.total_stock_cost || 0);
       setTotalStockSell(data.total_stock_sell || 0);
       setTotalSalesRevenue(data.total_sales_revenue || 0);
+      setTotalSupplierDebt(data.total_supplier_debt || 0);
       setLowStockItems(data.low_stock_items || []);
     } catch (e) {
       console.error("Dashboard fetch error", e);
@@ -120,6 +136,8 @@ const MainApp = () => {
       formData.append('sell_price', parseFloat(newProduct.sellPrice) || 0);
       if (newProduct.color) formData.append('color', newProduct.color);
       if (newProduct.condition) formData.append('condition', newProduct.condition);
+      if (newProduct.supplierId) formData.append('supplier_id', newProduct.supplierId);
+      formData.append('is_debt', newProduct.isDebt ? 'true' : 'false');
       
       if (newProduct.imageFile) {
         formData.append('image', newProduct.imageFile);
@@ -132,7 +150,10 @@ const MainApp = () => {
       });
       toast.success("Muvaffaqiyatli qo'shildi!", { id: loadingToast });
       setShowAddModal(false);
-      setNewProduct({ name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '', color: '', condition: '', imageFile: null });
+      setNewProduct({ 
+        name: '', category: 'Umumiy', unit: 'dona', stock: '', buyPrice: '', sellPrice: '', 
+        color: '', condition: '', imageFile: null, supplierId: '', isDebt: false 
+      });
       fetchInventoryData(); 
       fetchDashboardData(); // Refresh dashboard for low stock alerts
     } catch (err) {
@@ -285,6 +306,7 @@ const MainApp = () => {
               totalStockCost={totalStockCost}
               totalStockSell={totalStockSell}
               totalSalesRevenue={totalSalesRevenue}
+              totalSupplierDebt={totalSupplierDebt}
               lowStockItems={lowStockItems}
               tg={tg} 
               fetchDashboardData={fetchDashboardData} 
@@ -323,6 +345,13 @@ const MainApp = () => {
           {activeTab === 'admin' && isAdmin && (
             <AdminPanel API_BASE={API_BASE} />
           )}
+
+          {activeTab === 'debts' && (
+            <SupplierDebts 
+              API_BASE={API_BASE} 
+              fetchDashboardData={fetchDashboardData} 
+            />
+          )}
         </AnimatePresence>
       </main>
 
@@ -333,6 +362,8 @@ const MainApp = () => {
         setNewProduct={setNewProduct} 
         handleAddProduct={handleAddProduct} 
         inventory={inventory}
+        suppliers={suppliers}
+        fetchSuppliers={fetchSuppliers}
       />
 
       <ImportModal 
@@ -397,6 +428,18 @@ const MainApp = () => {
             <Calendar size={22} />
           </div>
           <span className="text-[9px] font-bold uppercase tracking-tight">Tarix</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('debts')}
+          className={`flex flex-col items-center space-y-1 transition ${
+            activeTab === 'debts' ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeTab === 'debts' ? 'bg-indigo-500/20' : ''}`}>
+            <Wallet size={22} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Qarzlar</span>
         </button>
 
         <button 

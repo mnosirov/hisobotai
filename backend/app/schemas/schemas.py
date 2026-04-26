@@ -127,3 +127,39 @@ class SystemStats(BaseModel):
     new_users_today: int
     growth_7d: List[DailyGrowth]
 
+# --- Supplier & Supplier Debt Schemas ---
+class SupplierBase(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+class SupplierCreate(SupplierBase):
+    pass
+
+class SupplierResponse(SupplierBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SupplierDebtBase(BaseModel):
+    supplier_id: int
+    product_id: Optional[int] = None
+    total_amount: float
+    remaining_amount: float
+    notes: Optional[str] = None
+
+class SupplierDebtCreate(SupplierDebtBase):
+    pass
+
+class SupplierDebtResponse(SupplierDebtBase):
+    id: int
+    tenant_id: int
+    created_at: datetime
+    supplier: Optional[SupplierResponse] = None
+
+    class Config:
+        from_attributes = True
+

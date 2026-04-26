@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import axios from 'axios';
 
-const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [] }) => {
+const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [], suppliers = [], fetchSuppliers }) => {
   const categories = [...new Set(inventory.map(i => i.category || 'Umumiy'))];
   const [matchFound, setMatchFound] = React.useState(false);
   
@@ -186,6 +187,56 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
                     placeholder="0" 
                   />
+                </div>
+              </div>
+              
+              <div className="pt-2 border-t border-white/5 space-y-4">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Yetkazib beruvchi va To'lov</p>
+                <div>
+                  <label className="text-xs text-slate-400 mb-1 block">Yetkazib beruvchi (Do'kon)</label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={newProduct.supplierId} 
+                      onChange={e => setNewProduct({...newProduct, supplierId: e.target.value})} 
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 appearance-none text-white"
+                    >
+                      <option value="" className="text-black bg-white">Tanlanmagan</option>
+                      {suppliers.map(s => (
+                        <option key={s.id} value={s.id} className="text-black bg-white">{s.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={async () => {
+                        const name = prompt("Do'kon (Yetkazib beruvchi) nomini kiriting:");
+                        if (name) {
+                          try {
+                            const { data } = await axios.post(`${API_BASE}/suppliers`, { name });
+                            await fetchSuppliers();
+                            setNewProduct({...newProduct, supplierId: data.id});
+                          } catch (e) {
+                            alert("Xatolik yuz berdi");
+                          }
+                        }
+                      }}
+                      className="px-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl hover:bg-indigo-500/20 transition"
+                      title="Yangi do'kon qo'shish"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                  <span className="text-sm font-medium">Qarzga olingan</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={newProduct.isDebt}
+                      onChange={e => setNewProduct({...newProduct, isDebt: e.target.checked})}
+                    />
+                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
                 </div>
               </div>
 

@@ -14,6 +14,7 @@ from app.core.security import ALGORITHM, SECRET_KEY
 from app.services.inventory_service import InventoryService
 from app.services.sales_service import SalesService
 from app.services.excel_service import ExcelService
+from app.services.supplier_service import SupplierService
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -264,6 +265,8 @@ async def add_product_manual(
     color: Optional[str] = Form(None),
     condition: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    supplier_id: Optional[int] = Form(None),
+    is_debt: bool = Form(False),
     current_user: User = Depends(get_current_user), 
     db: AsyncSession = Depends(get_db)
 ):
@@ -285,7 +288,13 @@ async def add_product_manual(
             "color": color,
             "condition": condition
         }
-        res = await service.add_or_update_product(product_data, source="Qo'lda (Manual)", image_url=image_url)
+        res = await service.add_or_update_product(
+            product_data, 
+            source="Qo'lda (Manual)", 
+            image_url=image_url,
+            supplier_id=supplier_id,
+            is_debt=is_debt
+        )
         return res
     except Exception as e:
         import traceback
@@ -425,12 +434,15 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         
         sales_summary = await sales_service.get_sales_summary()
         bi_summary = await bi_service.get_business_summary()
+        supplier_service = SupplierService(db, current_user.id)
+        total_supplier_debt = await supplier_service.get_total_debt()
         
         return {
             **sales_summary,
             "total_stock_cost": bi_summary.get("total_stock_cost", 0),
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
-            "total_sales_revenue": bi_summary.get("total_sales_revenue", 0)
+            "total_sales_revenue": bi_summary.get("total_sales_revenue", 0),
+            "total_supplier_debt": total_supplier_debt
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -670,3 +682,27 @@ async def admin_impersonate_user(user_id: int, admin: User = Depends(get_admin_u
         "token_type": "bearer",
         "user": user
     }
+
+# --- SUPPLIER API ---
+@app.get("/api/suppliers", response_model=List[schemas.SupplierResponse])
+async def get_suppliers(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    return await service.get_suppliers()
+
+@app.post("/api/suppliers", response_model=schemas.SupplierResponse)
+async def create_supplier(data: schemas.SupplierCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    return await service.create_supplier(data)
+
+@app.get("/api/suppliers/debts", response_model=List[schemas.SupplierDebtResponse])
+async def get_supplier_debts(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    return await service.get_debts()
+
+@app.post("/api/suppliers/debts/{debt_id}/pay")
+async def pay_supplier_debt(debt_id: int, amount: float = Form(...), current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    debt = await service.pay_debt(debt_id, amount)
+    if not debt:
+        raise HTTPException(status_code=404, detail="Qarz topilmadi")
+    return {"status": "success", "remaining_amount": debt.remaining_amount}

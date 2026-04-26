@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 import os
 import uuid
 from PIL import Image
-from app.models.models import Product, InventoryLog
+from app.models.models import Product, InventoryLog, SupplierDebt
 from app.services.ai_service import AIService
 
 class InventoryService:
@@ -17,7 +17,7 @@ class InventoryService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def add_or_update_product(self, product_data: Dict, source: str, image_url: Optional[str] = None) -> Product:
+    async def add_or_update_product(self, product_data: Dict, source: str, image_url: Optional[str] = None, supplier_id: Optional[int] = None, is_debt: bool = False) -> Product:
         from app.services.subscription_service import TIER_LIMITS
         from fastapi import HTTPException
         
@@ -99,6 +99,21 @@ class InventoryService:
             source=source
         )
         self.db.add(log)
+        
+        # Handle Supplier Debt
+        if is_debt and supplier_id:
+            total_cost = quantity * price
+            if total_cost > 0:
+                debt = SupplierDebt(
+                    tenant_id=self.tenant_id,
+                    supplier_id=supplier_id,
+                    product_id=product.id,
+                    total_amount=total_cost,
+                    remaining_amount=total_cost,
+                    notes=f"Qarzga olingan: {product.name} ({quantity} {unit})"
+                )
+                self.db.add(debt)
+
         await self.db.commit()
         await self.db.refresh(product)
         return product

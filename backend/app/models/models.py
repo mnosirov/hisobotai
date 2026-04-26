@@ -99,3 +99,30 @@ class Debt(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     owner = relationship("User", back_populates="debts")
+
+class Supplier(Base):
+    __tablename__ = "suppliers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
+    phone = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    debts = relationship("SupplierDebt", back_populates="supplier", cascade="all, delete-orphan")
+
+class SupplierDebt(Base):
+    __tablename__ = "supplier_debts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), index=True, nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
+    total_amount = Column(Float, nullable=False)
+    remaining_amount = Column(Float, nullable=False)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    supplier = relationship("Supplier", back_populates="debts")
+    product = relationship("Product")
