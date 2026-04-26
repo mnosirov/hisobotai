@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import EditProductModal from './EditProductModal';
 
-const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete }) => {
+const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete, onReturn }) => {
   const { API_BASE, BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
   const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -212,6 +212,7 @@ const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpd
         product={editingProduct} 
         onUpdate={onUpdate} 
         onDelete={onDelete}
+        onReturn={onReturn}
         inventory={inventory}
       />
     </>

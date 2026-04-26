@@ -248,6 +248,40 @@ class InventoryService:
         await self.db.commit()
         return True
 
+    async def return_product_to_supplier(self, product_id: int):
+        """Mahsulotni do'konga qaytaradi va qarzni bekor qiladi."""
+        from fastapi import HTTPException
+        from app.models.models import SupplierDebt
+        
+        # 1. Mahsulotni topish
+        query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
+        result = await self.db.execute(query)
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Mahsulot topilmadi")
+
+        # 2. Bog'langan qarzni topish va o'chirish
+        debt_query = select(SupplierDebt).where(SupplierDebt.product_id == product_id, SupplierDebt.tenant_id == self.tenant_id)
+        debt_result = await self.db.execute(debt_query)
+        debt = debt_result.scalar_one_or_none()
+        
+        if debt:
+            await self.db.delete(debt)
+
+        # 3. Tarixga qaydni yozish
+        log = InventoryLog(
+            tenant_id=self.tenant_id,
+            product_id=product_id,
+            change_amount=-product.stock,
+            source="Do'konga qaytarildi"
+        )
+        self.db.add(log)
+
+        # 4. Mahsulotni o'chirish
+        await self.db.delete(product)
+        await self.db.commit()
+        return True
+
     async def bulk_upsert_products(self, items: List[Dict], source: str = "Ommaviy yuklash") -> List[Product]:
         """Bir nechta mahsulotni ommaviy qo'shadi yoki yangilaydi."""
         results = []

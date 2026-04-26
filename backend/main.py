@@ -340,15 +340,17 @@ async def update_product(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/inventory/{product_id}")
-async def delete_product(
-    product_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
+async def delete_product(product_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = InventoryService(db, current_user.id)
+    await service.delete_product(product_id)
+    return {"message": "Mahsulot o'chirildi"}
+
+@app.post("/api/inventory/{product_id}/return")
+async def return_product_to_supplier(product_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
         service = InventoryService(db, current_user.id)
-        await service.delete_product(product_id)
-        return {"status": "success"}
+        await service.return_product_to_supplier(product_id)
+        return {"message": "Mahsulot do'konga qaytarildi va qarz bekor qilindi"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

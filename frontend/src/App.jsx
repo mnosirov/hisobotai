@@ -223,6 +223,18 @@ const MainApp = () => {
     }
   };
 
+  const handleReturnProduct = async (productId) => {
+    const loadingToast = toast.loading("Do'konga qaytarilmoqda...");
+    try {
+      await axios.post(`${API_BASE}/inventory/${productId}/return`);
+      toast.success("Qaytarildi va qarz bekor qilindi!", { id: loadingToast });
+      fetchInventoryData();
+      fetchDashboardData();
+    } catch (err) {
+      toast.error("Xatolik yuz berdi", { id: loadingToast });
+    }
+  };
+
   if (loading) return (
     <div className="h-screen bg-[#0F172A] flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -324,6 +336,7 @@ const MainApp = () => {
               user={user}
               onUpdate={handleUpdateProduct}
               onDelete={handleDeleteProduct}
+              onReturn={handleReturnProduct}
             />
           )}
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Undo2 } from 'lucide-react';
 
-const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventory = [] }) => {
+const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, onReturn, inventory = [] }) => {
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -48,6 +48,13 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventor
   const handleDelete = () => {
     if (window.confirm(`${product.name}ni o'chirishni tasdiqlaysizmi?`)) {
       onDelete(product.id);
+      onClose();
+    }
+  };
+
+  const handleReturn = () => {
+    if (window.confirm(`${product.name}ni haqiqatan ham do'konga qaytarmoqchimisiz? Agar bu mahsulot uchun olingan qarz bo'lsa, u ham bekor qilinadi.`)) {
+      onReturn(product.id);
       onClose();
     }
   };
@@ -222,8 +229,16 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, inventor
                 <button 
                   onClick={handleDelete}
                   className="flex-shrink-0 h-14 w-14 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 transition-colors"
+                  title="O'chirish"
                 >
                   <Trash2 size={24} />
+                </button>
+                <button 
+                  onClick={handleReturn}
+                  className="flex-shrink-0 h-14 w-14 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center hover:bg-amber-500/20 transition-colors"
+                  title="Do'konga qaytarish"
+                >
+                  <Undo2 size={24} />
                 </button>
                 <button 
                   onClick={handleSubmit} 
