@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Dict, Optional
-from app.models.models import Supplier, SupplierDebt
+from app.models.models import Supplier, SupplierDebt, SupplierPaymentLog
 from app.schemas import schemas
 
 from sqlalchemy.orm import selectinload
@@ -42,9 +42,25 @@ class SupplierService:
             debt.remaining_amount -= amount
             if debt.remaining_amount < 0:
                 debt.remaining_amount = 0
+            
+            # Create payment log
+            payment_log = SupplierPaymentLog(
+                tenant_id=self.tenant_id,
+                supplier_id=debt.supplier_id,
+                debt_id=debt.id,
+                amount=amount,
+                notes=debt.notes
+            )
+            self.db.add(payment_log)
+            
             await self.db.commit()
             await self.db.refresh(debt)
         return debt
+
+    async def get_payment_history(self) -> List[SupplierPaymentLog]:
+        query = select(SupplierPaymentLog).options(selectinload(SupplierPaymentLog.supplier)).where(SupplierPaymentLog.tenant_id == self.tenant_id).order_by(SupplierPaymentLog.payment_date.desc())
+        result = await self.db.execute(query)
+        return result.scalars().all()
 
     async def get_total_debt(self) -> float:
         query = select(func.sum(SupplierDebt.remaining_amount)).where(SupplierDebt.tenant_id == self.tenant_id)

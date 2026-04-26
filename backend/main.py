@@ -707,3 +707,8 @@ async def pay_supplier_debt(debt_id: int, amount: float = Form(...), current_use
     if not debt:
         raise HTTPException(status_code=404, detail="Qarz topilmadi")
     return {"status": "success", "remaining_amount": debt.remaining_amount}
+
+@app.get("/api/suppliers/payments/history", response_model=List[schemas.SupplierPaymentLogResponse])
+async def get_supplier_payment_history(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    return await service.get_payment_history()

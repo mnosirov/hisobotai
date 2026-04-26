@@ -163,3 +163,15 @@ class SupplierDebtResponse(SupplierDebtBase):
     class Config:
         from_attributes = True
 
+class SupplierPaymentLogResponse(BaseModel):
+    id: int
+    supplier_id: int
+    debt_id: Optional[int] = None
+    amount: float
+    payment_date: datetime
+    notes: Optional[str] = None
+    supplier: Optional[SupplierResponse] = None
+
+    class Config:
+        from_attributes = True
+

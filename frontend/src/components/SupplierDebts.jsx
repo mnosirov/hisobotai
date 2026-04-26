@@ -11,6 +11,8 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
   const [payAmount, setPayAmount] = useState("");
   const [selectedDebt, setSelectedDebt] = useState(null);
   const [expandedSuppliers, setExpandedSuppliers] = useState({});
+  const [viewMode, setViewMode] = useState('debts'); // 'debts' or 'history'
+  const [history, setHistory] = useState([]);
 
   const fetchDebts = async () => {
     try {
@@ -23,9 +25,25 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
     }
   };
 
+  const fetchHistory = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${API_BASE}/suppliers/payments/history`);
+      setHistory(data);
+    } catch (e) {
+      toast.error("Tarixni yuklashda xatolik");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchDebts();
-  }, []);
+    if (viewMode === 'debts') {
+      fetchDebts();
+    } else {
+      fetchHistory();
+    }
+  }, [viewMode]);
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -83,15 +101,28 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
         <div>
           <h2 className="text-2xl font-black text-white flex items-center gap-2">
             <Store className="text-indigo-400" />
-            Do'konlar kesimida qarzlar
+            Qarzlar va To'lovlar
           </h2>
-          <p className="text-slate-400 text-sm">Har bir yetkazib beruvchi bo'yicha umumiy qarzdorlik</p>
+          <div className="flex bg-white/5 p-1 rounded-xl mt-2 w-fit border border-white/10">
+            <button 
+              onClick={() => setViewMode('debts')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'debts' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              Hozirgi qarzlar
+            </button>
+            <button 
+              onClick={() => setViewMode('history')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'history' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              To'lovlar tarixi
+            </button>
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text"
-            placeholder="Do'kon nomi..."
+            placeholder={viewMode === 'debts' ? "Do'kon nomi..." : "Tarixdan qidirish..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full md:w-64 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-all"
@@ -103,6 +134,41 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
         </div>
+      ) : viewMode === 'history' ? (
+        /* History View */
+        <div className="grid gap-3">
+          {history.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <History className="mx-auto text-slate-500 mb-4" size={48} />
+              <p className="text-slate-400">To'lovlar tarixi hali mavjud emas.</p>
+            </div>
+          ) : (
+            history.filter(h => h.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase())).map((log) => (
+              <motion.div 
+                key={log.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="glass-card p-4 flex items-center justify-between border border-white/5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                    <CheckCircle size={20} />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-white text-sm">{log.supplier?.name}</h5>
+                    <p className="text-[10px] text-slate-400">{log.notes}</p>
+                    <p className="text-[10px] text-indigo-400 font-medium">{new Date(log.payment_date).toLocaleString('uz-UZ')}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-emerald-400">
+                    -{log.amount.toLocaleString()} <span className="text-[10px] font-normal text-slate-500">UZS</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
       ) : supplierList.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <CheckCircle className="mx-auto text-emerald-400 mb-4" size={48} />
@@ -110,6 +176,7 @@ const SupplierDebts = ({ API_BASE, fetchDashboardData }) => {
           <p className="text-slate-400">Hozirda barcha do'konlar bilan hisob-kitoblar joyida.</p>
         </div>
       ) : (
+        /* Debts View (Existing code) */
         <div className="grid gap-4">
           {supplierList.map((supplier) => (
             <div key={supplier.id} className="glass-card overflow-hidden border border-white/5">

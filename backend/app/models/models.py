@@ -126,3 +126,16 @@ class SupplierDebt(Base):
     
     supplier = relationship("Supplier", back_populates="debts")
     product = relationship("Product")
+
+class SupplierPaymentLog(BaseModel):
+    __tablename__ = "supplier_payment_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), index=True, nullable=False)
+    debt_id = Column(Integer, ForeignKey("supplier_debts.id", ondelete="SET NULL"), nullable=True)
+    amount = Column(Float, nullable=False)
+    payment_date = Column(DateTime, default=datetime.utcnow, index=True)
+    notes = Column(String, nullable=True)
+    
+    supplier = relationship("Supplier")
