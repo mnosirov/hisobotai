@@ -112,18 +112,19 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
         >
           Kecha
         </button>
-        <div className="relative shrink-0">
+        <label className="shrink-0 cursor-pointer">
           <input 
             type="date" 
             value={selectedDate}
             onChange={(e) => { if(e.target.value) setSelectedDate(e.target.value) }}
             max={new Date().toISOString().slice(0, 10)}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full"
+            className="sr-only"
+            id="date-picker"
           />
-          <button className="px-4 py-2 rounded-xl text-xs font-bold glass-card text-slate-400 flex items-center gap-2">
+          <span className="px-4 py-2 rounded-xl text-xs font-bold glass-card text-slate-400 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition">
             <Calendar size={14} /> Boshqa sana...
-          </button>
-        </div>
+          </span>
+        </label>
       </div>
 
       {loading ? (
