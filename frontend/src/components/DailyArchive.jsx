@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock } from 'lucide-react';
 import axios from 'axios';
@@ -8,6 +8,7 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     fetchDailyReport(selectedDate);
@@ -112,19 +113,26 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
         >
           Kecha
         </button>
-        <label className="shrink-0 cursor-pointer">
+        <div className="shrink-0 relative">
           <input 
+            ref={dateInputRef}
             type="date" 
             value={selectedDate}
             onChange={(e) => { if(e.target.value) setSelectedDate(e.target.value) }}
             max={new Date().toISOString().slice(0, 10)}
-            className="sr-only"
-            id="date-picker"
+            className="absolute opacity-0 w-0 h-0 pointer-events-none"
           />
-          <span className="px-4 py-2 rounded-xl text-xs font-bold glass-card text-slate-400 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition">
+          <button 
+            onClick={() => {
+              if (dateInputRef.current) {
+                try { dateInputRef.current.showPicker(); } catch(e) { dateInputRef.current.click(); }
+              }
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-bold glass-card text-slate-400 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition"
+          >
             <Calendar size={14} /> Boshqa sana...
-          </span>
-        </label>
+          </button>
+        </div>
       </div>
 
       {loading ? (
