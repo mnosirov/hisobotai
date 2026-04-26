@@ -777,3 +777,18 @@ async def export_excel(current_user: User = Depends(get_current_user), db: Async
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- DAILY REPORTS API ---
+from app.services.daily_report_service import DailyReportService
+
+@app.get("/api/reports/daily", response_model=Dict)
+async def get_daily_report(date: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = DailyReportService(db, current_user.id)
+        return await service.get_daily_report(date)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

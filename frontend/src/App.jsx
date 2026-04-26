@@ -9,7 +9,7 @@ import Inventory from './components/Inventory';
 import Chat from './components/Chat';
 import AddProductModal from './components/AddProductModal';
 import AddSaleModal from './components/AddSaleModal';
-import SalesHistory from './components/SalesHistory';
+import DailyArchive from './components/DailyArchive';
 import AdminPanel from './components/AdminPanel';
 import PricingPage from './components/PricingPage';
 import Login from './pages/Login';
@@ -351,10 +351,8 @@ const MainApp = () => {
           )}
 
           {activeTab === 'history' && (
-            <SalesHistory 
+            <DailyArchive 
               API_BASE={API_BASE} 
-              fetchInventoryData={fetchInventoryData} 
-              fetchDashboardData={fetchDashboardData} 
             />
           )}
 
@@ -460,7 +458,7 @@ const MainApp = () => {
           <div className={`p-2 rounded-xl transition ${activeTab === 'history' ? 'bg-indigo-500/20' : ''}`}>
             <Calendar size={22} />
           </div>
-          <span className="text-[9px] font-bold uppercase tracking-tight">Tarix</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Arxiv</span>
         </button>
 
         <button 
