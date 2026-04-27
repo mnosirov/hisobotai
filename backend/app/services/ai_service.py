@@ -177,66 +177,45 @@ class AIService:
 
     @classmethod
     async def transcribe_audio(cls, file_path: str) -> str:
-        """Uses Google Gemini (Flash) to transcribe audio file to text."""
-        tried_models = set()
-        last_error = "Noma'lum xatolik"
-        
-        # 1. Prepare audio part
+        """Uses OpenAI Whisper to transcribe audio file to text for better Uzbek accuracy."""
         try:
-            with open(file_path, "rb") as f:
-                audio_data = f.read()
-            
-            # We assume the file is small enough to pass directly or via upload_file
-            # For robustness in local/server environments, we'll try direct parts first
-            # but Gemini preferred way is genai.upload_file for non-image media.
-            # However, for 10-30s clips, parts work well.
-        except Exception as e:
-            raise ValueError(f"Faylni o'qib bo'lmadi: {e}")
-
-        prompt = "Ushbu ovozli xabarni o'zbek tilida matnga o'gir (transkripsiya qil). Faqat matnni o'zini qaytar."
-
-        for _ in range(3):
-            model_name = await cls._get_best_model(exclude=tried_models)
-            tried_models.add(model_name)
-            
-            try:
-                model = genai.GenerativeModel(model_name)
-                # MIME type discovery
-                mime_type = "audio/webm" 
-                if file_path.endswith(".mp4"): mime_type = "audio/mp4"
-                if file_path.endswith(".wav"): mime_type = "audio/wav"
-                
-                response = await asyncio.to_thread(
-                    model.generate_content, 
-                    [{"mime_type": mime_type, "data": audio_data}, prompt]
+            with open(file_path, "rb") as audio_file:
+                # OpenAI Whisper v3 is much better for Uzbek language than Gemini Flash
+                transcript = await client.audio.transcriptions.create(
+                    model="whisper-1", 
+                    file=audio_file,
+                    language="uz", # Explicitly set Uzbek to avoid confusion
+                    prompt="Sotuv va xaridlar haqida ma'lumot: mahsulot nomi, soni va narxi." # Contextual hint
                 )
-                return response.text.strip()
-            except Exception as e:
-                last_error = str(e)
-                print(f"Gemini Transcription failed with {model_name}: {e}")
-                # Fallback to OpenAI IF quota was present? No, user explicitly has quota error.
-                continue
-                
-        raise ValueError(f"Ovozni matnga o'girishda xatolik (Gemini): {last_error}")
+                return transcript.text.strip()
+        except Exception as e:
+            print(f"OpenAI Transcription failed: {e}")
+            # Fallback to a simplified error message or Gemini if needed, 
+            # but usually OpenAI is the reliable one here.
+            raise ValueError(f"Ovozni matnga o'girishda xatolik (OpenAI): {str(e)}")
 
     @classmethod
     async def parse_voice_intent(cls, transcribed_text: str, mode: str = "inventory") -> List[Dict]:
-        """Uses Gemini to parse transcribed text into structured JSON data."""
+        """Uses Gemini to parse transcribed text into structured JSON data. 
+        Handles converting word-numbers (ikki -> 2) and fuzzy product matching logic."""
         if mode == "sales":
             prompt = (
-                f"Ushbu matndan sotilgan mahsulotlar ro'yxatini ajratib ber: '{transcribed_text}'. "
-                "Faqat JSON ro'yxat qaytar. "
+                f"Matn: '{transcribed_text}'.\n"
+                "Ushbu matndan sotilgan mahsulotlarni ajrat. "
+                "DIQQAT: Matnda sonlar so'z bilan yozilgan bo'lsa (masalan: 'ikki', 'beshta', 'o'nta'), ularni raqamga o'gir (2, 5, 10). "
+                "Mahsulot nomini aslini topishga harakat qil (masalan: 'non sotildi' -> name: 'non'). "
+                "Faqat JSON ro'yxat qaytar.\n"
                 "Format: [{\"name\": \"...\", \"quantity\": ..., \"total_price\": ...}] "
-                "O'zbek tilidagi qisqartmalarni tushun (2ta choy -> name: 'choy', quantity: 2). "
                 "Agar narx aytilmagan bo'lsa, total_price: 0 qoldir."
             )
         else:
             prompt = (
-                f"Ushbu matndan omborga kelgan mahsulotlarni ajratib ber: '{transcribed_text}'. "
-                "Faqat JSON ro'yxat qaytar. "
+                f"Matn: '{transcribed_text}'.\n"
+                "Ushbu matndan omborga kelgan (xarid qilingan) mahsulotlarni ajrat. "
+                "DIQQAT: Sonlarni raqamga o'gir (masalan: 'uch yuz' -> 300). "
+                "Faqat JSON ro'yxat qaytar.\n"
                 "Format: [{\"name\": \"...\", \"category\": \"...\", \"quantity\": ..., \"unit\": \"...\", \"price\": ...}] "
-                "Toifasini (kategoriyasini) mantiqan top. Narx aytilgan bo'lsa 'price' (sotib olish narxi) ga yoz. "
-                "Price aytilmagan bo'lsa 0 qoldir."
+                "Kategoriyani mantiqan aniqla. Narx (price) sotib olish narxidir."
             )
 
         tried_models = set()

@@ -127,7 +127,7 @@ class SalesService:
                 Product.name.ilike(f"%{name}%")
             )
             result = await self.db.execute(query)
-            product = result.scalar_one_or_none()
+            product = result.scalars().first()
             
             if product:
                 if revenue <= 0:
