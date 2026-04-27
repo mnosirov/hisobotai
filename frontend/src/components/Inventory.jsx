@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Plus, Edit2, Download, Upload } from 'lucide-react';
+import { Package, Plus, Edit2, Download, Upload, Search } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,7 @@ import EditProductModal from './EditProductModal';
 const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete, onReturn }) => {
   const { API_BASE, BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
+  const [searchTerm, setSearchTerm] = useState('');
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -36,9 +38,15 @@ const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpd
     }
   };
 
-  const filteredInventory = selectedCategory === 'Barchasi' 
-    ? inventory 
-    : inventory.filter(item => (item.category || 'Umumiy') === selectedCategory);
+
+
+
+  const filteredInventory = inventory.filter(item => {
+    const matchesCategory = selectedCategory === 'Barchasi' || (item.category || 'Umumiy') === selectedCategory;
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = term === '' || (item.name && item.name.toLowerCase().includes(term)) || (item.color && item.color.toLowerCase().includes(term));
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <>
@@ -85,6 +93,18 @@ const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpd
               <Plus size={20} />
             </button>
           </div>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <input
+            type="text"
+            placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+          />
         </div>
 
         {/* Categories Filter Strip */}
