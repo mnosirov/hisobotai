@@ -274,7 +274,7 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
                           type="number"
                           value={item.unit_price}
                           onChange={e => updateUnitPrice(item.product_id, e.target.value)}
-                          className="w-20 bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-xs font-bold text-amber-400 focus:outline-none focus:border-amber-500 text-right"
+                          className="w-28 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500 text-right"
                         />
                       </div>
                       <span className="font-black text-white text-sm">{item.revenue.toLocaleString()} <span className="text-[10px] text-slate-500">UZS</span></span>
