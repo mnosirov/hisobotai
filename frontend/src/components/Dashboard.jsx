@@ -303,10 +303,17 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           ) : (
             lowStockItems.map((item, idx) => (
               <button key={idx} onClick={() => setSelectedLowStockProduct(item)} className="flex items-center w-full p-4 hover:bg-white/5 transition group">
-                <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center mr-4 group-hover:bg-orange-500/30 transition">
-                  <div className="h-5 w-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-orange-500">!</span>
-                  </div>
+                <div className="h-10 w-10 shrink-0 rounded-xl bg-orange-500/10 flex items-center justify-center mr-4 group-hover:bg-orange-500/20 transition overflow-hidden border border-orange-500/30 relative">
+                  {item.image_url ? (
+                    <>
+                      <img src={item.image_url.startsWith('http') ? item.image_url : `${API_BASE}${item.image_url}`} alt={item.name} className="h-full w-full object-cover" />
+                      <div className="absolute top-0 right-0 bg-orange-500 text-white text-[8px] font-black px-1 rounded-bl-lg">!</div>
+                    </>
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
+                      <span className="text-[8px] font-bold text-orange-500">!</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-semibold text-sm">{item.name} kam qoldi</p>
