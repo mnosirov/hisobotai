@@ -13,6 +13,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
   const [isConfirming, setIsConfirming] = useState(false);
   const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
   const [selectedLowStockProduct, setSelectedLowStockProduct] = useState(null);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -352,13 +353,20 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
               </div>
               
               <div className="flex items-center space-x-4 mb-6">
-                 <div className="h-16 w-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/10 shrink-0">
+                 <button 
+                   onClick={() => {
+                     if (selectedLowStockProduct.image_url) {
+                       setZoomedImage(selectedLowStockProduct.image_url.startsWith('http') ? selectedLowStockProduct.image_url : `${API_BASE}${selectedLowStockProduct.image_url}`);
+                     }
+                   }}
+                   className={`h-16 w-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/10 shrink-0 ${selectedLowStockProduct.image_url ? 'cursor-pointer hover:opacity-80 transition active:scale-95' : 'cursor-default'}`}
+                 >
                    {selectedLowStockProduct.image_url ? (
                      <img src={selectedLowStockProduct.image_url.startsWith('http') ? selectedLowStockProduct.image_url : `${API_BASE}${selectedLowStockProduct.image_url}`} alt={selectedLowStockProduct.name} className="h-full w-full object-cover" />
                    ) : (
                      <Package size={28} className="text-indigo-400" />
                    )}
-                 </div>
+                 </button>
                  <div className="flex-1 min-w-0">
                    <h4 className="font-bold text-white text-lg leading-tight truncate">{selectedLowStockProduct.name}</h4>
                    <p className="text-xs text-slate-400 truncate">{selectedLowStockProduct.category || 'Umumiy'}</p>
@@ -385,6 +393,35 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
                 className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20"
               >
                 Yopish
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Image Zoom Overlay */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <div 
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 cursor-zoom-out backdrop-blur-sm"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="relative max-w-2xl max-h-full w-full h-full flex items-center justify-center"
+            >
+              <img 
+                src={zoomedImage} 
+                alt="Zoomed product" 
+                className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+              />
+              <button 
+                onClick={() => setZoomedImage(null)}
+                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white backdrop-blur-md transition-colors"
+              >
+                <X size={24} />
               </button>
             </motion.div>
           </div>
