@@ -85,7 +85,8 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
         }
         
         const finalQty = qtyToSet > 999999 ? 999999 : qtyToSet;
-        return { ...item, quantity: finalQty, revenue: finalQty * item.unit_price };
+        const numericPrice = item.unit_price === '' ? 0 : parseFloat(item.unit_price) || 0;
+        return { ...item, quantity: finalQty, revenue: finalQty * numericPrice };
       }
       return item;
     }));
@@ -95,11 +96,19 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
     // Limit to 9 digits (max 999,999,999)
     let priceStr = newPrice.toString();
     if (priceStr.length > 9) priceStr = priceStr.slice(0, 9);
-    const price = parseFloat(priceStr) || 0;
+    let price;
+    if (priceStr === '') {
+      price = '';
+    } else {
+      price = parseFloat(priceStr);
+      if (isNaN(price)) price = 0;
+    }
     
     setCart(cart.map(item => {
       if (item.product_id === productId) {
-        return { ...item, unit_price: price, revenue: item.quantity * price };
+        const numericQty = item.quantity === '' ? 0 : parseFloat(item.quantity) || 0;
+        const numericPrice = price === '' ? 0 : price;
+        return { ...item, unit_price: price, revenue: numericQty * numericPrice };
       }
       return item;
     }));
