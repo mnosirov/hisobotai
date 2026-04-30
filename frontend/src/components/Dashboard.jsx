@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic, RefreshCw, X, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
@@ -12,6 +12,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [captureMode, setCaptureMode] = useState('sales'); // 'sales' or 'inventory'
+  const [selectedLowStockProduct, setSelectedLowStockProduct] = useState(null);
 
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -301,7 +302,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
             </div>
           ) : (
             lowStockItems.map((item, idx) => (
-              <button key={idx} className="flex items-center w-full p-4 hover:bg-white/5 transition group">
+              <button key={idx} onClick={() => setSelectedLowStockProduct(item)} className="flex items-center w-full p-4 hover:bg-white/5 transition group">
                 <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center mr-4 group-hover:bg-orange-500/30 transition">
                   <div className="h-5 w-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
                     <span className="text-[8px] font-bold text-orange-500">!</span>
@@ -326,6 +327,62 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
         onConfirm={handleFinalConfirm}
         onCancel={() => setShowConfirm(false)}
       />
+
+      <AnimatePresence>
+        {selectedLowStockProduct && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm glass-card p-6 bg-[#1e293b]"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg text-white">Mahsulot tafsilotlari</h3>
+                <button onClick={() => setSelectedLowStockProduct(null)} className="text-slate-400 hover:text-white">
+                   <X size={20} />
+                </button>
+              </div>
+              
+              <div className="flex items-center space-x-4 mb-6">
+                 <div className="h-16 w-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/10 shrink-0">
+                   {selectedLowStockProduct.image_url ? (
+                     <img src={selectedLowStockProduct.image_url.startsWith('http') ? selectedLowStockProduct.image_url : `${API_BASE}${selectedLowStockProduct.image_url}`} alt={selectedLowStockProduct.name} className="h-full w-full object-cover" />
+                   ) : (
+                     <Package size={28} className="text-indigo-400" />
+                   )}
+                 </div>
+                 <div className="flex-1 min-w-0">
+                   <h4 className="font-bold text-white text-lg leading-tight truncate">{selectedLowStockProduct.name}</h4>
+                   <p className="text-xs text-slate-400 truncate">{selectedLowStockProduct.category || 'Umumiy'}</p>
+                 </div>
+              </div>
+              
+              <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                 <div className="flex justify-between items-center">
+                   <span className="text-slate-400 text-xs">Joriy qoldiq:</span>
+                   <span className="text-orange-400 font-bold text-sm bg-orange-500/10 px-2 py-1 rounded-lg">{selectedLowStockProduct.stock} {selectedLowStockProduct.unit}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-slate-400 text-xs">Olish narxi:</span>
+                   <span className="text-white font-bold text-sm">{(selectedLowStockProduct.last_purchase_price || 0).toLocaleString()} UZS</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-slate-400 text-xs">Sotish narxi:</span>
+                   <span className="text-emerald-400 font-bold text-sm">{(selectedLowStockProduct.sell_price || 0).toLocaleString()} UZS</span>
+                 </div>
+              </div>
+              
+              <button 
+                onClick={() => setSelectedLowStockProduct(null)}
+                className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20"
+              >
+                Yopish
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
