@@ -190,8 +190,16 @@ const POSPage = ({ inventory, API_BASE, fetchInventoryData, fetchDashboardData }
             placeholder="MAHSULOT QIDIRISH..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-[#0f172a] border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-[11px] font-bold text-white placeholder-slate-800 outline-none focus:border-indigo-500 transition-all uppercase"
+            className="w-full bg-[#0f172a] border border-slate-700 rounded-lg py-2 pl-10 pr-10 text-[11px] font-bold text-white placeholder-slate-800 outline-none focus:border-indigo-500 transition-all uppercase"
           />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
+            >
+              <XCircle size={14} />
+            </button>
+          )}
         </div>
         
         <div className="hidden sm:flex items-center gap-4 px-4 border-l border-slate-700">
@@ -297,17 +305,18 @@ const POSPage = ({ inventory, API_BASE, fetchInventoryData, fetchDashboardData }
               <button 
                 key={p.id} 
                 onClick={() => addToCart(p)}
-                className={`group relative ${getTileColor(idx % 2 === 0 ? p.category : 'default')} rounded-2xl p-3 text-left transition-all duration-200 flex flex-col h-28 lg:h-32 shadow-lg border-b-4 border-black/30 overflow-hidden`}
+                className={`group relative ${getTileColor(idx % 2 === 0 ? p.category : 'default')} rounded-2xl p-3 text-left transition-all duration-200 flex flex-col h-28 lg:h-32 shadow-lg border-b-4 border-black/30 overflow-hidden hover:scale-[1.02] active:scale-[0.98] active:border-b-0 active:translate-y-1`}
               >
+                 <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                  <div className="flex-1 min-w-0 z-10">
-                   <h4 className="font-black text-white text-[10px] leading-tight uppercase truncate truncate-2-lines mb-1">{p.name}</h4>
+                   <h4 className="font-black text-white text-[10px] leading-tight uppercase truncate truncate-2-lines mb-1 group-hover:text-indigo-100 transition-colors">{p.name}</h4>
                    <p className="text-[9px] font-bold text-black/30 uppercase truncate">{p.category || 'ASOSIY'}</p>
                  </div>
                  
                  <div className="mt-auto flex justify-between items-end z-10">
-                   <span className="text-[9px] font-bold text-white/50">{p.stock} ta</span>
-                   <div className="bg-black/20 px-2 py-0.5 rounded-lg border border-white/5">
-                      <span className="text-white font-black text-[10px] tabular-nums tracking-tighter">{p.sell_price.toLocaleString()}</span>
+                   <span className="text-[9px] font-bold text-white/40">{p.stock} ta</span>
+                   <div className="bg-black/20 px-2 py-1 rounded-lg border border-white/10 group-hover:bg-black/40 transition-colors">
+                      <span className="text-white font-black text-[11px] tabular-nums tracking-tighter">{p.sell_price.toLocaleString()}</span>
                    </div>
                  </div>
               </button>

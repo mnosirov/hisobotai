@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic } from 'lucide-react';
+import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
@@ -99,27 +99,43 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
     >
       
       {/* Top Actions */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => {
-            const loadingToast = toast.loading("Hisobot tayyorlanmoqda...");
-            axios.get(`${API_BASE}/export/excel`, { responseType: 'blob' })
-              .then(res => {
-                const url = window.URL.createObjectURL(new Blob([res.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
-                document.body.appendChild(link);
-                link.click();
-                toast.success("Yuklab olindi!", { id: loadingToast });
-              })
-              .catch(() => toast.error("Hisobotni yuklashda xatolik yuz berdi", { id: loadingToast }));
-          }}
-          className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-indigo-500/20"
-        >
-          <span className="text-lg">📥</span>
-          <span>Hisobot (Excel)</span>
-        </button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-500">
+          Hisobot<span className="text-indigo-500">AI</span>
+        </h2>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+              fetchDashboardData();
+              fetchInventoryData();
+              toast.success("Ma'lumotlar yangilandi", { icon: '🔄' });
+            }}
+            className="h-10 w-10 glass-card flex items-center justify-center text-slate-400 hover:text-white transition-all active:rotate-180 duration-500"
+          >
+            <RefreshCw size={18} />
+          </button>
+          <button
+            onClick={() => {
+              const loadingToast = toast.loading("Hisobot tayyorlanmoqda...");
+              axios.get(`${API_BASE}/export/excel`, { responseType: 'blob' })
+                .then(res => {
+                  const url = window.URL.createObjectURL(new Blob([res.data]));
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', `Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
+                  document.body.appendChild(link);
+                  link.click();
+                  toast.success("Yuklab olindi!", { id: loadingToast });
+                })
+                .catch(() => toast.error("Hisobotni yuklashda xatolik yuz berdi", { id: loadingToast }));
+            }}
+            className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-indigo-500/20"
+          >
+            <FileText size={16} />
+            <span>Excel</span>
+          </button>
+        </div>
       </div>
 
       {/* Metrics Grid */}

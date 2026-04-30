@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Plus, Edit2, Download, Upload, Search } from 'lucide-react';
+import { Package, Plus, Edit2, Download, Upload, Search, XCircle } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -103,8 +103,16 @@ const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpd
             placeholder="Mahsulot nomi yoki kodi bo'yicha qidirish..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+            className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
           />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <XCircle size={18} />
+            </button>
+          )}
         </div>
 
         {/* Categories Filter Strip */}

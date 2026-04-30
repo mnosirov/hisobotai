@@ -70,13 +70,32 @@ const VoiceRecorder = ({ onRecordingComplete, isAnalyzing }) => {
       <AnimatePresence>
         {isRecording && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="flex items-center space-x-3 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-full"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="flex flex-col items-center space-y-2"
           >
-            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-400 font-mono font-bold text-sm">{formatTime(recordingTime)}</span>
+            <div className="flex items-center space-x-3 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-full">
+              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-red-400 font-mono font-bold text-sm">{formatTime(recordingTime)}</span>
+            </div>
+            {/* Visualizer Bars */}
+            <div className="flex items-center justify-center space-x-1 h-4">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ 
+                    height: [4, 16, 8, 12, 4],
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 0.5 + Math.random() * 0.5,
+                    delay: i * 0.1 
+                  }}
+                  className="w-1 bg-red-500/40 rounded-full"
+                />
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
