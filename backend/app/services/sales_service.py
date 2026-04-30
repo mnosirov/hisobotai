@@ -59,7 +59,16 @@ class SalesService:
         res_low_stock = await self.db.execute(query_low_stock)
         low_stock_items = res_low_stock.scalars().all()
         
-        low_stock_data = [{"name": p.name, "stock": p.stock, "unit": p.unit} for p in low_stock_items]
+        low_stock_data = [{
+            "id": p.id,
+            "name": p.name, 
+            "category": p.category,
+            "stock": p.stock, 
+            "unit": p.unit,
+            "sell_price": p.sell_price,
+            "last_purchase_price": p.last_purchase_price,
+            "image_url": p.image_url
+        } for p in low_stock_items]
 
         return {
             "today_profit": sales_today,
