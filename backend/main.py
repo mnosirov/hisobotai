@@ -564,6 +564,15 @@ async def chat_with_assistant(chat: schemas.ChatMessage, current_user: User = De
         context += f"Ombordagi mahsulot turlari: {biz_health.get('total_product_types', 0)} xil.\n"
         context += f"Ombordagi jami mollar qiymati: {biz_health.get('total_stock_value', 0)} UZS.\n"
         
+        inv_service = InventoryService(db, current_user.id)
+        all_products = await inv_service.get_all_products()
+        if all_products:
+            sorted_by_price = sorted(all_products, key=lambda x: x.sell_price, reverse=True)
+            top_expensive = [f"{p.name} ({p.sell_price} UZS)" for p in sorted_by_price[:3]]
+            top_cheap = [f"{p.name} ({p.sell_price} UZS)" for p in sorted_by_price[-3:]]
+            context += f"Eng qimmat mahsulotlar: {', '.join(top_expensive)}.\n"
+            context += f"Eng arzon mahsulotlar: {', '.join(top_cheap)}.\n"
+        
         # Add Expenses info to AI context
         from app.services.expense_service import ExpenseService
         expense_service = ExpenseService(db, current_user.id)
@@ -632,6 +641,13 @@ async def telegram_webhook(update: Dict):
                         context += f"Bugungi jami foyda: {int(summary.get('today_profit', 0))} UZS.\n"
                         context += f"Yaqinda sotilgan mahsulotlar:\n{history_text}\n"
                         context += f"Kam qolganlar: {', '.join(low_stock[:5])}\n"
+                        
+                        if products:
+                            sorted_by_price = sorted(products, key=lambda x: x.sell_price, reverse=True)
+                            top_expensive = [f"{p.name} ({p.sell_price} UZS)" for p in sorted_by_price[:3]]
+                            top_cheap = [f"{p.name} ({p.sell_price} UZS)" for p in sorted_by_price[-3:]]
+                            context += f"Eng qimmat mahsulotlar: {', '.join(top_expensive)}.\n"
+                            context += f"Eng arzon mahsulotlar: {', '.join(top_cheap)}.\n"
                         
                         # Add Expenses info to AI context
                         from app.services.expense_service import ExpenseService
