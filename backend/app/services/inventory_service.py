@@ -269,26 +269,36 @@ class InventoryService:
         is_full_return = (quantity == product.stock)
 
         # 2. Bog'langan qarzni topish va o'zgartirish
-        debt_query = select(SupplierDebt).where(SupplierDebt.product_id == product_id, SupplierDebt.tenant_id == self.tenant_id)
+        debt_query = select(SupplierDebt).where(SupplierDebt.product_id == product_id, SupplierDebt.tenant_id == self.tenant_id).order_by(SupplierDebt.created_at.desc())
         debt_result = await self.db.execute(debt_query)
-        debt = debt_result.scalar_one_or_none()
+        debts = debt_result.scalars().all()
         
-        if debt:
+        if debts:
             if is_full_return:
                 from app.models.models import SupplierPaymentLog
-                # Agar bu qarz uchun avval to'lov qilingan bo'lsa, u to'lovlarni tarixini o'chiramiz.
-                payment_query = select(SupplierPaymentLog).where(SupplierPaymentLog.debt_id == debt.id)
-                payment_result = await self.db.execute(payment_query)
-                payments = payment_result.scalars().all()
-                for payment in payments:
-                    await self.db.delete(payment)
-                await self.db.delete(debt)
+                for debt in debts:
+                    payment_query = select(SupplierPaymentLog).where(SupplierPaymentLog.debt_id == debt.id)
+                    payment_result = await self.db.execute(payment_query)
+                    payments = payment_result.scalars().all()
+                    for payment in payments:
+                        await self.db.delete(payment)
+                    await self.db.delete(debt)
             else:
                 reduction_amount = quantity * product.last_purchase_price
-                debt.total_amount = max(0, debt.total_amount - reduction_amount)
-                debt.remaining_amount = max(0, debt.remaining_amount - reduction_amount)
-                if debt.remaining_amount == 0 and debt.total_amount == 0:
-                    await self.db.delete(debt)
+                for debt in debts:
+                    if reduction_amount <= 0:
+                        break
+                    
+                    if debt.remaining_amount <= reduction_amount:
+                        reduction_amount -= debt.remaining_amount
+                        debt.total_amount = max(0, debt.total_amount - debt.remaining_amount)
+                        debt.remaining_amount = 0
+                        if debt.total_amount == 0:
+                            await self.db.delete(debt)
+                    else:
+                        debt.remaining_amount -= reduction_amount
+                        debt.total_amount -= reduction_amount
+                        reduction_amount = 0
 
         # 3. Mahsulot qoldig'ini ayirish yoki o'chirish
         if is_full_return:
