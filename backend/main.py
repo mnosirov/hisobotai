@@ -148,7 +148,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"status": "ok", "version": "2.1 Pro — Debug Active", "app": "Hisobot AI"}
 
