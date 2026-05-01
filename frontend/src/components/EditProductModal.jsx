@@ -53,8 +53,27 @@ const EditProductModal = ({ show, onClose, product, onUpdate, onDelete, onReturn
   };
 
   const handleReturn = () => {
-    if (window.confirm(`${product.name}ni haqiqatan ham do'konga qaytarmoqchimisiz? Agar bu mahsulot uchun olingan qarz bo'lsa, u ham bekor qilinadi.`)) {
-      onReturn(product.id);
+    const returnQtyStr = window.prompt(
+      `Diqqat: ${product.name} hozirda ${product.stock} ${product.unit} mavjud.\n\nQancha miqdorni do'konga qaytarmoqchisiz?\n(Hammasini qaytarish uchun ${product.stock} yozing yoki bo'sh qoldiring)`
+    );
+
+    if (returnQtyStr === null) return; // user cancelled
+
+    let returnQty = product.stock;
+    if (returnQtyStr.trim() !== '') {
+        returnQty = parseFloat(returnQtyStr);
+        if (isNaN(returnQty) || returnQty <= 0) {
+            alert("Iltimos, to'g'ri miqdor kiriting.");
+            return;
+        }
+        if (returnQty > product.stock) {
+            alert(`Skladda faqat ${product.stock} ${product.unit} bor!`);
+            return;
+        }
+    }
+
+    if (window.confirm(`${returnQty} ${product.unit} ${product.name}ni haqiqatan ham do'konga qaytarmoqchimisiz? Agar qarz bo'lsa, mos ravishda kamaytiriladi.`)) {
+      onReturn(product.id, returnQty);
       onClose();
     }
   };

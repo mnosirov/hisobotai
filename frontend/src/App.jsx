@@ -230,11 +230,11 @@ const MainApp = () => {
     }
   };
 
-  const handleReturnProduct = async (productId) => {
+  const handleReturnProduct = async (productId, quantity) => {
     const loadingToast = toast.loading("Do'konga qaytarilmoqda...");
     try {
-      await axios.post(`${API_BASE}/inventory/${productId}/return`);
-      toast.success("Qaytarildi va qarz bekor qilindi!", { id: loadingToast });
+      await axios.post(`${API_BASE}/inventory/${productId}/return`, { quantity });
+      toast.success("Muvaffaqiyatli qaytarildi!", { id: loadingToast });
       fetchInventoryData();
       fetchDashboardData();
     } catch (err) {

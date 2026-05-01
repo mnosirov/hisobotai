@@ -345,12 +345,16 @@ async def delete_product(product_id: int, current_user: User = Depends(get_curre
     await service.delete_product(product_id)
     return {"message": "Mahsulot o'chirildi"}
 
+from pydantic import BaseModel
+class ReturnRequest(BaseModel):
+    quantity: float
+
 @app.post("/api/inventory/{product_id}/return")
-async def return_product_to_supplier(product_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def return_product_to_supplier(product_id: int, req: ReturnRequest, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     try:
         service = InventoryService(db, current_user.id)
-        await service.return_product_to_supplier(product_id)
-        return {"message": "Mahsulot do'konga qaytarildi va qarz bekor qilindi"}
+        await service.return_product_to_supplier(product_id, req.quantity)
+        return {"message": f"Mahsulot do'konga qaytarildi ({req.quantity}) va kerakli qarz qisqartirildi"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

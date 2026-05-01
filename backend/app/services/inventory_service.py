@@ -251,8 +251,8 @@ class InventoryService:
         await self.db.commit()
         return True
 
-    async def return_product_to_supplier(self, product_id: int):
-        """Mahsulotni do'konga qaytaradi va qarzni bekor qiladi."""
+    async def return_product_to_supplier(self, product_id: int, quantity: float):
+        """Mahsulotni do'konga qaytaradi va qarzni qisqartiradi yoki bekor qiladi."""
         from fastapi import HTTPException
         from app.models.models import SupplierDebt
         
@@ -263,35 +263,47 @@ class InventoryService:
         if not product:
             raise HTTPException(status_code=404, detail="Mahsulot topilmadi")
 
-        # 2. Bog'langan qarzni topish va o'chirish
+        if quantity <= 0 or quantity > product.stock:
+            raise HTTPException(status_code=400, detail="Noto'g'ri miqdor kiritildi")
+
+        is_full_return = (quantity == product.stock)
+
+        # 2. Bog'langan qarzni topish va o'zgartirish
         debt_query = select(SupplierDebt).where(SupplierDebt.product_id == product_id, SupplierDebt.tenant_id == self.tenant_id)
         debt_result = await self.db.execute(debt_query)
         debt = debt_result.scalar_one_or_none()
         
         if debt:
-            from app.models.models import SupplierPaymentLog
-            
-            # 2.1 Agar bu qarz uchun avval to'lov qilingan bo'lsa, u to'lovlarni tarixini o'chiramiz.
-            # Bu orqali pul avtomatik ravishda Kassaga qaytadi.
-            payment_query = select(SupplierPaymentLog).where(SupplierPaymentLog.debt_id == debt.id)
-            payment_result = await self.db.execute(payment_query)
-            payments = payment_result.scalars().all()
-            for payment in payments:
-                await self.db.delete(payment)
-                
-            await self.db.delete(debt)
+            if is_full_return:
+                from app.models.models import SupplierPaymentLog
+                # Agar bu qarz uchun avval to'lov qilingan bo'lsa, u to'lovlarni tarixini o'chiramiz.
+                payment_query = select(SupplierPaymentLog).where(SupplierPaymentLog.debt_id == debt.id)
+                payment_result = await self.db.execute(payment_query)
+                payments = payment_result.scalars().all()
+                for payment in payments:
+                    await self.db.delete(payment)
+                await self.db.delete(debt)
+            else:
+                reduction_amount = quantity * product.last_purchase_price
+                debt.total_amount = max(0, debt.total_amount - reduction_amount)
+                debt.remaining_amount = max(0, debt.remaining_amount - reduction_amount)
+                if debt.remaining_amount == 0 and debt.total_amount == 0:
+                    await self.db.delete(debt)
 
-        # 3. Tarixga qaydni yozish
-        log = InventoryLog(
-            tenant_id=self.tenant_id,
-            product_id=product_id,
-            change_amount=-product.stock,
-            source="Do'konga qaytarildi"
-        )
-        self.db.add(log)
+        # 3. Mahsulot qoldig'ini ayirish yoki o'chirish
+        if is_full_return:
+            await self.db.delete(product)
+        else:
+            product.stock -= quantity
+            # Tarixga qaydni yozish (faqat to'liq o'chirilmasa qoladi, chunki ON DELETE CASCADE bor)
+            log = InventoryLog(
+                tenant_id=self.tenant_id,
+                product_id=product_id,
+                change_amount=-quantity,
+                source="Qisman do'konga qaytarildi"
+            )
+            self.db.add(log)
 
-        # 4. Mahsulotni o'chirish
-        await self.db.delete(product)
         await self.db.commit()
         return True
 
