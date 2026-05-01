@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import EditProductModal from './EditProductModal';
 
-const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete, onReturn }) => {
+const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpdate, onDelete, onReturn, suppliers = [] }) => {
   const { API_BASE, BACKEND_URL } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,6 +176,11 @@ const Inventory = ({ inventory, setShowAddModal, setShowImportModal, user, onUpd
                       {item.condition && (
                         <span className="text-[9px] font-bold bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400">
                           Holat: {item.condition}
+                        </span>
+                      )}
+                      {item.supplier_id && suppliers && (
+                        <span className="text-[9px] font-bold bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-amber-400">
+                          Do'kon: {suppliers.find(s => s.id === item.supplier_id)?.name || "Noma'lum"}
                         </span>
                       )}
                     </div>

@@ -347,6 +347,7 @@ const MainApp = () => {
               onUpdate={handleUpdateProduct}
               onDelete={handleDeleteProduct}
               onReturn={handleReturnProduct}
+              suppliers={suppliers}
             />
           )}
 

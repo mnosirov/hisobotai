@@ -58,9 +58,11 @@ class Product(Base):
     color = Column(String, nullable=True)
     condition = Column(String, nullable=True) # e.g., Yangi, Ishlatilgan
     image_url = Column(String, nullable=True)
+    supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="products")
+    supplier = relationship("Supplier")
     logs = relationship("InventoryLog", back_populates="product", cascade="all, delete-orphan")
 
 class InventoryLog(Base):

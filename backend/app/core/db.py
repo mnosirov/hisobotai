@@ -91,6 +91,7 @@ async def init_db():
     await safe_migrate("ALTER TABLE products ADD COLUMN image_url VARCHAR")
     await safe_migrate("ALTER TABLE products ADD COLUMN color VARCHAR")
     await safe_migrate("ALTER TABLE products ADD COLUMN condition VARCHAR")
+    await safe_migrate("ALTER TABLE products ADD COLUMN supplier_id INTEGER")
     
     # Sales table
     await safe_migrate("ALTER TABLE sales ADD COLUMN tenant_id INTEGER")

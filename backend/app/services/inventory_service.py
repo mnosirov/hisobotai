@@ -74,6 +74,8 @@ class InventoryService:
                 product.condition = condition
             if image_url:
                 product.image_url = image_url
+            if supplier_id:
+                product.supplier_id = supplier_id
         else:
             if sell_price == 0:
                 sell_price = price * 1.2  # Default 20% margin
@@ -87,7 +89,8 @@ class InventoryService:
                 sell_price=sell_price,
                 color=color,
                 condition=condition,
-                image_url=image_url
+                image_url=image_url,
+                supplier_id=supplier_id
             )
             self.db.add(product)
             await self.db.flush()

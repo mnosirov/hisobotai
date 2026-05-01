@@ -12,6 +12,7 @@ class ProductBase(BaseModel):
     color: Optional[str] = Field(default=None)
     condition: Optional[str] = Field(default=None) # e.g., Yangi, Ishlatilgan
     image_url: Optional[str] = Field(default=None)
+    supplier_id: Optional[int] = Field(default=None)
 
 class ProductCreate(ProductBase):
     pass
