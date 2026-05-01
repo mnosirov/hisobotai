@@ -6,6 +6,18 @@ import axios from 'axios';
 const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProduct, handleAddProduct, inventory = [], suppliers = [], fetchSuppliers, API_BASE }) => {
   const categories = [...new Set(inventory.map(i => i.category || 'Umumiy'))];
   const [matchFound, setMatchFound] = React.useState(false);
+  const [showCategories, setShowCategories] = React.useState(false);
+  const categoryRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setShowCategories(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   const handleNameChange = (val) => {
     const existing = inventory.find(i => i.name.toLowerCase() === val.trim().toLowerCase());
@@ -114,21 +126,53 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
                   ))}
                 </datalist>
               </div>
-              <div>
+              <div className="relative" ref={categoryRef}>
                 <label className="text-xs text-slate-400 mb-1 block">Bo'lim (Kategoriya)</label>
-                <input 
-                  type="text" 
-                  list="category-suggestions"
-                  value={newProduct.category} 
-                  onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" 
-                  placeholder="Masalan: Oziq-ovqat" 
-                />
-                <datalist id="category-suggestions">
-                  {categories.map(cat => (
-                    <option key={cat} value={cat} />
-                  ))}
-                </datalist>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={newProduct.category || ''} 
+                    onChange={e => {
+                      setNewProduct({...newProduct, category: e.target.value});
+                      setShowCategories(true);
+                    }} 
+                    onFocus={() => setShowCategories(true)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm focus:outline-none focus:border-indigo-500" 
+                    placeholder="Masalan: Oziq-ovqat" 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowCategories(!showCategories)}
+                    className="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center text-slate-400 hover:text-white"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${showCategories ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                </div>
+                
+                <AnimatePresence>
+                  {showCategories && categories.length > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute z-50 w-full mt-2 bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto py-2 no-scrollbar"
+                    >
+                      {categories.map(cat => (
+                        <div 
+                          key={cat} 
+                          className="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-500/20 hover:text-indigo-300 cursor-pointer transition-colors"
+                          onClick={() => {
+                            setNewProduct({...newProduct, category: cat});
+                            setShowCategories(false);
+                          }}
+                        >
+                          {cat}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               <div className="flex space-x-4">
                 <div className="flex-1">
