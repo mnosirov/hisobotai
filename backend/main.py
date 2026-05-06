@@ -16,6 +16,7 @@ from app.services.inventory_service import InventoryService
 from app.services.sales_service import SalesService
 from app.services.excel_service import ExcelService
 from app.services.supplier_service import SupplierService
+from app.services.trash_service import TrashService
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -764,6 +765,14 @@ async def get_supplier_payment_history(current_user: User = Depends(get_current_
     service = SupplierService(db, current_user.id)
     return await service.get_payment_history()
 
+@app.delete("/api/suppliers/{supplier_id}")
+async def delete_supplier(supplier_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = SupplierService(db, current_user.id)
+    deleted = await service.delete_supplier(supplier_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Ta'minotchi topilmadi")
+    return {"status": "success", "message": "Ta'minotchi o'chirildi"}
+
 # --- EXPENSES API ---
 from app.services.expense_service import ExpenseService
 
@@ -797,6 +806,20 @@ async def export_excel(current_user: User = Depends(get_current_user), db: Async
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- TRASH API ---
+@app.get("/api/trash")
+async def get_trash(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = TrashService(db, current_user.id)
+    return await service.get_trash_items()
+
+@app.post("/api/trash/{item_type}/{item_id}/restore")
+async def restore_trash_item(item_type: str, item_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    service = TrashService(db, current_user.id)
+    success = await service.restore_item(item_type, item_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Element topilmadi yoki tiklab bo'lmadi")
+    return {"status": "success", "message": "Ma'lumot qayta tiklandi"}
 
 # --- DAILY REPORTS API ---
 from app.services.daily_report_service import DailyReportService

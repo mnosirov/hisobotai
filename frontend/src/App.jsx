@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Wallet, Banknote } from 'lucide-react';
+import { TrendingUp, Package, MessageSquare, LogOut, User as UserIcon, Calendar, Shield, CreditCard, Crown, AlertTriangle, Wallet, Banknote, Trash2 } from 'lucide-react';
 import { Toaster, toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -17,6 +17,7 @@ import Register from './pages/Register';
 import ImportModal from './components/ImportModal';
 import SupplierDebts from './components/SupplierDebts';
 import Expenses from './components/Expenses';
+import Trash from './components/Trash';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const MainApp = () => {
@@ -283,15 +284,26 @@ const MainApp = () => {
             )}
           </div>
         </motion.div>
-        <motion.button 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={logout}
-          className="h-10 w-10 glass-card flex items-center justify-center hover:bg-red-500/10 transition-colors group"
-          title="Chiqish"
-        >
-          <LogOut className="text-slate-400 group-hover:text-red-400" size={20} />
-        </motion.button>
+        <div className="flex items-center space-x-2">
+          <motion.button 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={() => setActiveTab('pricing')}
+            className={`h-10 w-10 glass-card flex items-center justify-center transition-colors ${activeTab === 'pricing' ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:bg-amber-500/10'}`}
+            title="Tariflar"
+          >
+            <CreditCard size={20} />
+          </motion.button>
+          <motion.button 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={logout}
+            className="h-10 w-10 glass-card flex items-center justify-center hover:bg-red-500/10 transition-colors group"
+            title="Chiqish"
+          >
+            <LogOut className="text-slate-400 group-hover:text-red-400" size={20} />
+          </motion.button>
+        </div>
       </header>
 
       {/* Subscription Expired Banner */}
@@ -381,6 +393,14 @@ const MainApp = () => {
             <Expenses 
               API_BASE={API_BASE} 
               fetchDashboardData={fetchDashboardData} 
+            />
+          )}
+
+          {activeTab === 'trash' && (
+            <Trash 
+              API_BASE={API_BASE} 
+              fetchDashboardData={fetchDashboardData} 
+              fetchInventoryData={fetchInventoryData}
             />
           )}
 
@@ -489,15 +509,15 @@ const MainApp = () => {
         </button>
 
         <button 
-          onClick={() => setActiveTab('pricing')}
+          onClick={() => setActiveTab('trash')}
           className={`flex flex-col items-center space-y-1 transition ${
-            activeTab === 'pricing' ? 'text-indigo-400' : 'text-slate-500'
+            activeTab === 'trash' ? 'text-red-400' : 'text-slate-500'
           }`}
         >
-          <div className={`p-2 rounded-xl transition ${activeTab === 'pricing' ? 'bg-indigo-500/20' : ''}`}>
-            <CreditCard size={22} />
+          <div className={`p-2 rounded-xl transition ${activeTab === 'trash' ? 'bg-red-500/20' : ''}`}>
+            <Trash2 size={22} />
           </div>
-          <span className="text-[9px] font-bold uppercase tracking-tight">Tariflar</span>
+          <span className="text-[9px] font-bold uppercase tracking-tight">Savat</span>
         </button>
 
         {isAdmin && (

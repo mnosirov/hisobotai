@@ -12,7 +12,10 @@ class SupplierService:
         self.tenant_id = tenant_id
 
     async def get_suppliers(self) -> List[Supplier]:
-        query = select(Supplier).where(Supplier.tenant_id == self.tenant_id)
+        query = select(Supplier).where(
+            Supplier.tenant_id == self.tenant_id,
+            Supplier.is_deleted == 0
+        )
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -29,7 +32,10 @@ class SupplierService:
         return supplier
 
     async def get_debts(self) -> List[SupplierDebt]:
-        query = select(SupplierDebt).options(selectinload(SupplierDebt.supplier)).where(SupplierDebt.tenant_id == self.tenant_id).order_by(SupplierDebt.created_at.desc())
+        query = select(SupplierDebt).options(selectinload(SupplierDebt.supplier)).where(
+            SupplierDebt.tenant_id == self.tenant_id,
+            SupplierDebt.is_deleted == 0
+        ).order_by(SupplierDebt.created_at.desc())
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -58,16 +64,41 @@ class SupplierService:
         return debt
 
     async def get_payment_history(self) -> List[SupplierPaymentLog]:
-        query = select(SupplierPaymentLog).options(selectinload(SupplierPaymentLog.supplier)).where(SupplierPaymentLog.tenant_id == self.tenant_id).order_by(SupplierPaymentLog.payment_date.desc())
+        query = select(SupplierPaymentLog).options(selectinload(SupplierPaymentLog.supplier)).where(
+            SupplierPaymentLog.tenant_id == self.tenant_id,
+            SupplierPaymentLog.is_deleted == 0
+        ).order_by(SupplierPaymentLog.payment_date.desc())
         result = await self.db.execute(query)
         return result.scalars().all()
 
     async def get_total_debt(self) -> float:
-        query = select(func.sum(SupplierDebt.remaining_amount)).where(SupplierDebt.tenant_id == self.tenant_id)
+        query = select(func.sum(SupplierDebt.remaining_amount)).where(
+            SupplierDebt.tenant_id == self.tenant_id,
+            SupplierDebt.is_deleted == 0
+        )
         result = await self.db.execute(query)
         return result.scalar() or 0.0
 
     async def get_total_payments(self) -> float:
-        query = select(func.sum(SupplierPaymentLog.amount)).where(SupplierPaymentLog.tenant_id == self.tenant_id)
+        query = select(func.sum(SupplierPaymentLog.amount)).where(
+            SupplierPaymentLog.tenant_id == self.tenant_id,
+            SupplierPaymentLog.is_deleted == 0
+        )
         result = await self.db.execute(query)
         return result.scalar() or 0.0
+
+    async def delete_supplier(self, supplier_id: int) -> bool:
+        query = select(Supplier).where(Supplier.id == supplier_id, Supplier.tenant_id == self.tenant_id)
+        result = await self.db.execute(query)
+        supplier = result.scalar_one_or_none()
+        if supplier:
+            from app.models.models import uzb_now
+            supplier.is_deleted = 1
+            supplier.deleted_at = uzb_now()
+            # Also soft delete its debts
+            await self.db.execute(
+                f"UPDATE supplier_debts SET is_deleted = 1, deleted_at = '{supplier.deleted_at}' WHERE supplier_id = {supplier_id} AND tenant_id = {self.tenant_id}"
+            )
+            await self.db.commit()
+            return True
+        return False

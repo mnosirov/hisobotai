@@ -92,6 +92,8 @@ async def init_db():
     await safe_migrate("ALTER TABLE products ADD COLUMN color VARCHAR")
     await safe_migrate("ALTER TABLE products ADD COLUMN condition VARCHAR")
     await safe_migrate("ALTER TABLE products ADD COLUMN supplier_id INTEGER")
+    await safe_migrate("ALTER TABLE products ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE products ADD COLUMN deleted_at TIMESTAMP")
     
     # Sales table
     await safe_migrate("ALTER TABLE sales ADD COLUMN tenant_id INTEGER")
@@ -102,6 +104,8 @@ async def init_db():
     # Debts table
     await safe_migrate("ALTER TABLE debts ADD COLUMN tenant_id INTEGER")
     await safe_migrate("ALTER TABLE debts ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    await safe_migrate("ALTER TABLE debts ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE debts ADD COLUMN deleted_at TIMESTAMP")
     
     # Inventory Logs table
     await safe_migrate("ALTER TABLE inventory_logs ADD COLUMN tenant_id INTEGER")
@@ -266,6 +270,16 @@ async def init_db():
     await ensure_supplier_debts_table()
     await ensure_supplier_payment_logs_table()
     await ensure_expenses_table()
+    
+    # Soft delete columns for additional tables
+    await safe_migrate("ALTER TABLE suppliers ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE suppliers ADD COLUMN deleted_at TIMESTAMP")
+    await safe_migrate("ALTER TABLE supplier_debts ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE supplier_debts ADD COLUMN deleted_at TIMESTAMP")
+    await safe_migrate("ALTER TABLE supplier_payment_logs ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE supplier_payment_logs ADD COLUMN deleted_at TIMESTAMP")
+    await safe_migrate("ALTER TABLE expenses ADD COLUMN is_deleted INTEGER DEFAULT 0")
+    await safe_migrate("ALTER TABLE expenses ADD COLUMN deleted_at TIMESTAMP")
 
     # Update existing prices based on tier if price is 0
     async with engine.connect() as conn:

@@ -11,7 +11,10 @@ class ExpenseService:
         self.tenant_id = tenant_id
 
     async def get_expenses(self) -> List[Expense]:
-        query = select(Expense).where(Expense.tenant_id == self.tenant_id).order_by(Expense.created_at.desc())
+        query = select(Expense).where(
+            Expense.tenant_id == self.tenant_id,
+            Expense.is_deleted == 0
+        ).order_by(Expense.created_at.desc())
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -33,13 +36,20 @@ class ExpenseService:
         expense = result.scalar_one_or_none()
         
         if expense:
-            await self.db.delete(expense)
+            from datetime import timedelta
+            from app.models.models import uzb_now
+            expense.is_deleted = 1
+            expense.deleted_at = uzb_now()
+            self.db.add(expense)
             await self.db.commit()
             return True
         return False
 
     async def get_total_expenses(self) -> float:
-        query = select(func.sum(Expense.amount)).where(Expense.tenant_id == self.tenant_id)
+        query = select(func.sum(Expense.amount)).where(
+            Expense.tenant_id == self.tenant_id,
+            Expense.is_deleted == 0
+        )
         result = await self.db.execute(query)
         return result.scalar() or 0.0
 
@@ -48,6 +58,7 @@ class ExpenseService:
         today = uzb_now().date()
         query = select(func.sum(Expense.amount)).where(
             Expense.tenant_id == self.tenant_id,
+            Expense.is_deleted == 0,
             func.date(Expense.created_at) == today
         )
         result = await self.db.execute(query)

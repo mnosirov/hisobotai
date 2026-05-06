@@ -92,10 +92,11 @@ class SalesService:
         return all_items
 
     async def get_sales_history(self, page: int = 1, size: int = 50) -> List[Sale]:
-        """Sotuvlar tarixini sahifalash (Pagination) orqali qaytaradi."""
+        """Sotuvlar tarixini sahifalash (Pagination) orqali qaytaradi (Active only)."""
         offset = (page - 1) * size
         query = select(Sale).where(
-            Sale.tenant_id == self.tenant_id
+            Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0
         ).order_by(
             Sale.created_at.desc()
         ).offset(offset).limit(size)
@@ -104,8 +105,11 @@ class SalesService:
         return result.scalars().all()
 
     async def get_recent_sales_full(self, limit: int = 15) -> List[str]:
-        """AI uchun oxirgi sotuvlar tafsilotlari"""
-        query = select(Sale).where(Sale.tenant_id == self.tenant_id).order_by(Sale.created_at.desc()).limit(limit)
+        """AI uchun oxirgi sotuvlar tafsilotlari (Active only)"""
+        query = select(Sale).where(
+            Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0
+        ).order_by(Sale.created_at.desc()).limit(limit)
         result = await self.db.execute(query)
         sales = result.scalars().all()
         
@@ -273,8 +277,9 @@ class SalesService:
                 self.db.add(product)
         
         # Soft delete
+        from app.models.models import uzb_now
         sale.is_deleted = 1
-        sale.deleted_at = datetime.utcnow()
+        sale.deleted_at = uzb_now()
         self.db.add(sale)
         await self.db.commit()
         return {"status": "success", "message": "Sotuv o'chirildi (Soft Delete) va ombor yangilandi."}

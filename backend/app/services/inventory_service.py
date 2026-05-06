@@ -13,7 +13,10 @@ class InventoryService:
         self.tenant_id = tenant_id
 
     async def get_all_products(self) -> List[Product]:
-        query = select(Product).where(Product.tenant_id == self.tenant_id)
+        query = select(Product).where(
+            Product.tenant_id == self.tenant_id,
+            Product.is_deleted == 0
+        )
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -30,10 +33,11 @@ class InventoryService:
         color = product_data.get("color")
         condition = product_data.get("condition")
 
-        # Exact case-insensitive search
+        # Exact case-insensitive search (active products only)
         query = select(Product).where(
             Product.tenant_id == self.tenant_id,
-            Product.name.ilike(name)
+            Product.name.ilike(name),
+            Product.is_deleted == 0
         )
         result = await self.db.execute(query)
         product = result.scalar_one_or_none()
@@ -191,7 +195,8 @@ class InventoryService:
             
             query = select(Product).where(
                 Product.tenant_id == self.tenant_id,
-                Product.name.ilike(f"%{name}%")
+                Product.name.ilike(f"%{name}%"),
+                Product.is_deleted == 0
             )
             result = await self.db.execute(query)
             product = result.scalar_one_or_none()
@@ -239,15 +244,18 @@ class InventoryService:
         return product
 
     async def delete_product(self, product_id: int):
-        """Mahsulotni o'chiradi."""
+        """Mahsulotni o'chiradi (Soft Delete)."""
         from fastapi import HTTPException
+        from datetime import datetime, timedelta
         query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
         result = await self.db.execute(query)
         product = result.scalar_one_or_none()
         if not product:
             raise HTTPException(status_code=404, detail="Mahsulot topilmadi")
 
-        await self.db.delete(product)
+        product.is_deleted = 1
+        product.deleted_at = datetime.utcnow() + timedelta(hours=5)
+        self.db.add(product)
         await self.db.commit()
         return True
 
@@ -302,7 +310,10 @@ class InventoryService:
 
         # 3. Mahsulot qoldig'ini ayirish yoki o'chirish
         if is_full_return:
-            await self.db.delete(product)
+            from datetime import datetime, timedelta
+            product.is_deleted = 1
+            product.deleted_at = datetime.utcnow() + timedelta(hours=5)
+            self.db.add(product)
         else:
             product.stock -= quantity
             # Tarixga qaydni yozish (faqat to'liq o'chirilmasa qoladi, chunki ON DELETE CASCADE bor)

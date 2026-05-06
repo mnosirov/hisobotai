@@ -59,6 +59,8 @@ class Product(Base):
     condition = Column(String, nullable=True) # e.g., Yangi, Ishlatilgan
     image_url = Column(String, nullable=True)
     supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="SET NULL"), nullable=True)
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="products")
@@ -101,6 +103,8 @@ class Debt(Base):
     amount = Column(Float, nullable=False)
     due_date = Column(DateTime, nullable=True)
     is_paid = Column(Integer, default=0) # 0 for unpaid, 1 for paid
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User", back_populates="debts")
@@ -113,6 +117,8 @@ class Supplier(Base):
     name = Column(String, index=True, nullable=False)
     phone = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=uzb_now)
 
     debts = relationship("SupplierDebt", back_populates="supplier", cascade="all, delete-orphan")
@@ -127,6 +133,8 @@ class SupplierDebt(Base):
     total_amount = Column(Float, nullable=False)
     remaining_amount = Column(Float, nullable=False)
     notes = Column(String, nullable=True)
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=uzb_now, index=True)
     
     supplier = relationship("Supplier", back_populates="debts")
@@ -140,6 +148,8 @@ class SupplierPaymentLog(Base):
     supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), index=True, nullable=False)
     debt_id = Column(Integer, ForeignKey("supplier_debts.id", ondelete="SET NULL"), nullable=True)
     amount = Column(Float, nullable=False)
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     payment_date = Column(DateTime, default=uzb_now, index=True)
     notes = Column(String, nullable=True)
     
@@ -153,6 +163,8 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     category = Column(String, index=True, nullable=False) # e.g. Tushlik, Svet, Ijara, Oylik, Boshqa
     notes = Column(String, nullable=True)
+    is_deleted = Column(Integer, default=0, index=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=uzb_now, index=True)
     
     owner = relationship("User")
