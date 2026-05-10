@@ -511,6 +511,8 @@ async def confirm_sales(items: List[Dict], current_user: User = Depends(get_curr
     try:
         service = SalesService(db, current_user.id)
         return await service.commit_sales(items)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -528,6 +530,8 @@ async def create_manual_sale(sale: schemas.SaleCreate, current_user: User = Depe
         service = SalesService(db, current_user.id)
         items_dict = [item.dict() for item in sale.items]
         return await service.commit_sales(items_dict)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

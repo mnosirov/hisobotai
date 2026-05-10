@@ -199,10 +199,16 @@ class SalesService:
 
         for item in items:
             product_id = item.get("product_id")
-            qty = float(item.get("quantity") or 0.0)
-            revenue = float(item.get("revenue") or 0.0)
+            try:
+                qty_raw = item.get("quantity")
+                rev_raw = item.get("revenue")
+                qty = float(qty_raw) if qty_raw not in (None, "") else 0.0
+                revenue = float(rev_raw) if rev_raw not in (None, "") else 0.0
+            except (ValueError, TypeError):
+                qty = 0.0
+                revenue = 0.0
 
-            if not product_id:
+            if not product_id or qty <= 0:
                 continue
 
             query = select(Product).where(Product.id == product_id, Product.tenant_id == self.tenant_id)
@@ -210,9 +216,12 @@ class SalesService:
             product = res.scalar_one_or_none()
 
             if product:
-                product.stock -= qty
+                current_stock = product.stock or 0.0
+                product.stock = current_stock - qty
+                
                 # Foyda = (Sotish narxi - Kelish narxi) * Miqdor
-                profit = revenue - (product.last_purchase_price * qty)
+                lpp = product.last_purchase_price or 0.0
+                profit = revenue - (lpp * qty)
                 
                 total_revenue += revenue
                 total_profit += profit
@@ -227,7 +236,7 @@ class SalesService:
                 self.db.add(product)
 
         if not sold_items_records:
-            return {"status": "error", "message": "Hech qanday mahsulot saqlanmadi."}
+            return {"status": "error", "message": "Hech qanday mahsulot saqlanmadi (yoki miqdor noto'g'ri kiritilgan)."}
 
         sale_record = Sale(
             tenant_id=self.tenant_id,
@@ -273,7 +282,8 @@ class SalesService:
             p_res = await self.db.execute(p_query)
             product = p_res.scalar_one_or_none()
             if product:
-                product.stock += qty
+                current_stock = product.stock or 0.0
+                product.stock = current_stock + qty
                 self.db.add(product)
         
         # Soft delete

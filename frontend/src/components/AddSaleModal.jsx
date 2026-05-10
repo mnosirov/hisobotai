@@ -133,7 +133,8 @@ const AddSaleModal = ({ show, onClose, inventory, API_BASE, fetchDashboardData, 
       fetchInventoryData();
       onClose();
     } catch (err) {
-      toast.error("Xatolik yuz berdi", { id: loadingToast });
+      const errMsg = err.response?.data?.detail || "Xatolik yuz berdi";
+      toast.error(errMsg, { id: loadingToast });
     } finally {
       setIsSubmitting(false);
     }
