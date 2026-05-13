@@ -241,35 +241,47 @@ class DailyReportService:
         }
 
     async def get_monthly_summary_only(self) -> Dict[str, Any]:
-        """Lightweight summary for current month dashboard cards"""
-        now = datetime.utcnow() + timedelta(hours=5) # Tashkent Time
-        year, month = now.year, now.month
+        """Lightweight summary for current month dashboard cards using UTC boundaries"""
+        # Get current Tashkent time
+        now_uz = datetime.utcnow() + timedelta(hours=5)
+        year, month = now_uz.year, now_uz.month
         
-        from sqlalchemy import extract
+        # Tashkent month boundaries
+        start_uz = datetime(year, month, 1)
+        if month == 12:
+            end_uz = datetime(year + 1, 1, 1)
+        else:
+            end_uz = datetime(year, month + 1, 1)
+            
+        # Convert boundaries back to UTC
+        start_utc = start_uz - timedelta(hours=5)
+        end_utc = end_uz - timedelta(hours=5)
         
         q_sales = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
             and_(
                 Sale.tenant_id == self.tenant_id,
                 Sale.is_deleted == 0,
-                extract('year', Sale.created_at + timedelta(hours=5)) == year,
-                extract('month', Sale.created_at + timedelta(hours=5)) == month
+                Sale.created_at >= start_utc,
+                Sale.created_at < end_utc
             )
         )
         res_sales = await self.db.execute(q_sales)
-        rev, prof = (await res_sales.first()) or (0, 0)
+        row = res_sales.first()
+        rev = row[0] if row and row[0] is not None else 0
+        prof = row[1] if row and row[1] is not None else 0
         
         q_exp = select(func.sum(Expense.amount)).where(
             and_(
                 Expense.tenant_id == self.tenant_id,
-                extract('year', Expense.created_at + timedelta(hours=5)) == year,
-                extract('month', Expense.created_at + timedelta(hours=5)) == month
+                Expense.created_at >= start_utc,
+                Expense.created_at < end_utc
             )
         )
         res_exp = await self.db.execute(q_exp)
         total_exp = res_exp.scalar() or 0
         
         return {
-            "monthly_revenue": rev or 0,
-            "monthly_profit": prof or 0,
-            "monthly_expenses": total_exp or 0
+            "monthly_revenue": int(rev),
+            "monthly_profit": int(prof),
+            "monthly_expenses": int(total_exp)
         }
