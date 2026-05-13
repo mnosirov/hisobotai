@@ -64,32 +64,40 @@ class DailyReportService:
         total_expenses = sum(e.amount for e in expenses)
         expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
 
-        # 3. Inventory Kirim Data (Items added to stock on this day, including restocking)
-        inv_query = select(InventoryLog).options(
-            selectinload(InventoryLog.product)
+        # DEBUG: Basic verification
+        debug_count_query = select(func.count()).where(InventoryLog.tenant_id == self.tenant_id)
+        debug_count_result = await self.db.execute(debug_count_query)
+        total_logs_count = debug_count_result.scalar()
+
+        # 3. Inventory Kirim Data
+        inv_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
+            Product, InventoryLog.product_id == Product.id
         ).where(
             and_(
                 InventoryLog.tenant_id == self.tenant_id,
                 InventoryLog.change_amount > 0,
-                cast(InventoryLog.created_at, Date) == target_date
+                func.date(InventoryLog.created_at) == target_date
             )
         )
         inv_result = await self.db.execute(inv_query)
-        logs = inv_result.scalars().all()
+        logs = inv_result.all()
         
         total_purchases = 0
         purchases_list = []
-        for log in logs:
-            if log.product:
-                cost = log.change_amount * log.product.last_purchase_price
-                total_purchases += cost
-                purchases_list.append({
-                    "name": log.product.name,
-                    "quantity": log.change_amount,
-                    "cost": cost,
-                    "source": log.source,
-                    "time": log.created_at.strftime("%H:%M") if log.created_at else None
-                })
+        for log_row in logs:
+            log_obj = log_row[0]
+            prod_name = log_row[1]
+            prod_price = log_row[2]
+            
+            cost = log_obj.change_amount * prod_price
+            total_purchases += cost
+            purchases_list.append({
+                "name": prod_name,
+                "quantity": log_obj.change_amount,
+                "cost": cost,
+                "source": log_obj.source,
+                "time": log_obj.created_at.strftime("%H:%M") if log_obj.created_at else None
+            })
 
         # 4. Debts and Payments
         debts_query = select(SupplierDebt).where(
@@ -125,7 +133,9 @@ class DailyReportService:
                 "new_debts_taken": new_debts,
                 "debt_payments_made": debt_payments,
                 "net_cash_flow": net_cash_flow,
-                "sales_count": len(sales)
+                "sales_count": len(sales),
+                "debug_total_logs": total_logs_count,
+                "debug_date_logs": len(logs)
             },
             "sold_items": sold_items_list,
             "expenses": expenses_list,

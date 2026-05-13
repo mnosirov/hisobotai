@@ -443,6 +443,15 @@ async def create_manual_purchase(purchase: schemas.PurchaseManualCreate, current
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/debug/logs")
+async def debug_logs(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select
+    from app.models.models import InventoryLog, Product
+    query = select(InventoryLog, Product.name).join(Product).order_by(InventoryLog.id.desc()).limit(10)
+    result = await db.execute(query)
+    logs = result.all()
+    return [{"id": l[0].id, "product": l[1], "amount": l[0].change_amount, "tenant": l[0].tenant_id, "date": str(l[0].created_at)} for l in logs]
+
 # --- SALES API ---
 @app.get("/api/sales/summary", response_model=Dict)
 async def get_sales_summary(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
