@@ -208,7 +208,38 @@ class DailyReportService:
         # Filter by Month in Python
         monthly_sales = [s for s in all_sales if s.created_at and s.created_at.year == year and s.created_at.month == month]
         monthly_expenses = [e for e in all_expenses if e.created_at and e.created_at.year == year and e.created_at.month == month]
+        
+        # Original logs
         monthly_logs = [row for row in all_logs if row[0].created_at and row[0].created_at.year == year and row[0].created_at.month == month]
+        
+        # Fallback: Products created in this month that might NOT have logs (historical data)
+        # Fetch all products created in this month
+        prods_query = select(Product, Supplier.name).outerjoin(Supplier, Product.supplier_id == Supplier.id).where(and_(
+            Product.tenant_id == self.tenant_id,
+            Product.created_at >= datetime(year, month, 1),
+            Product.created_at < (datetime(year, month, 1) + timedelta(days=31)) # Rough check
+        ))
+        prods_res = await self.db.execute(prods_query)
+        month_prods = prods_res.all()
+        
+        # If no logs exist for these products in this month, add them as virtual logs
+        existing_log_prod_ids = {row[0].product_id for row in monthly_logs}
+        for p_row in month_prods:
+            p = p_row[0]
+            s_name = p_row[1]
+            if p.id not in existing_log_prod_ids:
+                # Create a virtual row matching our logs structure: 
+                # (InventoryLog-like, Product.name, Product.last_purchase_price, Product.image_url, Supplier.name)
+                from app.models.models import InventoryLog
+                virtual_log = InventoryLog(
+                    id=0,
+                    product_id=p.id,
+                    change_amount=p.stock, # Use current stock as initial kirim if no logs
+                    source="Tarixiy ma'lumot",
+                    created_at=p.created_at
+                )
+                monthly_logs.append((virtual_log, p.name, p.last_purchase_price, p.image_url, s_name))
+
         monthly_debts = [d for d in all_debts if d.created_at and d.created_at.year == year and d.created_at.month == month]
         monthly_payments = [p for p in all_payments if p.payment_date and p.payment_date.year == year and p.payment_date.month == month]
         
