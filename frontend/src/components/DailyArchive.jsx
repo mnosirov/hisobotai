@@ -63,8 +63,10 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
 
   const getTime = (dateStr) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
-    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+    // Backend allaqachon O'zbekiston vaqtini yuboradi, shuning uchun 'Z' qo'shish shart emas
+    // Bu brauzer tomonidan qayta 5 soat qo'shilishini oldini oladi
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   return (
