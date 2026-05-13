@@ -80,7 +80,7 @@ class DailyReportService:
             Product.last_purchase_price,
             Product.image_url,
             Supplier.name
-        ).join(
+        ).outerjoin(
             Product, InventoryLog.product_id == Product.id
         ).outerjoin(
             Supplier, Product.supplier_id == Supplier.id
@@ -103,8 +103,8 @@ class DailyReportService:
         purchases_list = []
         for log_row in logs:
             log_obj = log_row[0]
-            prod_name = log_row[1]
-            prod_price = log_row[2]
+            prod_name = log_row[1] or "O'chirilgan mahsulot"
+            prod_price = log_row[2] or 0.0
             prod_image = log_row[3]
             supplier_name = log_row[4]
             
@@ -183,7 +183,7 @@ class DailyReportService:
             Product.last_purchase_price,
             Product.image_url,
             Supplier.name
-        ).join(
+        ).outerjoin(
             Product, InventoryLog.product_id == Product.id
         ).outerjoin(
             Supplier, Product.supplier_id == Supplier.id
@@ -216,7 +216,7 @@ class DailyReportService:
         total_revenue = sum(s.total_amount for s in monthly_sales)
         total_profit = sum(s.profit for s in monthly_sales)
         total_expenses = sum(e.amount for e in monthly_expenses)
-        total_purchases_cost = sum(row[0].change_amount * row[2] for row in monthly_logs)
+        total_purchases_cost = sum(row[0].change_amount * (row[2] or 0) for row in monthly_logs)
         total_new_debts = sum(d.total_amount for d in monthly_debts)
         total_payments_made = sum(p.amount for p in monthly_payments)
         
@@ -249,8 +249,8 @@ class DailyReportService:
         purchases_list = []
         for row in monthly_logs:
             log_obj = row[0]
-            prod_name = row[1]
-            prod_price = row[2]
+            prod_name = row[1] or "O'chirilgan mahsulot"
+            prod_price = row[2] or 0.0
             prod_image = row[3]
             supplier_name = row[4]
             
