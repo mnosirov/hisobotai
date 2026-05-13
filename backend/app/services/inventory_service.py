@@ -334,7 +334,12 @@ class InventoryService:
         for item in items:
             try:
                 # add_or_update_product allaqachon limitlarni tekshiradi va commit qiladi
-                product = await self.add_or_update_product(item, source=source)
+                product = await self.add_or_update_product(
+                    item, 
+                    source=source, 
+                    supplier_id=item.get("supplier_id"),
+                    is_debt=item.get("is_debt", False)
+                )
                 results.append(product)
             except Exception as e:
                 print(f"Error bulk upserting item {item.get('name')}: {e}")

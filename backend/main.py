@@ -433,6 +433,16 @@ async def confirm_invoice(items: List[Dict], current_user: User = Depends(get_cu
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/purchases/manual", response_model=Dict)
+async def create_manual_purchase(purchase: schemas.PurchaseManualCreate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = InventoryService(db, current_user.id)
+        # item.dict() includes supplier_id and is_debt which bulk_upsert_products now handles
+        results = await service.bulk_upsert_products([item.dict() for item in purchase.items], source="Qo'lda (Manual)")
+        return {"status": "success", "processed_count": len(results)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # --- SALES API ---
 @app.get("/api/sales/summary", response_model=Dict)
 async def get_sales_summary(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

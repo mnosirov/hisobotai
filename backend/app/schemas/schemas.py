@@ -191,3 +191,16 @@ class ExpenseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PurchaseManualItem(BaseModel):
+    name: str
+    category: Optional[str] = "Umumiy"
+    quantity: float
+    unit: str = "dona"
+    price: float = 0.0 # buy price
+    sell_price: float = 0.0
+    supplier_id: Optional[int] = None
+    is_debt: bool = False
+
+class PurchaseManualCreate(BaseModel):
+    items: List[PurchaseManualItem]
+

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.models import Sale, Expense, SupplierDebt, SupplierPaymentLog, Product
+from app.models.models import Sale, Expense, SupplierDebt, SupplierPaymentLog, Product, InventoryLog
 
 class DailyReportService:
     def __init__(self, db: AsyncSession, tenant_id: int):
@@ -65,20 +65,30 @@ class DailyReportService:
         total_expenses = sum(e.amount for e in expenses)
         expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
 
-        # 3. New Inventory Data (Items added to stock on this day)
-        # Note: inventory created_at is when it was added
-        inv_query = select(Product).where(
+        # 3. Inventory Kirim Data (Items added to stock on this day, including restocking)
+        inv_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
+            Product, InventoryLog.product_id == Product.id
+        ).where(
             and_(
-                Product.tenant_id == self.tenant_id,
-                Product.created_at >= start_dt,
-                Product.created_at <= end_dt
+                InventoryLog.tenant_id == self.tenant_id,
+                InventoryLog.change_amount > 0,
+                InventoryLog.created_at >= start_dt,
+                InventoryLog.created_at <= end_dt
             )
         )
         inv_result = await self.db.execute(inv_query)
-        new_inventory = inv_result.scalars().all()
+        logs = inv_result.all()
         
-        total_purchases = sum(i.stock * i.last_purchase_price for i in new_inventory)
-        purchases_list = [{"name": i.name, "quantity": i.stock, "cost": i.last_purchase_price * i.stock} for i in new_inventory]
+        total_purchases = sum(log.InventoryLog.change_amount * log.last_purchase_price for log in logs)
+        purchases_list = [
+            {
+                "name": log.name, 
+                "quantity": log.InventoryLog.change_amount, 
+                "cost": log.InventoryLog.change_amount * log.last_purchase_price,
+                "source": log.InventoryLog.source
+            } 
+            for log in logs
+        ]
 
         # 4. Debts and Payments
         debts_query = select(SupplierDebt).where(
