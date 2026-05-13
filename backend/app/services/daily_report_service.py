@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.models.models import Sale, Expense, SupplierDebt, SupplierPaymentLog, Product, InventoryLog
 
 class DailyReportService:
@@ -23,8 +24,7 @@ class DailyReportService:
             and_(
                 Sale.tenant_id == self.tenant_id,
                 Sale.is_deleted == 0,
-                Sale.created_at >= start_dt,
-                Sale.created_at <= end_dt
+                cast(Sale.created_at, Date) == target_date
             )
         )
         sales_result = await self.db.execute(sales_query)
@@ -55,8 +55,7 @@ class DailyReportService:
         expenses_query = select(Expense).where(
             and_(
                 Expense.tenant_id == self.tenant_id,
-                Expense.created_at >= start_dt,
-                Expense.created_at <= end_dt
+                cast(Expense.created_at, Date) == target_date
             )
         )
         expenses_result = await self.db.execute(expenses_query)
@@ -66,37 +65,37 @@ class DailyReportService:
         expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
 
         # 3. Inventory Kirim Data (Items added to stock on this day, including restocking)
-        inv_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
-            Product, InventoryLog.product_id == Product.id
+        inv_query = select(InventoryLog).options(
+            selectinload(InventoryLog.product)
         ).where(
             and_(
                 InventoryLog.tenant_id == self.tenant_id,
                 InventoryLog.change_amount > 0,
-                InventoryLog.created_at >= start_dt,
-                InventoryLog.created_at <= end_dt
+                cast(InventoryLog.created_at, Date) == target_date
             )
         )
         inv_result = await self.db.execute(inv_query)
-        logs = inv_result.all()
+        logs = inv_result.scalars().all()
         
-        total_purchases = sum(log.InventoryLog.change_amount * log.last_purchase_price for log in logs)
-        purchases_list = [
-            {
-                "name": log.name, 
-                "quantity": log.InventoryLog.change_amount, 
-                "cost": log.InventoryLog.change_amount * log.last_purchase_price,
-                "source": log.InventoryLog.source,
-                "time": log.InventoryLog.created_at.strftime("%H:%M") if log.InventoryLog.created_at else None
-            } 
-            for log in logs
-        ]
+        total_purchases = 0
+        purchases_list = []
+        for log in logs:
+            if log.product:
+                cost = log.change_amount * log.product.last_purchase_price
+                total_purchases += cost
+                purchases_list.append({
+                    "name": log.product.name,
+                    "quantity": log.change_amount,
+                    "cost": cost,
+                    "source": log.source,
+                    "time": log.created_at.strftime("%H:%M") if log.created_at else None
+                })
 
         # 4. Debts and Payments
         debts_query = select(SupplierDebt).where(
             and_(
                 SupplierDebt.tenant_id == self.tenant_id,
-                SupplierDebt.created_at >= start_dt,
-                SupplierDebt.created_at <= end_dt
+                cast(SupplierDebt.created_at, Date) == target_date
             )
         )
         debts_result = await self.db.execute(debts_query)
@@ -105,8 +104,7 @@ class DailyReportService:
         payments_query = select(SupplierPaymentLog).where(
             and_(
                 SupplierPaymentLog.tenant_id == self.tenant_id,
-                SupplierPaymentLog.payment_date >= start_dt,
-                SupplierPaymentLog.payment_date <= end_dt
+                cast(SupplierPaymentLog.payment_date, Date) == target_date
             )
         )
         payments_result = await self.db.execute(payments_query)
