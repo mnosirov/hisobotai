@@ -253,6 +253,9 @@ class DailyReportService:
         
         # Product-wise sales aggregation
         sold_items_dict = {}
+        # Map product names to images from current logs/prods for better UI
+        prod_images = {row[1]: row[3] for row in all_logs if row[1]}
+
         for s in monthly_sales:
             for item in s.items_json:
                 name = item.get("product", "Noma'lum")
@@ -260,7 +263,7 @@ class DailyReportService:
                 rev = item.get("revenue", 0)
                 prof = item.get("profit", 0)
                 if name not in sold_items_dict:
-                    sold_items_dict[name] = {"quantity": 0, "revenue": 0, "profit": 0}
+                    sold_items_dict[name] = {"quantity": 0, "revenue": 0, "profit": 0, "image_url": prod_images.get(name)}
                 sold_items_dict[name]["quantity"] += qty
                 sold_items_dict[name]["revenue"] += rev
                 sold_items_dict[name]["profit"] += prof

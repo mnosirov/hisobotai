@@ -257,45 +257,7 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
             <StatCard title="Net Kassa" value={monthlyReport.summary.net_cash_flow} icon={Banknote} color="text-amber-400" subValue="Savdo - Xarajat - Qarz To'lovi" />
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <PackageOpen size={18} className="text-slate-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Eng Ko'p Sotilganlar</h3>
-            </div>
-            <div className="glass-card divide-y divide-white/5 overflow-hidden">
-              {monthlyReport.sold_items.length === 0 ? (
-                <div className="p-10 text-center text-slate-500 text-xs font-medium">Bu oyda savdo bo'lmagan.</div>
-              ) : (
-                monthlyReport.sold_items.map((item, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
-                    <div>
-                      <p className="text-sm font-bold text-white">{item.name}</p>
-                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
-                    </div>
-                    <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {monthlyReport.expenses_by_category?.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 px-1">
-                <PieChart size={18} className="text-slate-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Xarajatlar Tahlili</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {monthlyReport.expenses_by_category.map((ex, idx) => (
-                  <div key={idx} className="glass-card p-3 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{ex.category}</p>
-                    <p className="text-sm font-bold text-red-400">{ex.amount.toLocaleString()} UZS</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+          {/* Moved Kirimlar up for visibility */}
           {monthlyReport.purchases?.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">
@@ -332,6 +294,54 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
                       <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()}</p>
                       <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">UZS</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <PackageOpen size={18} className="text-slate-400" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Eng Ko'p Sotilganlar</h3>
+            </div>
+            <div className="glass-card divide-y divide-white/5 overflow-hidden">
+              {monthlyReport.sold_items.length === 0 ? (
+                <div className="p-10 text-center text-slate-500 text-xs font-medium">Bu oyda savdo bo'lmagan.</div>
+              ) : (
+                monthlyReport.sold_items.map((item, idx) => (
+                  <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
+                    <div className="h-10 w-10 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-500">
+                          <ShoppingBag size={18} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
+                    </div>
+                    <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {monthlyReport.expenses_by_category?.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <PieChart size={18} className="text-slate-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Xarajatlar Tahlili</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {monthlyReport.expenses_by_category.map((ex, idx) => (
+                  <div key={idx} className="glass-card p-3 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{ex.category}</p>
+                    <p className="text-sm font-bold text-red-400">{ex.amount.toLocaleString()} UZS</p>
                   </div>
                 ))}
               </div>
