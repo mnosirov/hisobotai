@@ -14,8 +14,6 @@ class DailyReportService:
         """Gets a consolidated report for a specific date (YYYY-MM-DD)"""
         try:
             target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            start_dt = datetime.combine(target_date, datetime.min.time())
-            end_dt = datetime.combine(target_date, datetime.max.time())
         except ValueError:
             raise ValueError("Noto'g'ri sana formati. YYYY-MM-DD bo'lishi kerak.")
 
@@ -23,12 +21,12 @@ class DailyReportService:
         sales_query = select(Sale).where(
             and_(
                 Sale.tenant_id == self.tenant_id,
-                Sale.is_deleted == 0,
-                cast(Sale.created_at, Date) == target_date
+                Sale.is_deleted == 0
             )
         )
         sales_result = await self.db.execute(sales_query)
-        sales = sales_result.scalars().all()
+        all_sales = sales_result.scalars().all()
+        sales = [s for s in all_sales if s.created_at and s.created_at.date() == target_date]
 
         total_sales_revenue = sum(s.total_amount for s in sales)
         total_sales_profit = sum(s.profit for s in sales)
@@ -52,14 +50,10 @@ class DailyReportService:
         sold_items_list.sort(key=lambda x: x["revenue"], reverse=True)
 
         # 2. Expenses Data
-        expenses_query = select(Expense).where(
-            and_(
-                Expense.tenant_id == self.tenant_id,
-                cast(Expense.created_at, Date) == target_date
-            )
-        )
+        expenses_query = select(Expense).where(Expense.tenant_id == self.tenant_id)
         expenses_result = await self.db.execute(expenses_query)
-        expenses = expenses_result.scalars().all()
+        all_expenses = expenses_result.scalars().all()
+        expenses = [e for e in all_expenses if e.created_at and e.created_at.date() == target_date]
 
         total_expenses = sum(e.amount for e in expenses)
         expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
@@ -75,12 +69,17 @@ class DailyReportService:
         ).where(
             and_(
                 InventoryLog.tenant_id == self.tenant_id,
-                InventoryLog.change_amount > 0,
-                func.date(InventoryLog.created_at) == target_date
+                InventoryLog.change_amount > 0
             )
         )
         inv_result = await self.db.execute(inv_query)
-        logs = inv_result.all()
+        all_logs = inv_result.all()
+        
+        # Python-side filtering for logs
+        logs = [
+            row for row in all_logs 
+            if row[0].created_at and row[0].created_at.date() == target_date
+        ]
         
         total_purchases = 0
         purchases_list = []
@@ -92,6 +91,7 @@ class DailyReportService:
             cost = log_obj.change_amount * prod_price
             total_purchases += cost
             purchases_list.append({
+                "id": log_obj.id,
                 "name": prod_name,
                 "quantity": log_obj.change_amount,
                 "cost": cost,
@@ -100,27 +100,17 @@ class DailyReportService:
             })
 
         # 4. Debts and Payments
-        debts_query = select(SupplierDebt).where(
-            and_(
-                SupplierDebt.tenant_id == self.tenant_id,
-                cast(SupplierDebt.created_at, Date) == target_date
-            )
-        )
+        debts_query = select(SupplierDebt).where(SupplierDebt.tenant_id == self.tenant_id)
         debts_result = await self.db.execute(debts_query)
-        new_debts = sum(d.total_amount for d in debts_result.scalars().all())
+        all_debts = debts_result.scalars().all()
+        new_debts = sum(d.total_amount for d in all_debts if d.created_at and d.created_at.date() == target_date)
 
-        payments_query = select(SupplierPaymentLog).where(
-            and_(
-                SupplierPaymentLog.tenant_id == self.tenant_id,
-                cast(SupplierPaymentLog.payment_date, Date) == target_date
-            )
-        )
+        payments_query = select(SupplierPaymentLog).where(SupplierPaymentLog.tenant_id == self.tenant_id)
         payments_result = await self.db.execute(payments_query)
-        debt_payments = sum(p.amount for p in payments_result.scalars().all())
+        all_payments = payments_result.scalars().all()
+        debt_payments = sum(p.amount for p in all_payments if p.payment_date and p.payment_date.date() == target_date)
 
-        # Net Daily Cash calculation (Rough estimate for the day)
-        # In: Sales revenue
-        # Out: Expenses, Debt Payments
+        # Net Daily Cash calculation
         net_cash_flow = total_sales_revenue - total_expenses - debt_payments
 
         return {
