@@ -461,6 +461,12 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         
         sales_summary = await sales_service.get_sales_summary()
         bi_summary = await bi_service.get_business_summary()
+        
+        # Oylik hisob-kitoblarni olish
+        from app.services.daily_report_service import DailyReportService
+        report_service = DailyReportService(db, current_user.id)
+        monthly_sum = await report_service.get_monthly_summary_only()
+        
         supplier_service = SupplierService(db, current_user.id)
         total_supplier_debt = await supplier_service.get_total_debt()
         total_supplier_payments = await supplier_service.get_total_payments()
@@ -470,9 +476,9 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
         total_expenses = await expense_service.get_total_expenses()
         today_expenses = await expense_service.get_today_expenses()
         
-        # Calculate cash balance
-        total_sales_revenue = bi_summary.get("total_sales_revenue", 0)
-        cash_balance = total_sales_revenue - total_supplier_payments - total_expenses
+        # Calculate cash balance (based on all-time total revenue for kassa)
+        total_sales_revenue_all = bi_summary.get("total_sales_revenue", 0)
+        cash_balance = total_sales_revenue_all - total_supplier_payments - total_expenses
         
         # Adjust today profit
         sales_summary["today_profit"] = sales_summary.get("today_profit", 0) - today_expenses
@@ -481,10 +487,10 @@ async def get_sales_summary(current_user: User = Depends(get_current_user), db: 
             **sales_summary,
             "total_stock_cost": bi_summary.get("total_stock_cost", 0),
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
-            "total_sales_revenue": total_sales_revenue,
+            "total_sales_revenue": monthly_sum.get("monthly_revenue", 0), # Dashboard-da oylik chiqadi
             "total_supplier_debt": total_supplier_debt,
-            "cash_balance": cash_balance,
-            "total_expenses": total_expenses,
+            "cash_balance": cash_balance, # Kassa umumiy qoladi
+            "total_expenses": monthly_sum.get("monthly_expenses", 0), # Dashboard-da oylik chiqadi
             "today_expenses": today_expenses
         }
     except Exception as e:
@@ -844,7 +850,7 @@ async def restore_trash_item(item_type: str, item_id: int, current_user: User = 
         raise HTTPException(status_code=404, detail="Element topilmadi yoki tiklab bo'lmadi")
     return {"status": "success", "message": "Ma'lumot qayta tiklandi"}
 
-# --- DAILY REPORTS API ---
+# --- DAILY & MONTHLY REPORTS API ---
 from app.services.daily_report_service import DailyReportService
 
 @app.get("/api/reports/daily", response_model=Dict)
@@ -854,6 +860,16 @@ async def get_daily_report(date: str, current_user: User = Depends(get_current_u
         return await service.get_daily_report(date)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/reports/monthly", response_model=Dict)
+async def get_monthly_report(year: int, month: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        service = DailyReportService(db, current_user.id)
+        return await service.get_monthly_report(year, month)
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
-  // Local date initialization (YYYY-MM-DD)
   const getLocalDate = () => {
     const d = new Date();
     const offset = d.getTimezoneOffset();
@@ -13,14 +12,23 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
     return localDate.toISOString().split('T')[0];
   };
 
+  const [viewType, setViewType] = useState('daily'); // 'daily' or 'monthly'
   const [selectedDate, setSelectedDate] = useState(getLocalDate());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
   const [report, setReport] = useState(null);
+  const [monthlyReport, setMonthlyReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const dateInputRef = useRef(null);
 
   useEffect(() => {
-    fetchDailyReport(selectedDate);
-  }, [selectedDate]);
+    if (viewType === 'daily') {
+      fetchDailyReport(selectedDate);
+    } else {
+      fetchMonthlyReport(selectedYear, selectedMonth);
+    }
+  }, [selectedDate, selectedMonth, selectedYear, viewType]);
 
   const fetchDailyReport = async (dateStr) => {
     setLoading(true);
@@ -29,8 +37,22 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
       setReport(data);
     } catch (err) {
       console.error("Report fetch error", err);
-      toast.error("Hisobotni yuklashda xatolik yuz berdi");
+      toast.error("Kunlik hisobotni yuklashda xatolik");
       setReport(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMonthlyReport = async (year, month) => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${API_BASE}/reports/monthly?year=${year}&month=${month}&t=${Date.now()}`);
+      setMonthlyReport(data);
+    } catch (err) {
+      console.error("Monthly report fetch error", err);
+      toast.error("Oylik hisobotni yuklashda xatolik");
+      setMonthlyReport(null);
     } finally {
       setLoading(false);
     }
@@ -56,18 +78,40 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
     setSelectedDate(d.toISOString().slice(0, 10));
   };
 
+  const changeMonth = (delta) => {
+    let newMonth = selectedMonth + delta;
+    let newYear = selectedYear;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+    setSelectedMonth(newMonth);
+    setSelectedYear(newYear);
+  };
+
   const formatDateDisplay = (dateStr) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const getTime = (dateStr) => {
-    if (!dateStr) return '';
-    // Backend allaqachon O'zbekiston vaqtini yuboradi, shuning uchun 'Z' qo'shish shart emas
-    // Bu brauzer tomonidan qayta 5 soat qo'shilishini oldini oladi
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', hour12: false });
-  };
+  const months = [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+    "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
+  ];
+
+  const StatCard = ({ title, value, icon: Icon, color, subValue }) => (
+    <div className="glass-card p-4 relative overflow-hidden group">
+      <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
+        <Icon size={48} />
+      </div>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+      <p className={`text-xl font-black ${color}`}>{value.toLocaleString()} <span className="text-[10px] opacity-70">UZS</span></p>
+      {subValue && <p className="text-[10px] text-slate-500 mt-1">{subValue}</p>}
+    </div>
+  );
 
   return (
     <motion.div
@@ -79,263 +123,156 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Calendar className="text-indigo-400" size={24} />
-          <h2 className="text-xl font-bold">Kunlik Xotira (Arxiv)</h2>
+          <h2 className="text-xl font-bold">Xotira (Arxiv)</h2>
+        </div>
+        
+        <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/5">
+          <button 
+            onClick={() => setViewType('daily')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'daily' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Kunlik
+          </button>
+          <button 
+            onClick={() => setViewType('monthly')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'monthly' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Oylik
+          </button>
         </div>
       </div>
 
-      {/* Date Navigator */}
+      {/* Date/Month Navigator */}
       <div className="glass-card p-4 flex items-center justify-between bg-slate-800/80">
         <button 
-          onClick={() => changeDate(-1)}
+          onClick={() => viewType === 'daily' ? changeDate(-1) : changeMonth(-1)}
           className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-700/50 hover:bg-slate-700 transition"
         >
           <ChevronLeft size={20} />
         </button>
         
         <div className="text-center flex-1">
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Tanlangan Sana</p>
-          <p className="text-lg font-black text-white">{formatDateDisplay(selectedDate)}</p>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">
+            {viewType === 'daily' ? 'Tanlangan Sana' : 'Tanlangan Oy'}
+          </p>
+          <p className="text-lg font-black text-white">
+            {viewType === 'daily' ? formatDateDisplay(selectedDate) : `${months[selectedMonth - 1]}, ${selectedYear}`}
+          </p>
         </div>
 
         <button 
-          onClick={() => changeDate(1)}
-          disabled={selectedDate === new Date().toISOString().slice(0, 10)}
+          onClick={() => viewType === 'daily' ? changeDate(1) : changeMonth(1)}
+          disabled={viewType === 'daily' && selectedDate === getLocalDate()}
           className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-700/50 hover:bg-slate-700 transition disabled:opacity-30"
         >
           <ChevronRight size={20} />
         </button>
       </div>
 
-      {/* Quick Select Buttons */}
-      <div className="flex space-x-2 overflow-x-auto scrollbar-hide pb-2">
-        <button 
-          onClick={() => setSelectedDate(getLocalDate())}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-            selectedDate === getLocalDate() 
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
-              : 'glass-card text-slate-400 hover:bg-white/10'
-          }`}
-        >
-          Bugun
-        </button>
-        <button 
-          onClick={() => {
-            const d = new Date(); d.setDate(d.getDate() - 1);
-            setSelectedDate(d.toISOString().slice(0, 10));
-          }}
-          className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition ${selectedDate === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'bg-indigo-600 text-white' : 'glass-card text-slate-400'}`}
-        >
-          Kecha
-        </button>
-        <div className="shrink-0 relative">
-          <input 
-            ref={dateInputRef}
-            type="date" 
-            value={selectedDate}
-            onChange={(e) => { if(e.target.value) setSelectedDate(e.target.value) }}
-            max={new Date().toISOString().slice(0, 10)}
-            className="absolute opacity-0 w-0 h-0 pointer-events-none"
-          />
-          <button 
-            onClick={() => {
-              if (dateInputRef.current) {
-                try { dateInputRef.current.showPicker(); } catch(e) { dateInputRef.current.click(); }
-              }
-            }}
-            className="px-4 py-2 rounded-xl text-xs font-bold glass-card text-slate-400 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition"
-          >
-            <Calendar size={14} /> Boshqa sana...
-          </button>
-        </div>
-      </div>
-
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500"></div>
         </div>
-      ) : report ? (
+      ) : viewType === 'daily' && report ? (
         <div className="space-y-6">
-          {report?.summary?.debug && (
-            <div className="glass-card p-4 mb-6 border-dashed border-slate-700 bg-slate-900/50">
-              <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Diagnostic Data</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
-                <div className="text-slate-300">System Logs: <span className="text-white">{report.summary.debug.total_system_logs}</span></div>
-                <div className="text-slate-300">System Prods: <span className="text-white">{report.summary.debug.total_system_prods}</span></div>
-                <div className="text-slate-300">Your Logs Total: <span className="text-white">{report.summary.debug.tenant_logs_total}</span></div>
-                <div className="text-slate-300">Searching Date: <span className="text-white">{report.summary.debug.target_date_searched}</span></div>
-              </div>
-              {report.summary.debug.latest_tenant_logs?.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-[9px] text-slate-500 uppercase mb-1">Latest logs (Your Tenant):</p>
-                  <div className="space-y-1">
-                    {report.summary.debug.latest_tenant_logs.map(l => (
-                      <div key={l.id} className="flex justify-between text-[10px] text-slate-400 bg-black/20 p-1 rounded">
-                        <span>{l.name} (+{l.amount})</span>
-                        <span>{l.date}</span>
-                      </div>
-                    ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatCard title="Kunlik Savdo" value={report.summary.total_sales_revenue} icon={ShoppingBag} color="text-emerald-400" subValue={`${report.summary.sales_count} ta sotuv`} />
+            <StatCard title="Sof Foyda" value={report.summary.total_sales_profit} icon={TrendingUp} color="text-indigo-400" subValue="Xarajatlarsiz" />
+            <StatCard title="Xarajat (Chiqim)" value={report.summary.total_expenses} icon={Banknote} color="text-red-400" />
+            <StatCard title="Net Kassa" value={report.summary.net_cash_flow} icon={Layers} color="text-amber-400" subValue="Savdo - Chiqim - Qarz to'lovi" />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <PackageOpen size={18} className="text-slate-400" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Sotilgan Mahsulotlar</h3>
+            </div>
+            <div className="glass-card divide-y divide-white/5 overflow-hidden">
+              {report.sold_items.length === 0 ? (
+                <div className="p-10 text-center text-slate-500 text-xs font-medium">Bu kunda savdo bo'lmagan.</div>
+              ) : (
+                report.sold_items.map((item, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
+                    <div>
+                      <p className="text-sm font-bold text-white">{item.name}</p>
+                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
+                    </div>
+                    <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
                   </div>
-                </div>
+                ))
               )}
-            </div>
-          )}
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="glass-card p-4 bg-emerald-500/10 border border-emerald-500/20">
-              <span className="text-emerald-400/70 text-[10px] font-bold uppercase">Kungi Sof Foyda</span>
-              <p className="text-xl font-black text-emerald-400 mt-1">{(report.summary.total_sales_profit - report.summary.total_expenses).toLocaleString()} UZS</p>
-            </div>
-            <div className="glass-card p-4 bg-indigo-500/10 border border-indigo-500/20">
-              <span className="text-indigo-400/70 text-[10px] font-bold uppercase">Jami Savdo (Tushum)</span>
-              <p className="text-xl font-black text-indigo-400 mt-1">{report.summary.total_sales_revenue.toLocaleString()} UZS</p>
-              <p className="text-[9px] text-indigo-400/60 mt-1">{report.summary.sales_count} ta tranzaksiya</p>
-            </div>
-            <div className="glass-card p-4 bg-red-500/10 border border-red-500/20">
-              <span className="text-red-400/70 text-[10px] font-bold uppercase">Kungi Chiqimlar</span>
-              <p className="text-xl font-black text-red-400 mt-1">{report.summary.total_expenses.toLocaleString()} UZS</p>
-            </div>
-            <div className="glass-card p-4 bg-orange-500/10 border border-orange-500/20">
-              <span className="text-orange-400/70 text-[10px] font-bold uppercase">Kelgan Mollar (Xarid)</span>
-              <p className="text-xl font-black text-orange-400 mt-1">{report.summary.total_purchases_cost.toLocaleString()} UZS</p>
             </div>
           </div>
 
-          {/* Sales Transactions (Individual) */}
-          {report.sales_transactions && report.sales_transactions.length > 0 && (
-            <div className="glass-card overflow-hidden">
-              <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
-                <Clock size={18} className="text-indigo-400" />
-                <h3 className="font-bold text-sm">Savdo Tranzaksiyalari</h3>
-                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold ml-auto">{report.sales_transactions.length} ta</span>
+          {report.purchases?.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <BarChart3 size={18} className="text-slate-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Kirimlar (Sklad)</h3>
               </div>
-              <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
-                {report.sales_transactions.map((sale) => (
-                  <div key={sale.id} className="p-4 hover:bg-white/5 transition">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-[10px] font-bold text-indigo-400">
-                          {getTime(sale.created_at)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-100">{sale.items_json.length} xil mahsulot</p>
-                          <p className="text-[10px] text-slate-500">Sotuv #{sale.id.toString().slice(-4)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="text-right">
-                          <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()}</p>
-                          <p className="text-[10px] text-slate-500">Foyda: {sale.profit.toLocaleString()}</p>
-                        </div>
-                        <button 
-                          onClick={() => handleDeleteSale(sale.id)}
-                          className="h-9 w-9 shrink-0 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition hover:bg-red-500/20 active:scale-90"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+              <div className="glass-card divide-y divide-white/5 overflow-hidden">
+                {report.purchases.map((p, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
+                    <div>
+                      <p className="text-sm font-bold text-white">{p.name}</p>
+                      <p className="text-[10px] text-slate-500">{p.quantity} dona • {p.time} • {p.source}</p>
                     </div>
-                    <div className="flex space-x-4 overflow-x-auto scrollbar-hide">
-                      {sale.items_json.map((item, idx) => (
-                        <div key={idx} className="shrink-0">
-                          <span className="text-[11px] font-bold text-slate-300">{item.product}</span>
-                          <span className="text-[9px] text-slate-500 ml-1">{item.quantity} ta | {(item.revenue || 0).toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
                   </div>
                 ))}
               </div>
             </div>
           )}
+        </div>
+      ) : viewType === 'monthly' && monthlyReport ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatCard title="Oylik Savdo" value={monthlyReport.summary.total_revenue} icon={ShoppingBag} color="text-emerald-400" subValue={`${monthlyReport.summary.sales_count} ta sotuv`} />
+            <StatCard title="Oylik Foyda" value={monthlyReport.summary.total_profit} icon={TrendingUp} color="text-indigo-400" subValue="Savdo - Tannarx" />
+            <StatCard title="Oylik Xarajat" value={monthlyReport.summary.total_expenses} icon={Banknote} color="text-red-400" />
+            <StatCard title="Net Foyda" value={monthlyReport.summary.net_profit} icon={PieChart} color="text-indigo-400" subValue="Foyda - Xarajat" />
+            <StatCard title="Qarz To'lovi" value={monthlyReport.summary.total_payments_made} icon={Layers} color="text-rose-400" />
+            <StatCard title="Net Kassa" value={monthlyReport.summary.net_cash_flow} icon={Banknote} color="text-amber-400" subValue="Savdo - Xarajat - Qarz To'lovi" />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Sold Items Summary */}
-            <div className="glass-card overflow-hidden">
-              <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
-                <ShoppingBag size={18} className="text-indigo-400" />
-                <h3 className="font-bold text-sm">Sotilgan Mahsulotlar (Jami)</h3>
-              </div>
-              <div className="p-0 max-h-[300px] overflow-y-auto">
-                {report.sold_items.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-slate-500">Bu kunda savdo bo'lmagan.</p>
-                ) : (
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-800/50 text-[10px] uppercase text-slate-400 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-2 font-semibold">Nomi</th>
-                        <th className="px-4 py-2 font-semibold text-center">Soni</th>
-                        <th className="px-4 py-2 font-semibold text-right">Summa</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {report.sold_items.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-white/5 transition">
-                          <td className="px-4 py-3 font-medium text-slate-300">{item.name}</td>
-                          <td className="px-4 py-3 text-center text-slate-400">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right text-emerald-400 font-bold">{item.revenue.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <PackageOpen size={18} className="text-slate-400" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Eng Ko'p Sotilganlar</h3>
             </div>
-
-            {/* Expenses and Purchases */}
-            <div className="space-y-6">
-              {/* Expenses List */}
-              <div className="glass-card overflow-hidden">
-                <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
-                  <Banknote size={18} className="text-red-400" />
-                  <h3 className="font-bold text-sm">Qilingan Chiqimlar</h3>
-                </div>
-                <div className="p-0 max-h-[200px] overflow-y-auto">
-                  {report.expenses.length === 0 ? (
-                    <p className="p-4 text-center text-xs text-slate-500">Chiqimlar yo'q.</p>
-                  ) : (
-                    <ul className="divide-y divide-white/5">
-                      {report.expenses.map((exp, idx) => (
-                        <li key={idx} className="p-3 flex justify-between items-center hover:bg-white/5 transition">
-                          <div>
-                            <p className="text-sm font-bold text-slate-300">{exp.category}</p>
-                            {exp.notes && <p className="text-[10px] text-slate-500">{exp.notes}</p>}
-                          </div>
-                          <span className="text-red-400 font-bold text-sm">-{exp.amount.toLocaleString()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              {/* Purchases List */}
-              <div className="glass-card overflow-hidden">
-                <div className="p-4 bg-white/5 border-b border-white/5 flex items-center space-x-2">
-                  <PackageOpen size={18} className="text-orange-400" />
-                  <h3 className="font-bold text-sm">Omborga Kirim (Xaridlar)</h3>
-                </div>
-                <div className="p-0 max-h-[200px] overflow-y-auto">
-                  {report.purchases.length === 0 ? (
-                    <p className="p-4 text-center text-xs text-slate-500">Kirim bo'lmagan.</p>
-                  ) : (
-                    <ul className="divide-y divide-white/5">
-                      {report.purchases.map((inv, idx) => (
-                        <li key={idx} className="p-3 flex justify-between items-center hover:bg-white/5 transition">
-                          <div>
-                            <p className="text-sm font-bold text-slate-300">{inv.name}</p>
-                             <p className="text-[10px] text-slate-500">
-                               {inv.quantity} ta qo'shilgan {inv.time ? `(soat ${inv.time})` : ''} {inv.source ? `[${inv.source}]` : ''}
-                             </p>
-                          </div>
-                          <span className="text-orange-400 font-bold text-sm">{inv.cost.toLocaleString()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
+            <div className="glass-card divide-y divide-white/5 overflow-hidden">
+              {monthlyReport.sold_items.length === 0 ? (
+                <div className="p-10 text-center text-slate-500 text-xs font-medium">Bu oyda savdo bo'lmagan.</div>
+              ) : (
+                monthlyReport.sold_items.map((item, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
+                    <div>
+                      <p className="text-sm font-bold text-white">{item.name}</p>
+                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
+                    </div>
+                    <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
+
+          {monthlyReport.expenses_by_category?.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <PieChart size={18} className="text-slate-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Xarajatlar Tahlili</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {monthlyReport.expenses_by_category.map((ex, idx) => (
+                  <div key={idx} className="glass-card p-3 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">{ex.category}</p>
+                    <p className="text-sm font-bold text-red-400">{ex.amount.toLocaleString()} UZS</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </motion.div>
@@ -343,3 +280,4 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
 };
 
 export default DailyArchive;
+

@@ -174,7 +174,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Sales Revenue Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Tushum (Savdo)</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Oylik Tushum (Savdo)</span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
@@ -214,7 +214,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Expenses Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-slate-500/20 to-slate-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Jami Chiqimlar</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">Oylik Chiqimlar</span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white text-slate-300">
               {(totalExpenses || 0).toLocaleString('uz-UZ')}
