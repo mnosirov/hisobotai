@@ -72,9 +72,18 @@ class DailyReportService:
         latest_logs_res = await self.db.execute(latest_logs_q)
         latest_logs_data = [{"id": l[0].id, "name": l[1], "amount": l[0].change_amount, "date": str(l[0].created_at)} for l in latest_logs_res.all()]
 
-        # 3. Inventory Kirim Data
-        inv_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
+        # 3. Inventory Logs (Kirimlar)
+        from app.models.models import Supplier
+        inv_query = select(
+            InventoryLog, 
+            Product.name, 
+            Product.last_purchase_price,
+            Product.image_url,
+            Supplier.name
+        ).join(
             Product, InventoryLog.product_id == Product.id
+        ).outerjoin(
+            Supplier, Product.supplier_id == Supplier.id
         ).where(
             and_(
                 InventoryLog.tenant_id == self.tenant_id,
@@ -96,6 +105,8 @@ class DailyReportService:
             log_obj = log_row[0]
             prod_name = log_row[1]
             prod_price = log_row[2]
+            prod_image = log_row[3]
+            supplier_name = log_row[4]
             
             cost = log_obj.change_amount * prod_price
             total_purchases += cost
@@ -105,6 +116,9 @@ class DailyReportService:
                 "quantity": log_obj.change_amount,
                 "cost": cost,
                 "source": log_obj.source,
+                "image_url": prod_image,
+                "supplier_name": supplier_name or "Noma'lum",
+                "price": prod_price,
                 "time": log_obj.created_at.strftime("%H:%M") if log_obj.created_at else None
             })
 
@@ -160,10 +174,19 @@ class DailyReportService:
     async def get_monthly_report(self, year: int, month: int) -> Dict[str, Any]:
         """Gets a consolidated report for an entire month (YYYY-MM)"""
         # 1. Fetch all relevant data for the tenant
+        from app.models.models import Supplier
         sales_query = select(Sale).where(and_(Sale.tenant_id == self.tenant_id, Sale.is_deleted == 0))
         expenses_query = select(Expense).where(Expense.tenant_id == self.tenant_id)
-        logs_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
+        logs_query = select(
+            InventoryLog, 
+            Product.name, 
+            Product.last_purchase_price,
+            Product.image_url,
+            Supplier.name
+        ).join(
             Product, InventoryLog.product_id == Product.id
+        ).outerjoin(
+            Supplier, Product.supplier_id == Supplier.id
         ).where(and_(InventoryLog.tenant_id == self.tenant_id, InventoryLog.change_amount > 0))
         
         debts_query = select(SupplierDebt).where(SupplierDebt.tenant_id == self.tenant_id)
@@ -228,6 +251,8 @@ class DailyReportService:
             log_obj = row[0]
             prod_name = row[1]
             prod_price = row[2]
+            prod_image = row[3]
+            supplier_name = row[4]
             
             cost = log_obj.change_amount * prod_price
             purchases_list.append({
@@ -236,6 +261,9 @@ class DailyReportService:
                 "quantity": log_obj.change_amount,
                 "cost": cost,
                 "source": log_obj.source,
+                "image_url": prod_image,
+                "supplier_name": supplier_name or "Noma'lum",
+                "price": prod_price,
                 "time": log_obj.created_at.strftime("%H:%M") if log_obj.created_at else None,
                 "date": log_obj.created_at.strftime("%Y-%m-%d") if log_obj.created_at else None
             })

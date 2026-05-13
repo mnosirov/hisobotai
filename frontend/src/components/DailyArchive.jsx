@@ -212,12 +212,34 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               </div>
               <div className="glass-card divide-y divide-white/5 overflow-hidden">
                 {report.purchases.map((p, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
-                    <div>
-                      <p className="text-sm font-bold text-white">{p.name}</p>
-                      <p className="text-[10px] text-slate-500">{p.quantity} dona • {p.time} • {p.source}</p>
+                  <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
+                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-500">
+                          <PackageOpen size={20} />
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{p.name}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                        <p className="text-[10px] text-slate-400">
+                          <span className="font-bold text-slate-300">{p.quantity}</span> dona • {p.time}
+                        </p>
+                        <p className="text-[10px] text-indigo-400 font-medium">
+                          Do'kon: <span className="text-slate-300">{p.supplier_name}</span>
+                        </p>
+                        <p className="text-[10px] text-amber-500/80 font-medium">
+                          Narx: <span className="text-slate-300">{p.price?.toLocaleString()}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()}</p>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">UZS</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -282,14 +304,34 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               </div>
               <div className="glass-card divide-y divide-white/5 overflow-hidden">
                 {monthlyReport.purchases.map((p, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
-                    <div>
-                      <p className="text-sm font-bold text-white">{p.name}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {p.quantity} dona • {p.date} {p.time} • {p.source}
-                      </p>
+                  <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
+                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-500">
+                          <PackageOpen size={20} />
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{p.name}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                        <p className="text-[10px] text-slate-400">
+                          <span className="font-bold text-slate-300">{p.quantity}</span> dona • {p.date} {p.time}
+                        </p>
+                        <p className="text-[10px] text-indigo-400 font-medium">
+                          Do'kon: <span className="text-slate-300">{p.supplier_name}</span>
+                        </p>
+                        <p className="text-[10px] text-amber-500/80 font-medium">
+                          Narx: <span className="text-slate-300">{p.price?.toLocaleString()}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()}</p>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">UZS</p>
+                    </div>
                   </div>
                 ))}
               </div>
