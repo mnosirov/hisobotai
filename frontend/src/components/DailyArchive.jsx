@@ -273,6 +273,28 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               </div>
             </div>
           )}
+
+          {monthlyReport.purchases?.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <BarChart3 size={18} className="text-slate-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Kirimlar Tarixi (Sklad)</h3>
+              </div>
+              <div className="glass-card divide-y divide-white/5 overflow-hidden">
+                {monthlyReport.purchases.map((p, idx) => (
+                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
+                    <div>
+                      <p className="text-sm font-bold text-white">{p.name}</p>
+                      <p className="text-[10px] text-slate-500">
+                        {p.quantity} dona • {p.date} {p.time} • {p.source}
+                      </p>
+                    </div>
+                    <p className="text-sm font-black text-amber-400">{p.cost.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </motion.div>

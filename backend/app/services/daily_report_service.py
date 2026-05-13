@@ -221,6 +221,27 @@ class DailyReportService:
             expenses_by_cat[cat] = expenses_by_cat.get(cat, 0) + e.amount
         
         expenses_summary = [{"category": k, "amount": v} for k, v in expenses_by_cat.items()]
+        
+        # Purchase (Inventory Log) details
+        purchases_list = []
+        for row in monthly_logs:
+            log_obj = row[0]
+            prod_name = row[1]
+            prod_price = row[2]
+            
+            cost = log_obj.change_amount * prod_price
+            purchases_list.append({
+                "id": log_obj.id,
+                "name": prod_name,
+                "quantity": log_obj.change_amount,
+                "cost": cost,
+                "source": log_obj.source,
+                "time": log_obj.created_at.strftime("%H:%M") if log_obj.created_at else None,
+                "date": log_obj.created_at.strftime("%Y-%m-%d") if log_obj.created_at else None
+            })
+        
+        # Sort purchases by date desc
+        purchases_list.sort(key=lambda x: (x["date"] or "", x["time"] or ""), reverse=True)
 
         return {
             "year": year,
@@ -237,7 +258,8 @@ class DailyReportService:
                 "sales_count": len(monthly_sales)
             },
             "sold_items": sold_items_list,
-            "expenses_by_category": expenses_summary
+            "expenses_by_category": expenses_summary,
+            "purchases": purchases_list
         }
 
     async def get_dashboard_summary(self, year: Optional[int] = None, month: Optional[int] = None) -> Dict[str, Any]:
