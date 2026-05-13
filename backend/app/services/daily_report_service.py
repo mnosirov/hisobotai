@@ -98,6 +98,29 @@ class DailyReportService:
             row for row in all_logs 
             if row[0].created_at and row[0].created_at.date() == target_date
         ]
+
+        # Fallback: Products created on this date that might NOT have logs
+        prods_query = select(Product, Supplier.name).outerjoin(Supplier, Product.supplier_id == Supplier.id).where(and_(
+            Product.tenant_id == self.tenant_id,
+            cast(Product.created_at, Date) == target_date
+        ))
+        prods_res = await self.db.execute(prods_query)
+        day_prods = prods_res.all()
+        
+        existing_log_prod_ids = {row[0].product_id for row in logs}
+        for p_row in day_prods:
+            p = p_row[0]
+            s_name = p_row[1]
+            if p.id not in existing_log_prod_ids:
+                from app.models.models import InventoryLog
+                virtual_log = InventoryLog(
+                    id=0,
+                    product_id=p.id,
+                    change_amount=p.stock,
+                    source="Tarixiy ma'lumot",
+                    created_at=p.created_at
+                )
+                logs.append((virtual_log, p.name, p.last_purchase_price, p.image_url, s_name))
         
         total_purchases = 0
         purchases_list = []
