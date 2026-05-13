@@ -257,8 +257,7 @@ class DailyReportService:
             # Kelgusi oyning birinchi kuni
             end_date = (start_date + timedelta(days=32)).replace(day=1)
         else:
-            # Tanlangan oy (Tashkent vaqti bo'yicha hisoblash uchun 5 soat farqni inobatga olamiz)
-            # Lekin bazada UTC saqlangan bo'lsa:
+            # Tanlangan oy
             start_date = datetime(year, month, 1, tzinfo=timezone.utc)
             if month == 12:
                 end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
@@ -272,7 +271,7 @@ class DailyReportService:
         # Revenue & Profit
         revenue_query = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
             Sale.tenant_id == self.tenant_id, 
-            Sale.is_deleted == False
+            Sale.is_deleted == 0
         )
         if start_date and end_date:
             revenue_query = revenue_query.where(and_(Sale.created_at >= start_date, Sale.created_at < end_date))
@@ -285,7 +284,7 @@ class DailyReportService:
         # Expenses
         expense_query = select(func.sum(Expense.amount)).where(
             Expense.tenant_id == self.tenant_id, 
-            Expense.is_deleted == False
+            Expense.is_deleted == 0
         )
         if start_date and end_date:
             expense_query = expense_query.where(and_(Expense.created_at >= start_date, Expense.created_at < end_date))

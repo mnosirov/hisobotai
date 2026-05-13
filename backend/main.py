@@ -497,7 +497,7 @@ async def get_sales_summary(
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
             "total_sales_revenue": dash_sum.get("revenue", 0),
             "total_expenses": dash_sum.get("expenses", 0),
-            "today_profit": dash_sum.get("profit", 0) if (filter_year and filter_month) else sales_summary.get("today_profit", 0),
+            "today_profit": dash_sum.get("profit", 0) if (year and month) else sales_summary.get("today_profit", 0),
             "total_supplier_debt": total_supplier_debt,
             "cash_balance": cash_balance,
             "today_expenses": today_expenses,
