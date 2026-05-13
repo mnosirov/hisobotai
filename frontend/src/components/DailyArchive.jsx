@@ -285,7 +285,9 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
                         <li key={idx} className="p-3 flex justify-between items-center hover:bg-white/5 transition">
                           <div>
                             <p className="text-sm font-bold text-slate-300">{inv.name}</p>
-                             <p className="text-[10px] text-slate-500">{inv.quantity} ta qo'shilgan {inv.source ? `(${inv.source})` : ''}</p>
+                             <p className="text-[10px] text-slate-500">
+                               {inv.quantity} ta qo'shilgan {inv.time ? `(soat ${inv.time})` : ''} {inv.source ? `[${inv.source}]` : ''}
+                             </p>
                           </div>
                           <span className="text-orange-400 font-bold text-sm">{inv.cost.toLocaleString()}</span>
                         </li>

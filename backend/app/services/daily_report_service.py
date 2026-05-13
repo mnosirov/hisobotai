@@ -85,7 +85,8 @@ class DailyReportService:
                 "name": log.name, 
                 "quantity": log.InventoryLog.change_amount, 
                 "cost": log.InventoryLog.change_amount * log.last_purchase_price,
-                "source": log.InventoryLog.source
+                "source": log.InventoryLog.source,
+                "time": log.InventoryLog.created_at.strftime("%H:%M") if log.InventoryLog.created_at else None
             } 
             for log in logs
         ]
