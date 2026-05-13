@@ -247,14 +247,9 @@ class DailyReportService:
         start_date = None
         end_date = None
         
-        # Eslatma: Bazada created_at "Tashkent vaqti" bilan (naive) saqlangan
         if year == 0:
-            # UMUMIY (Barcha vaqtlar)
             pass
         elif not year or not month:
-            # Joriy oy (default)
-            now = datetime.now() # Naive (local server time, assuming matches uzb_now logic)
-            # Lekin aniqroq bo'lishi uchun:
             uz_now = datetime.utcnow() + timedelta(hours=5)
             start_date = uz_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             if start_date.month == 12:
@@ -262,17 +257,15 @@ class DailyReportService:
             else:
                 end_date = start_date.replace(month=start_date.month + 1)
         else:
-            # Tanlangan oy (Naive - bazadagi uzb_now ga mos kelishi uchun)
             start_date = datetime(year, month, 1)
             if month == 12:
                 end_date = datetime(year + 1, 1, 1)
             else:
                 end_date = datetime(year, month + 1, 1)
 
-        # Revenue & Profit
+        # 1. Revenue & Profit
         revenue_query = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
-            Sale.tenant_id == self.tenant_id, 
-            Sale.is_deleted == 0
+            Sale.tenant_id == self.tenant_id, Sale.is_deleted == 0
         )
         if start_date and end_date:
             revenue_query = revenue_query.where(and_(Sale.created_at >= start_date, Sale.created_at < end_date))
@@ -282,19 +275,56 @@ class DailyReportService:
         revenue = rev_row[0] if rev_row and rev_row[0] is not None else 0
         profit = rev_row[1] if rev_row and rev_row[1] is not None else 0
 
-        # Expenses
+        # 2. Expenses
         expense_query = select(func.sum(Expense.amount)).where(
-            Expense.tenant_id == self.tenant_id, 
-            Expense.is_deleted == 0
+            Expense.tenant_id == self.tenant_id, Expense.is_deleted == 0
         )
         if start_date and end_date:
             expense_query = expense_query.where(and_(Expense.created_at >= start_date, Expense.created_at < end_date))
-        
         expense_res = await self.db.execute(expense_query)
         expenses = expense_res.scalar() or 0
+
+        # 3. Supplier Payments (Oylik to'lovlar)
+        pay_query = select(func.sum(SupplierPaymentLog.amount)).where(
+            SupplierPaymentLog.tenant_id == self.tenant_id, SupplierPaymentLog.is_deleted == 0
+        )
+        if start_date and end_date:
+            pay_query = pay_query.where(and_(SupplierPaymentLog.payment_date >= start_date, SupplierPaymentLog.payment_date < end_date))
+        pay_res = await self.db.execute(pay_query)
+        supplier_payments = pay_res.scalar() or 0
+
+        # 4. New Supplier Debts (Yangi qarzlar)
+        debt_query = select(func.sum(SupplierDebt.total_amount)).where(
+            SupplierDebt.tenant_id == self.tenant_id, SupplierDebt.is_deleted == 0
+        )
+        if start_date and end_date:
+            debt_query = debt_query.where(and_(SupplierDebt.created_at >= start_date, SupplierDebt.created_at < end_date))
+        debt_res = await self.db.execute(debt_query)
+        new_supplier_debts = debt_res.scalar() or 0
+
+        # 5. Inventory In (Stock added)
+        # Sum (Log.change_amount * Product.last_purchase_price)
+        from app.models.models import InventoryLog, Product
+        stock_in_query = select(
+            func.sum(InventoryLog.change_amount * Product.last_purchase_price),
+            func.sum(InventoryLog.change_amount * Product.sell_price)
+        ).join(Product, InventoryLog.product_id == Product.id).where(
+            InventoryLog.tenant_id == self.tenant_id,
+            InventoryLog.change_amount > 0
+        )
+        if start_date and end_date:
+            stock_in_query = stock_in_query.where(and_(InventoryLog.created_at >= start_date, InventoryLog.created_at < end_date))
+        stock_in_res = await self.db.execute(stock_in_query)
+        stock_row = stock_in_res.first()
+        inventory_in_cost = stock_row[0] if stock_row and stock_row[0] is not None else 0
+        inventory_in_sell = stock_row[1] if stock_row and stock_row[1] is not None else 0
 
         return {
             "revenue": int(revenue),
             "expenses": int(expenses),
-            "profit": int(profit)
+            "profit": int(profit),
+            "supplier_payments": int(supplier_payments),
+            "new_supplier_debts": int(new_supplier_debts),
+            "inventory_in_cost": int(inventory_in_cost),
+            "inventory_in_sell": int(inventory_in_sell)
         }

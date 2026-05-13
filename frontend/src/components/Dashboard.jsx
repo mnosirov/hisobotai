@@ -220,7 +220,9 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Stock Cost Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-emerald-500/20 to-teal-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Sklad (Tan narxi)</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Sklad (Tan narxi)' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Kirimi (Xarid)` : 'Sklad (Tan narxi)')}
+          </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalStockCost || 0).toLocaleString('uz-UZ')}
@@ -230,7 +232,9 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Stock Sell Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-teal-500/20 to-cyan-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Sklad (Sotish)</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Sklad (Sotish)' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Kirimi (Sotish)` : 'Sklad (Sotish)')}
+          </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalStockSell || 0).toLocaleString('uz-UZ')}
@@ -238,10 +242,10 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </div>
         </div>
 
-        {/* Total Sales Revenue Card */}
+        {/* Total Sales Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
           <span className="text-slate-400 text-[10px] font-medium uppercase">
-            {isOverall ? 'Umumiy Tushum' : `${months[selectedMonth-1]} Tushumi`}
+            {isOverall ? 'Umumiy Tushum' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Tushumi` : 'Bugungi Tushum')}
           </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
@@ -250,21 +254,25 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </div>
         </div>
 
-        {/* Total Supplier Debt Card */}
-        <div className="glass-card p-4 bg-gradient-to-br from-red-500/20 to-rose-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Do'konlardan qarz</span>
+        {/* Customer Debt Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-rose-500/20 to-pink-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Ta\'minotchiga Qarz' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Yangi Qarzlari` : 'Ta\'minotchiga Qarz')}
+          </span>
           <div className="flex items-end justify-between mt-1">
-            <h2 className="text-xl font-black text-white text-rose-400">
+            <h2 className="text-xl font-black text-white text-rose-300">
               {(totalSupplierDebt || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>
 
         {/* Cash Balance Card */}
-        <div className="glass-card p-4 bg-gradient-to-br from-purple-500/20 to-pink-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Sof Kassa (Qoldiq)</span>
+        <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-purple-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Sof Kassa (Qoldiq)' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Sof Kassa` : 'Sof Kassa (Qoldiq)')}
+          </span>
           <div className="flex items-end justify-between mt-1">
-            <h2 className="text-xl font-black text-white text-purple-400">
+            <h2 className="text-xl font-black text-white text-indigo-300">
               {(cashBalance || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>

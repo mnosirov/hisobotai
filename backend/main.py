@@ -488,18 +488,26 @@ async def get_sales_summary(
         # 3. Period-specific summary for Dashboard cards
         dash_sum = await report_service.get_dashboard_summary(year, month)
         
+        # Calculate period cash balance (Revenue - Expenses - Payments)
+        if year is not None:
+            # For a specific period, kassa balance is the net flow
+            period_cash_balance = dash_sum.get("revenue", 0) - dash_sum.get("expenses", 0) - dash_sum.get("supplier_payments", 0)
+        else:
+            # Overall kassa balance
+            period_cash_balance = cash_balance
+
         # Adjust today profit/expenses for display
         today_expenses = await expense_service.get_today_expenses()
         
         return {
             **sales_summary,
-            "total_stock_cost": bi_summary.get("total_stock_cost", 0),
-            "total_stock_sell": bi_summary.get("total_stock_sell", 0),
+            "total_stock_cost": dash_sum.get("inventory_in_cost", 0) if year is not None else bi_summary.get("total_stock_cost", 0),
+            "total_stock_sell": dash_sum.get("inventory_in_sell", 0) if year is not None else bi_summary.get("total_stock_sell", 0),
             "total_sales_revenue": dash_sum.get("revenue", 0),
             "total_expenses": dash_sum.get("expenses", 0),
             "today_profit": dash_sum.get("profit", 0) if (year is not None) else sales_summary.get("today_profit", 0),
-            "total_supplier_debt": total_supplier_debt,
-            "cash_balance": cash_balance,
+            "total_supplier_debt": dash_sum.get("new_supplier_debts", 0) if year is not None else total_supplier_debt,
+            "cash_balance": period_cash_balance,
             "today_expenses": today_expenses,
             "low_stock_items": sales_summary.get("low_stock_items", [])
         }
