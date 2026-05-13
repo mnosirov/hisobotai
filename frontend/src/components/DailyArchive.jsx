@@ -5,7 +5,15 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  // Local date initialization (YYYY-MM-DD)
+  const getLocalDate = () => {
+    const d = new Date();
+    const offset = d.getTimezoneOffset();
+    const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getLocalDate());
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const dateInputRef = useRef(null);
@@ -99,8 +107,12 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
       {/* Quick Select Buttons */}
       <div className="flex space-x-2 overflow-x-auto scrollbar-hide pb-2">
         <button 
-          onClick={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
-          className={`px-4 py-2 rounded-xl text-xs font-bold shrink-0 transition ${selectedDate === new Date().toISOString().slice(0, 10) ? 'bg-indigo-600 text-white' : 'glass-card text-slate-400'}`}
+          onClick={() => setSelectedDate(getLocalDate())}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+            selectedDate === getLocalDate() 
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
+              : 'glass-card text-slate-400 hover:bg-white/10'
+          }`}
         >
           Bugun
         </button>
