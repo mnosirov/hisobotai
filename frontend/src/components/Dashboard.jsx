@@ -277,7 +277,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white text-orange-400">
-              {isOverall || !isOverall ? (totalExpenses || 0).toLocaleString('uz-UZ') : (todayExpenses || 0).toLocaleString('uz-UZ')}
+              {(isOverall || !isOverall) && (selectedMonth && !isOverall) ? (totalExpenses || 0).toLocaleString('uz-UZ') : (isOverall ? (totalExpenses || 0).toLocaleString('uz-UZ') : (todayExpenses || 0).toLocaleString('uz-UZ'))}
             </h2>
           </div>
         </div>

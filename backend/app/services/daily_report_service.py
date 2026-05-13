@@ -247,26 +247,27 @@ class DailyReportService:
         start_date = None
         end_date = None
         
+        # Eslatma: Bazada created_at "Tashkent vaqti" bilan (naive) saqlangan
         if year == 0:
             # UMUMIY (Barcha vaqtlar)
             pass
         elif not year or not month:
             # Joriy oy (default)
-            now = datetime.now(timezone.utc)
-            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            # Kelgusi oyning birinchi kuni
-            end_date = (start_date + timedelta(days=32)).replace(day=1)
-        else:
-            # Tanlangan oy
-            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
-            if month == 12:
-                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            now = datetime.now() # Naive (local server time, assuming matches uzb_now logic)
+            # Lekin aniqroq bo'lishi uchun:
+            uz_now = datetime.utcnow() + timedelta(hours=5)
+            start_date = uz_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if start_date.month == 12:
+                end_date = start_date.replace(year=start_date.year + 1, month=1)
             else:
-                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
-            
-            # UTC ga o'tkazish (Tashkent -> UTC)
-            start_date = start_date - timedelta(hours=5)
-            end_date = end_date - timedelta(hours=5)
+                end_date = start_date.replace(month=start_date.month + 1)
+        else:
+            # Tanlangan oy (Naive - bazadagi uzb_now ga mos kelishi uchun)
+            start_date = datetime(year, month, 1)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1)
+            else:
+                end_date = datetime(year, month + 1, 1)
 
         # Revenue & Profit
         revenue_query = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
