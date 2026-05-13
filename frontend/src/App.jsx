@@ -85,10 +85,13 @@ const MainApp = () => {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (year = null, month = null) => {
     try {
-      // Add timestamp to bypass potential caching
-      const { data } = await axios.get(`${API_BASE}/sales/summary?t=${Date.now()}`);
+      let url = `${API_BASE}/sales/summary?t=${Date.now()}`;
+      if (year !== null) url += `&year=${year}`;
+      if (month !== null) url += `&month=${month}`;
+      
+      const { data } = await axios.get(url);
       setProfit(data.today_profit || 0);
       setProfitGrowth(data.profit_growth || 0);
       setTotalStockCost(data.total_stock_cost || 0);

@@ -15,6 +15,25 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
   const [selectedLowStockProduct, setSelectedLowStockProduct] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null);
 
+  // Period Filtering State
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [isOverall, setIsOverall] = useState(false);
+
+  const months = [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+    "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
+  ];
+
+  useEffect(() => {
+    if (isOverall) {
+      fetchDashboardData(0, 0); // year=0 means overall in our backend logic
+    } else {
+      fetchDashboardData(selectedYear, selectedMonth);
+    }
+  }, [selectedMonth, selectedYear, isOverall]);
+
   const handleCapture = async () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
@@ -82,7 +101,7 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
       
       toast.success("Muvaffaqiyatli saqlandi!", { id: loadingToast });
       setShowConfirm(false);
-      fetchDashboardData();
+      fetchDashboardData(isOverall ? 0 : selectedYear, isOverall ? 0 : selectedMonth);
       fetchInventoryData();
     } catch (err) {
       toast.error("Saqlashda xatolik yuz berdi", { id: loadingToast });
@@ -101,50 +120,97 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
     >
       
       {/* Top Actions */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-500">
-          Hisobot<span className="text-indigo-500">AI</span>
-        </h2>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => {
-              if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-              fetchDashboardData();
-              fetchInventoryData();
-              toast.success("Ma'lumotlar yangilandi", { icon: '🔄' });
-            }}
-            className="h-10 w-10 glass-card flex items-center justify-center text-slate-400 hover:text-white transition-all active:rotate-180 duration-500"
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-500">
+            Hisobot<span className="text-indigo-500">AI</span>
+          </h2>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                fetchDashboardData(isOverall ? 0 : selectedYear, isOverall ? 0 : selectedMonth);
+                fetchInventoryData();
+                toast.success("Ma'lumotlar yangilandi", { icon: '🔄' });
+              }}
+              className="h-10 w-10 glass-card flex items-center justify-center text-slate-400 hover:text-white transition-all active:rotate-180 duration-500"
+            >
+              <RefreshCw size={18} />
+            </button>
+            <button
+              onClick={() => {
+                const loadingToast = toast.loading("Hisobot tayyorlanmoqda...");
+                axios.get(`${API_BASE}/export/excel`, { responseType: 'blob' })
+                  .then(res => {
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    toast.success("Yuklab olindi!", { id: loadingToast });
+                  })
+                  .catch(() => toast.error("Hisobotni yuklashda xatolik yuz berdi", { id: loadingToast }));
+              }}
+              className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-indigo-500/20"
+            >
+              <FileText size={16} />
+              <span>Excel</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Period Selector */}
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2 no-scrollbar">
+          <button 
+            onClick={() => setIsOverall(true)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+              isOverall ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
+            }`}
           >
-            <RefreshCw size={18} />
+            Umumiy
           </button>
-          <button
-            onClick={() => {
-              const loadingToast = toast.loading("Hisobot tayyorlanmoqda...");
-              axios.get(`${API_BASE}/export/excel`, { responseType: 'blob' })
-                .then(res => {
-                  const url = window.URL.createObjectURL(new Blob([res.data]));
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.setAttribute('download', `Hisobot_${new Date().toISOString().slice(0,10)}.xlsx`);
-                  document.body.appendChild(link);
-                  link.click();
-                  toast.success("Yuklab olindi!", { id: loadingToast });
-                })
-                .catch(() => toast.error("Hisobotni yuklashda xatolik yuz berdi", { id: loadingToast }));
-            }}
-            className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-lg shadow-indigo-500/20"
+          <button 
+            onClick={() => setIsOverall(false)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+              !isOverall ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400'
+            }`}
           >
-            <FileText size={16} />
-            <span>Excel</span>
+            Saralash: {months[selectedMonth-1]} {selectedYear}
           </button>
+          
+          {!isOverall && (
+            <div className="flex items-center space-x-2 animate-in fade-in slide-in-from-left-2">
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="bg-slate-800 border border-white/5 rounded-lg text-[10px] py-1 px-2 focus:ring-1 focus:ring-indigo-500 outline-none"
+              >
+                {months.map((m, i) => (
+                  <option key={i} value={i + 1}>{m}</option>
+                ))}
+              </select>
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="bg-slate-800 border border-white/5 rounded-lg text-[10px] py-1 px-2 focus:ring-1 focus:ring-indigo-500 outline-none"
+              >
+                {[2024, 2025, 2026].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
-        {/* Daily Profit Card */}
+        {/* Profit Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-indigo-500/20 to-blue-600/10 relative overflow-hidden">
-          <span className="text-slate-400 text-[10px] font-medium uppercase z-10 relative">Bugungi Sof Foyda</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase z-10 relative">
+            {isOverall ? 'Umumiy Foyda' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Foydasi` : 'Bugungi Sof Foyda')}
+          </span>
           <div className="flex items-end justify-between mt-1 z-10 relative">
             <h2 className="text-xl font-black text-white">
               {profit.toLocaleString('uz-UZ')}
@@ -174,7 +240,9 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Total Sales Revenue Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-amber-500/20 to-orange-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Oylik Tushum (Savdo)</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Umumiy Tushum' : `${months[selectedMonth-1]} Tushumi`}
+          </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
@@ -204,10 +272,12 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
 
         {/* Today Expenses Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-orange-500/20 to-red-600/10">
-          <span className="text-slate-400 text-[10px] font-medium uppercase">Bugungi Chiqimlar</span>
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Umumiy Chiqim' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Chiqimi` : 'Bugungi Chiqimlar')}
+          </span>
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white text-orange-400">
-              {(todayExpenses || 0).toLocaleString('uz-UZ')}
+              {isOverall || !isOverall ? (totalExpenses || 0).toLocaleString('uz-UZ') : (todayExpenses || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>

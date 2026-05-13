@@ -240,48 +240,61 @@ class DailyReportService:
             "expenses_by_category": expenses_summary
         }
 
-    async def get_monthly_summary_only(self) -> Dict[str, Any]:
-        """Lightweight summary for current month dashboard cards using UTC boundaries"""
-        # Get current Tashkent time
-        now_uz = datetime.utcnow() + timedelta(hours=5)
-        year, month = now_uz.year, now_uz.month
+    async def get_dashboard_summary(self, year: Optional[int] = None, month: Optional[int] = None) -> Dict[str, Any]:
+        """Dashboard uchun oylik yoki umumiy xulosani oladi."""
+        from sqlalchemy import func, and_
         
-        # Tashkent month boundaries
-        start_uz = datetime(year, month, 1)
-        if month == 12:
-            end_uz = datetime(year + 1, 1, 1)
+        start_date = None
+        end_date = None
+        
+        if year == 0:
+            # UMUMIY (Barcha vaqtlar)
+            pass
+        elif not year or not month:
+            # Joriy oy (default)
+            now = datetime.now(timezone.utc)
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            # Kelgusi oyning birinchi kuni
+            end_date = (start_date + timedelta(days=32)).replace(day=1)
         else:
-            end_uz = datetime(year, month + 1, 1)
+            # Tanlangan oy (Tashkent vaqti bo'yicha hisoblash uchun 5 soat farqni inobatga olamiz)
+            # Lekin bazada UTC saqlangan bo'lsa:
+            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+            else:
+                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
             
-        # Convert boundaries back to UTC
-        start_utc = start_uz - timedelta(hours=5)
-        end_utc = end_uz - timedelta(hours=5)
-        
-        q_sales = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
-            and_(
-                Sale.tenant_id == self.tenant_id,
-                Sale.is_deleted == 0,
-                Sale.created_at >= start_utc,
-                Sale.created_at < end_utc
-            )
+            # UTC ga o'tkazish (Tashkent -> UTC)
+            start_date = start_date - timedelta(hours=5)
+            end_date = end_date - timedelta(hours=5)
+
+        # Revenue & Profit
+        revenue_query = select(func.sum(Sale.total_amount), func.sum(Sale.profit)).where(
+            Sale.tenant_id == self.tenant_id, 
+            Sale.is_deleted == False
         )
-        res_sales = await self.db.execute(q_sales)
-        row = res_sales.first()
-        rev = row[0] if row and row[0] is not None else 0
-        prof = row[1] if row and row[1] is not None else 0
+        if start_date and end_date:
+            revenue_query = revenue_query.where(and_(Sale.created_at >= start_date, Sale.created_at < end_date))
         
-        q_exp = select(func.sum(Expense.amount)).where(
-            and_(
-                Expense.tenant_id == self.tenant_id,
-                Expense.created_at >= start_utc,
-                Expense.created_at < end_utc
-            )
+        revenue_res = await self.db.execute(revenue_query)
+        rev_row = revenue_res.first()
+        revenue = rev_row[0] if rev_row and rev_row[0] is not None else 0
+        profit = rev_row[1] if rev_row and rev_row[1] is not None else 0
+
+        # Expenses
+        expense_query = select(func.sum(Expense.amount)).where(
+            Expense.tenant_id == self.tenant_id, 
+            Expense.is_deleted == False
         )
-        res_exp = await self.db.execute(q_exp)
-        total_exp = res_exp.scalar() or 0
+        if start_date and end_date:
+            expense_query = expense_query.where(and_(Expense.created_at >= start_date, Expense.created_at < end_date))
         
+        expense_res = await self.db.execute(expense_query)
+        expenses = expense_res.scalar() or 0
+
         return {
-            "monthly_revenue": int(rev),
-            "monthly_profit": int(prof),
-            "monthly_expenses": int(total_exp)
+            "revenue": int(revenue),
+            "expenses": int(expenses),
+            "profit": int(profit)
         }

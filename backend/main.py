@@ -454,46 +454,57 @@ async def debug_logs(db: AsyncSession = Depends(get_db)):
 
 # --- SALES API ---
 @app.get("/api/sales/summary", response_model=Dict)
-async def get_sales_summary(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_sales_summary(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    current_user: User = Depends(get_current_user), 
+    db: AsyncSession = Depends(get_db)
+):
     try:
+        from app.services.sales_service import SalesService
+        from app.services.bi_service import BIService
+        from app.services.supplier_service import SupplierService
+        from app.services.expense_service import ExpenseService
+        from app.services.daily_report_service import DailyReportService
+        
         sales_service = SalesService(db, current_user.id)
         bi_service = BIService(db, current_user.id)
+        supplier_service = SupplierService(db, current_user.id)
+        expense_service = ExpenseService(db, current_user.id)
+        report_service = DailyReportService(db, current_user.id)
         
+        # 1. Base summaries
         sales_summary = await sales_service.get_sales_summary()
         bi_summary = await bi_service.get_business_summary()
         
-        # Oylik hisob-kitoblarni olish
-        from app.services.daily_report_service import DailyReportService
-        report_service = DailyReportService(db, current_user.id)
-        monthly_sum = await report_service.get_monthly_summary_only()
-        
-        supplier_service = SupplierService(db, current_user.id)
+        # 2. Financial totals for Cash Balance (Overall)
         total_supplier_debt = await supplier_service.get_total_debt()
         total_supplier_payments = await supplier_service.get_total_payments()
+        total_expenses_all = await expense_service.get_total_expenses()
+        total_revenue_all = bi_summary.get("total_sales_revenue", 0)
         
-        from app.services.expense_service import ExpenseService
-        expense_service = ExpenseService(db, current_user.id)
-        total_expenses = await expense_service.get_total_expenses()
+        cash_balance = total_revenue_all - total_supplier_payments - total_expenses_all
+        
+        # 3. Period-specific summary for Dashboard cards
+        dash_sum = await report_service.get_dashboard_summary(year, month)
+        
+        # Adjust today profit/expenses for display
         today_expenses = await expense_service.get_today_expenses()
-        
-        # Calculate cash balance (based on all-time total revenue for kassa)
-        total_sales_revenue_all = bi_summary.get("total_sales_revenue", 0)
-        cash_balance = total_sales_revenue_all - total_supplier_payments - total_expenses
-        
-        # Adjust today profit
-        sales_summary["today_profit"] = sales_summary.get("today_profit", 0) - today_expenses
         
         return {
             **sales_summary,
             "total_stock_cost": bi_summary.get("total_stock_cost", 0),
             "total_stock_sell": bi_summary.get("total_stock_sell", 0),
-            "total_sales_revenue": monthly_sum.get("monthly_revenue", 0), # Dashboard-da oylik chiqadi
+            "total_sales_revenue": dash_sum.get("revenue", 0),
+            "total_expenses": dash_sum.get("expenses", 0),
+            "today_profit": dash_sum.get("profit", 0) if (filter_year and filter_month) else sales_summary.get("today_profit", 0),
             "total_supplier_debt": total_supplier_debt,
-            "cash_balance": cash_balance, # Kassa umumiy qoladi
-            "total_expenses": monthly_sum.get("monthly_expenses", 0), # Dashboard-da oylik chiqadi
-            "today_expenses": today_expenses
+            "cash_balance": cash_balance,
+            "today_expenses": today_expenses,
+            "low_stock_items": sales_summary.get("low_stock_items", [])
         }
     except Exception as e:
+        print(f"Summary error details: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/sales/history", response_model=List[schemas.SaleResponse])
