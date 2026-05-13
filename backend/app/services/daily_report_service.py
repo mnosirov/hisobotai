@@ -63,6 +63,15 @@ class DailyReportService:
         debug_count_result = await self.db.execute(debug_count_query)
         total_logs_count = debug_count_result.scalar()
 
+        # DEBUG: Full system diagnostics
+        total_logs_all = (await self.db.execute(select(func.count()).select_from(InventoryLog))).scalar()
+        total_prods_all = (await self.db.execute(select(func.count()).select_from(Product))).scalar()
+        tenant_logs_count = (await self.db.execute(select(func.count()).where(InventoryLog.tenant_id == self.tenant_id))).scalar()
+        
+        latest_logs_q = select(InventoryLog, Product.name).join(Product).where(InventoryLog.tenant_id == self.tenant_id).order_by(InventoryLog.id.desc()).limit(5)
+        latest_logs_res = await self.db.execute(latest_logs_q)
+        latest_logs_data = [{"id": l[0].id, "name": l[1], "amount": l[0].change_amount, "date": str(l[0].created_at)} for l in latest_logs_res.all()]
+
         # 3. Inventory Kirim Data
         inv_query = select(InventoryLog, Product.name, Product.last_purchase_price).join(
             Product, InventoryLog.product_id == Product.id
@@ -124,8 +133,14 @@ class DailyReportService:
                 "debt_payments_made": debt_payments,
                 "net_cash_flow": net_cash_flow,
                 "sales_count": len(sales),
-                "debug_total_logs": total_logs_count,
-                "debug_date_logs": len(logs)
+                "debug": {
+                    "total_system_logs": total_logs_all,
+                    "total_system_prods": total_prods_all,
+                    "tenant_logs_total": tenant_logs_count,
+                    "tenant_id_used": self.tenant_id,
+                    "target_date_searched": str(target_date),
+                    "latest_tenant_logs": latest_logs_data
+                }
             },
             "sold_items": sold_items_list,
             "expenses": expenses_list,

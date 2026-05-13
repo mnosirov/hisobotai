@@ -141,6 +141,30 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
         </div>
       ) : report ? (
         <div className="space-y-6">
+          {report?.summary?.debug && (
+            <div className="glass-card p-4 mb-6 border-dashed border-slate-700 bg-slate-900/50">
+              <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Diagnostic Data</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
+                <div className="text-slate-300">System Logs: <span className="text-white">{report.summary.debug.total_system_logs}</span></div>
+                <div className="text-slate-300">System Prods: <span className="text-white">{report.summary.debug.total_system_prods}</span></div>
+                <div className="text-slate-300">Your Logs Total: <span className="text-white">{report.summary.debug.tenant_logs_total}</span></div>
+                <div className="text-slate-300">Searching Date: <span className="text-white">{report.summary.debug.target_date_searched}</span></div>
+              </div>
+              {report.summary.debug.latest_tenant_logs?.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-[9px] text-slate-500 uppercase mb-1">Latest logs (Your Tenant):</p>
+                  <div className="space-y-1">
+                    {report.summary.debug.latest_tenant_logs.map(l => (
+                      <div key={l.id} className="flex justify-between text-[10px] text-slate-400 bg-black/20 p-1 rounded">
+                        <span>{l.name} (+{l.amount})</span>
+                        <span>{l.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="glass-card p-4 bg-emerald-500/10 border border-emerald-500/20">
