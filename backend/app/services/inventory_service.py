@@ -231,7 +231,20 @@ class InventoryService:
 
         if "name" in data: product.name = data["name"]
         if "category" in data: product.category = data["category"]
-        if "stock" in data: product.stock = float(data["stock"])
+        if "stock" in data: 
+            old_stock = product.stock
+            new_stock = float(data["stock"])
+            if old_stock != new_stock:
+                product.stock = new_stock
+                # Add to InventoryLog for manual adjustment
+                log = InventoryLog(
+                    tenant_id=self.tenant_id,
+                    product_id=product.id,
+                    change_amount=new_stock - old_stock,
+                    source="Qo'lda tahrirlandi"
+                )
+                self.db.add(log)
+
         if "unit" in data: product.unit = data["unit"]
         if "last_purchase_price" in data: product.last_purchase_price = float(data["last_purchase_price"])
         if "sell_price" in data: product.sell_price = float(data["sell_price"])

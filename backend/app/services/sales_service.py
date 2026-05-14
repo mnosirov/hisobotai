@@ -302,6 +302,16 @@ class SalesService:
                 current_stock = product.stock or 0.0
                 product.stock = current_stock + qty
                 self.db.add(product)
+                
+                # Add to InventoryLog so it appears in reporting
+                from app.models.models import InventoryLog
+                log = InventoryLog(
+                    tenant_id=self.tenant_id,
+                    product_id=product.id,
+                    change_amount=qty,
+                    source=f"O'chirilgan sotuvdan qaytdi (ID: {sale_id})"
+                )
+                self.db.add(log)
         
         # Soft delete
         from app.models.models import uzb_now
