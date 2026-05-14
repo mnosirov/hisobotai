@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers, X, RotateCw } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers, X, RotateCw, Package } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
