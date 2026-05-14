@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers, X } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers, X, RotateCw } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -104,35 +104,54 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
     "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
   ];
 
-  const ImageModal = ({ url, onClose }) => (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
-    >
+  const ImageModal = ({ url, onClose }) => {
+    const [rotation, setRotation] = useState(0);
+    
+    return (
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="relative max-w-4xl w-full h-auto max-h-[90vh] flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md"
       >
-        <button 
-          onClick={onClose}
-          className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition"
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative max-w-4xl w-full flex flex-col items-center gap-6"
         >
-          <X size={32} />
-        </button>
-        <img 
-          src={url} 
-          alt="Preview" 
-          className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl border border-white/10 object-contain"
-        />
+          <div className="absolute -top-16 right-0 flex items-center gap-4">
+            <button 
+              onClick={() => setRotation(r => (r + 90) % 360)}
+              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all active:scale-90"
+              title="Aylantirish"
+            >
+              <RotateCw size={24} />
+            </button>
+            <button 
+              onClick={onClose}
+              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all active:scale-90"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          <div className="w-full flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl border border-white/10 bg-slate-900/50">
+            <img 
+              src={url} 
+              alt="Preview" 
+              style={{ 
+                transform: `rotate(${rotation}deg)`,
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              className="max-w-full max-h-[75vh] object-contain image-render-auto"
+            />
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
+    );
+  };
 
   const StatCard = ({ title, value, icon: Icon, color, subValue }) => (
     <div className="glass-card p-4 relative overflow-hidden group">

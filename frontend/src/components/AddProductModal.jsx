@@ -83,12 +83,12 @@ const AddProductModal = ({ showAddModal, setShowAddModal, newProduct, setNewProd
               {/* Image Upload/Preview */}
               <div className="flex flex-col items-center justify-center mb-4">
                 <label className="cursor-pointer group relative">
-                  <div className="h-24 w-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 group-hover:border-indigo-500/50 transition-all flex items-center justify-center overflow-hidden">
+                  <div className="h-24 w-24 rounded-2xl bg-slate-800/50 border-2 border-dashed border-white/10 group-hover:border-indigo-500/50 transition-all flex items-center justify-center overflow-hidden">
                     {newProduct.imageFile ? (
                       <img 
                         src={URL.createObjectURL(newProduct.imageFile)} 
                         alt="Preview" 
-                        className="h-full w-full object-cover" 
+                        className="h-full w-full object-contain" 
                       />
                     ) : (
                       <div className="text-center">

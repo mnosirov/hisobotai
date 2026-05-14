@@ -40,3 +40,12 @@ main {
   height: 100vh;
   overflow-y: auto;
 }
+
+/* Global Image Orientation Fix */
+img {
+  image-orientation: from-image;
+}
+
+.img-natural {
+  object-fit: contain;
+}
