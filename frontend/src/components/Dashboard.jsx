@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic, RefreshCw, X, Package } from 'lucide-react';
+import { Camera, TrendingUp, TrendingDown, ChevronRight, FileText, ShoppingBag, Mic, RefreshCw, X, Package, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
