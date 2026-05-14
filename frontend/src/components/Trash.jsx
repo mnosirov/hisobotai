@@ -133,6 +133,18 @@ const Trash = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
                   <h3 className="text-sm font-semibold truncate text-slate-200">
                     {item.name || item.customer || (item.category ? `${item.category}: ${item.amount}` : `Sotuv: ${item.amount}`)}
                   </h3>
+                  
+                  {/* Show products if it's a sale */}
+                  {item.type === 'sale' && item.items_json && (
+                    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+                      {item.items_json.map((p, idx) => (
+                        <span key={idx} className="text-[9px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">
+                          {p.product} ({p.quantity} ta)
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-[10px] text-slate-500 flex items-center gap-1">
                       <Clock size={10} />

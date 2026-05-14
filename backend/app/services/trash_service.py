@@ -26,7 +26,13 @@ class TrashService:
         # Sales
         s_query = select(Sale).where(Sale.tenant_id == self.tenant_id, Sale.is_deleted == 1).order_by(Sale.deleted_at.desc())
         s_res = await self.db.execute(s_query)
-        trash["sales"] = [{"id": x.id, "amount": x.total_amount, "deleted_at": x.deleted_at, "type": "sale"} for x in s_res.scalars().all()]
+        trash["sales"] = [{
+            "id": x.id, 
+            "amount": x.total_amount, 
+            "deleted_at": x.deleted_at, 
+            "type": "sale",
+            "items_json": x.items_json
+        } for x in s_res.scalars().all()]
 
         # Expenses
         e_query = select(Expense).where(Expense.tenant_id == self.tenant_id, Expense.is_deleted == 1).order_by(Expense.deleted_at.desc())
