@@ -272,6 +272,56 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
             </div>
           </div>
 
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <Clock size={18} className="text-slate-400" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Sotuvlar (Cheklar)</h3>
+            </div>
+            <div className="space-y-3">
+              {report.sales_transactions?.length === 0 ? (
+                <div className="glass-card p-6 text-center text-slate-500 text-xs italic">Sotuvlar topilmadi.</div>
+              ) : (
+                report.sales_transactions.map((sale) => (
+                  <div key={sale.id} className="glass-card overflow-hidden">
+                    <div className="p-4 flex justify-between items-center bg-white/5">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-[10px] font-bold">
+                          {new Date(sale.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">ID: #{sale.id.toString().slice(-4)}</p>
+                          <p className="text-[10px] text-slate-500">{sale.items_json?.length} xil mahsulot</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-sm font-black text-emerald-400">+{sale.total_amount.toLocaleString()} UZS</p>
+                          <p className="text-[10px] text-slate-500">Foyda: {sale.profit.toLocaleString()} UZS</p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteSale(sale.id)}
+                          className="h-9 w-9 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center transition-all hover:bg-red-500/20 active:scale-90"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="px-4 py-2 border-t border-white/5 overflow-x-auto bg-black/10">
+                      <div className="flex space-x-4 min-w-max">
+                        {sale.items_json.map((item, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-[11px] font-bold text-slate-300">{item.product}</span>
+                            <span className="text-[9px] text-slate-500">{item.quantity} ta | {item.revenue.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {report.purchases?.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">

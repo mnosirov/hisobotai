@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, todayExpenses, totalExpenses, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, recentSales, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, todayExpenses, totalExpenses, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -107,6 +107,21 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
       toast.error("Saqlashda xatolik yuz berdi", { id: loadingToast });
     } finally {
       setIsConfirming(false);
+    }
+  };
+
+  const handleDeleteSale = async (saleId) => {
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+    if (!window.confirm("Ushbu sotuvni o'chirmoqchimisiz? Mahsulot qoldig'i qayta tiklanadi.")) return;
+    
+    const loadingToast = toast.loading("O'chirilmoqda...");
+    try {
+      await axios.delete(`${API_BASE}/sales/${saleId}`);
+      toast.success("Sotuv o'chirildi!", { id: loadingToast });
+      fetchDashboardData(isOverall ? 0 : selectedYear, isOverall ? 0 : selectedMonth);
+      fetchInventoryData();
+    } catch (err) {
+      toast.error("Xatolik yuz berdi", { id: loadingToast });
     }
   };
 
@@ -378,7 +393,66 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
         </div>
       </div>
 
-      {/* Quick Insights List */}
+      {/* Recent Sales Section */}
+      <div className="space-y-4 pt-4">
+        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Oxirgi sotuvlar</h4>
+        <div className="space-y-3">
+          {recentSales.length === 0 ? (
+            <div className="glass-card p-10 text-center text-slate-500 text-sm italic">
+              Sotuvlar topilmadi.
+            </div>
+          ) : (
+            recentSales.map((sale) => (
+              <div key={sale.id} className="glass-card overflow-hidden">
+                <div className="p-4 flex justify-between items-center bg-white/5">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                      <ShoppingBag size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">
+                        {sale.items_json?.length} xil mahsulot
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {new Date(sale.created_at).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })} • #{sale.id.toString().slice(-4)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 ml-2">
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-black text-emerald-400">
+                        +{sale.total_amount.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {sale.profit.toLocaleString()} foyda
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteSale(sale.id)}
+                      className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all active:scale-90"
+                      title="O'chirish"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="px-4 py-2 border-t border-white/5 overflow-x-auto bg-black/20">
+                  <div className="flex space-x-4 min-w-max">
+                    {sale.items_json?.map((item, idx) => (
+                      <div key={idx} className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-300">{item.product}</span>
+                        <span className="text-[8px] text-slate-500">{item.quantity} ta • {item.revenue.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Quick Insights List (Low Stock) */}
       <div className="space-y-4 pt-4">
         <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Kutilayotgan topshiriqlar</h4>
         <div className="glass-card divide-y divide-white/5 overflow-hidden">

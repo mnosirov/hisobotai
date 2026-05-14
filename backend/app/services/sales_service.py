@@ -70,11 +70,28 @@ class SalesService:
             "image_url": p.image_url
         } for p in low_stock_items]
 
+        # Recent sales for quick management (Dashboard)
+        query_recent = select(Sale).where(
+            Sale.tenant_id == self.tenant_id,
+            Sale.is_deleted == 0
+        ).order_by(Sale.created_at.desc()).limit(5)
+        res_recent = await self.db.execute(query_recent)
+        recent_sales = res_recent.scalars().all()
+        
+        recent_sales_data = [{
+            "id": s.id,
+            "total_amount": s.total_amount,
+            "profit": s.profit,
+            "items_json": s.items_json,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        } for s in recent_sales]
+
         return {
             "today_profit": sales_today,
             "total_profit": total_sales,
             "profit_growth": round(profit_growth, 1),
-            "low_stock_items": low_stock_data
+            "low_stock_items": low_stock_data,
+            "recent_sales": recent_sales_data
         }
 
     async def get_todays_sales(self) -> List[Dict]:
