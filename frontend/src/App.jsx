@@ -30,6 +30,7 @@ const MainApp = () => {
   const [totalStockCost, setTotalStockCost] = useState(0);
   const [totalStockSell, setTotalStockSell] = useState(0);
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
+  const [totalSalesCost, setTotalSalesCost] = useState(0);
   const [totalSupplierDebt, setTotalSupplierDebt] = useState(0);
   const [cashBalance, setCashBalance] = useState(0);
   const [todayExpenses, setTodayExpenses] = useState(0);
@@ -98,6 +99,7 @@ const MainApp = () => {
       setTotalStockCost(data.total_stock_cost || 0);
       setTotalStockSell(data.total_stock_sell || 0);
       setTotalSalesRevenue(data.total_sales_revenue || 0);
+      setTotalSalesCost(data.total_sales_cost || 0);
       setTotalSupplierDebt(data.total_supplier_debt || 0);
       setCashBalance(data.cash_balance || 0);
       setTodayExpenses(data.today_expenses || 0);
@@ -342,6 +344,7 @@ const MainApp = () => {
               totalStockCost={totalStockCost}
               totalStockSell={totalStockSell}
               totalSalesRevenue={totalSalesRevenue}
+              totalSalesCost={totalSalesCost}
               totalSupplierDebt={totalSupplierDebt}
               cashBalance={cashBalance}
               todayExpenses={todayExpenses}

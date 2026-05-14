@@ -6,7 +6,7 @@ import axios from 'axios';
 import ConfirmationModal from './ConfirmationModal';
 import VoiceRecorder from './VoiceRecorder';
 
-const Dashboard = ({ profit, profitGrowth, lowStockItems, recentSales, totalStockCost, totalStockSell, totalSalesRevenue, totalSupplierDebt, cashBalance, todayExpenses, totalExpenses, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
+const Dashboard = ({ profit, profitGrowth, lowStockItems, recentSales, totalStockCost, totalStockSell, totalSalesRevenue, totalSalesCost, totalSupplierDebt, cashBalance, todayExpenses, totalExpenses, tg, fetchDashboardData, fetchInventoryData, API_BASE, setShowAddSaleModal }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [analyzedItems, setAnalyzedItems] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -265,6 +265,18 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, recentSales, totalStoc
           <div className="flex items-end justify-between mt-1">
             <h2 className="text-xl font-black text-white">
               {(totalSalesRevenue || 0).toLocaleString('uz-UZ')}
+            </h2>
+          </div>
+        </div>
+
+        {/* Cost of Sales Card */}
+        <div className="glass-card p-4 bg-gradient-to-br from-slate-500/20 to-slate-600/10">
+          <span className="text-slate-400 text-[10px] font-medium uppercase">
+            {isOverall ? 'Umumiy Tannarx' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Tannarxi` : 'Bugungi Tannarx')}
+          </span>
+          <div className="flex items-end justify-between mt-1">
+            <h2 className="text-xl font-black text-white text-slate-300">
+              {(totalSalesCost || 0).toLocaleString('uz-UZ')}
             </h2>
           </div>
         </div>

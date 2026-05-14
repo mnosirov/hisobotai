@@ -509,7 +509,8 @@ async def get_sales_summary(
             "total_supplier_debt": total_supplier_debt,
             "cash_balance": period_cash_balance,
             "today_expenses": today_expenses,
-            "low_stock_items": sales_summary.get("low_stock_items", [])
+            "low_stock_items": sales_summary.get("low_stock_items", []),
+            "total_sales_cost": dash_sum.get("total_cost", 0)
         }
     except Exception as e:
         print(f"Summary error details: {e}")

@@ -230,6 +230,7 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StatCard title="Kunlik Savdo" value={report.summary.total_sales_revenue} icon={ShoppingBag} color="text-emerald-400" subValue={`${report.summary.sales_count} ta sotuv`} />
             <StatCard title="Sof Foyda" value={report.summary.total_sales_profit} icon={TrendingUp} color="text-indigo-400" subValue="Xarajatlarsiz" />
+            <StatCard title="Tannarx (Sotilgan)" value={report.summary.total_sales_cost} icon={Package} color="text-slate-400" subValue="Sotilgan narsa tannarxi" />
             <StatCard title="Xarajat (Chiqim)" value={report.summary.total_expenses} icon={Banknote} color="text-red-400" />
             <StatCard title="Kirim Summasi" value={report.summary.total_purchases_cost} icon={BarChart3} color="text-amber-400" subValue="Skladga kirim summasi" />
             <StatCard title="Net Kassa" value={report.summary.net_cash_flow} icon={Layers} color="text-amber-400" subValue="Savdo - Chiqim - Qarz to'lovi" />

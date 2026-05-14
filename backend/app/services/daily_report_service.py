@@ -150,7 +150,8 @@ class DailyReportService:
                 "new_debts_taken": new_debts,
                 "debt_payments_made": debt_payments,
                 "net_cash_flow": net_cash_flow,
-                "sales_count": len(day_sales)
+                "sales_count": len(day_sales),
+                "total_sales_cost": total_sales_revenue - total_sales_profit
             },
             "sold_items": sold_items_list,
             "expenses": expenses_list,
@@ -414,5 +415,6 @@ class DailyReportService:
             "supplier_payments": int(supplier_payments),
             "new_supplier_debts": int(new_supplier_debts),
             "inventory_in_cost": int(inventory_in_cost),
-            "inventory_in_sell": int(inventory_in_sell)
+            "inventory_in_sell": int(inventory_in_sell),
+            "total_cost": int(revenue - profit)
         }
