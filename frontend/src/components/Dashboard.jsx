@@ -15,11 +15,11 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, recentSales, totalStoc
   const [selectedLowStockProduct, setSelectedLowStockProduct] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null);
 
-  // Period Filtering State
+  // Period Filtering State - Default to Overall as requested by user feedback
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [isOverall, setIsOverall] = useState(false);
+  const [isOverall, setIsOverall] = useState(true);
 
   const months = [
     "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
