@@ -382,7 +382,7 @@ class DailyReportService:
         supplier_payments = pay_res.scalar() or 0
 
         # 4. New Supplier Debts (Yangi qarzlar)
-        debt_query = select(func.sum(SupplierDebt.total_amount)).where(
+        debt_query = select(func.sum(SupplierDebt.remaining_amount)).where(
             SupplierDebt.tenant_id == self.tenant_id, SupplierDebt.is_deleted == 0
         )
         if start_date and end_date:

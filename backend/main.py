@@ -506,7 +506,7 @@ async def get_sales_summary(
             "total_sales_revenue": dash_sum.get("revenue", 0),
             "total_expenses": dash_sum.get("expenses", 0),
             "today_profit": dash_sum.get("profit", 0) if (year is not None) else sales_summary.get("today_profit", 0),
-            "total_supplier_debt": dash_sum.get("new_supplier_debts", 0) if year is not None else total_supplier_debt,
+            "total_supplier_debt": total_supplier_debt,
             "cash_balance": period_cash_balance,
             "today_expenses": today_expenses,
             "low_stock_items": sales_summary.get("low_stock_items", [])

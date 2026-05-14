@@ -254,15 +254,22 @@ const Dashboard = ({ profit, profitGrowth, lowStockItems, totalStockCost, totalS
           </div>
         </div>
 
-        {/* Customer Debt Card */}
+        {/* Supplier Debt Card */}
         <div className="glass-card p-4 bg-gradient-to-br from-rose-500/20 to-pink-600/10">
           <span className="text-slate-400 text-[10px] font-medium uppercase">
-            {isOverall ? 'Ta\'minotchiga Qarz' : (selectedMonth && !isOverall ? `${months[selectedMonth-1]} Yangi Qarzlari` : 'Ta\'minotchiga Qarz')}
+            Ta'minotchiga Qarz
           </span>
           <div className="flex items-end justify-between mt-1">
-            <h2 className="text-xl font-black text-white text-rose-300">
-              {(totalSupplierDebt || 0).toLocaleString('uz-UZ')}
-            </h2>
+            <div>
+              <h2 className="text-xl font-black text-white text-rose-300">
+                {(totalSupplierDebt || 0).toLocaleString('uz-UZ')}
+              </h2>
+              {!isOverall && (
+                <p className="text-[10px] text-rose-400/70 font-medium mt-1">
+                  Umumiy qoldi
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
