@@ -17,64 +17,17 @@ class DailyReportService:
         except ValueError:
             raise ValueError("Noto'g'ri sana formati. YYYY-MM-DD bo'lishi kerak.")
 
-        # 1. Sales Data
-        sales_query = select(Sale).where(
-            and_(
-                Sale.tenant_id == self.tenant_id,
-                Sale.is_deleted == 0
-            )
-        )
-        sales_result = await self.db.execute(sales_query)
-        all_sales = sales_result.scalars().all()
-        sales = [s for s in all_sales if s.created_at and s.created_at.date() == target_date]
-
-        total_sales_revenue = sum(s.total_amount for s in sales)
-        total_sales_profit = sum(s.profit for s in sales)
-        
-        # Aggregate sold items
-        sold_items_dict = {}
-        for s in sales:
-            for item in s.items_json:
-                name = item.get("product", "Noma'lum")
-                qty = item.get("quantity", 0)
-                rev = item.get("revenue", 0)
-                prof = item.get("profit", 0)
-                
-                if name not in sold_items_dict:
-                    sold_items_dict[name] = {"quantity": 0, "revenue": 0, "profit": 0}
-                sold_items_dict[name]["quantity"] += qty
-                sold_items_dict[name]["revenue"] += rev
-                sold_items_dict[name]["profit"] += prof
-
-        sold_items_list = [{"name": k, **v} for k, v in sold_items_dict.items()]
-        sold_items_list.sort(key=lambda x: x["revenue"], reverse=True)
-
-        # 2. Expenses Data
-        expenses_query = select(Expense).where(Expense.tenant_id == self.tenant_id)
-        expenses_result = await self.db.execute(expenses_query)
-        all_expenses = expenses_result.scalars().all()
-        expenses = [e for e in all_expenses if e.created_at and e.created_at.date() == target_date]
-
-        total_expenses = sum(e.amount for e in expenses)
-        expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
-
-        # DEBUG: Basic verification
-        debug_count_query = select(func.count()).where(InventoryLog.tenant_id == self.tenant_id)
-        debug_count_result = await self.db.execute(debug_count_query)
-        total_logs_count = debug_count_result.scalar()
-
-        # DEBUG: Full system diagnostics
-        total_logs_all = (await self.db.execute(select(func.count()).select_from(InventoryLog))).scalar()
-        total_prods_all = (await self.db.execute(select(func.count()).select_from(Product))).scalar()
-        tenant_logs_count = (await self.db.execute(select(func.count()).where(InventoryLog.tenant_id == self.tenant_id))).scalar()
-        
-        latest_logs_q = select(InventoryLog, Product.name).join(Product).where(InventoryLog.tenant_id == self.tenant_id).order_by(InventoryLog.id.desc()).limit(5)
-        latest_logs_res = await self.db.execute(latest_logs_q)
-        latest_logs_data = [{"id": l[0].id, "name": l[1], "amount": l[0].change_amount, "date": str(l[0].created_at)} for l in latest_logs_res.all()]
-
-        # 3. Inventory Logs (Kirimlar)
+        # 1. Fetch all data for the tenant
         from app.models.models import Supplier
-        inv_query = select(
+        
+        # Sales
+        sales_query = select(Sale).where(and_(Sale.tenant_id == self.tenant_id, Sale.is_deleted == 0))
+        sales_res = await self.db.execute(sales_query)
+        all_sales = sales_res.scalars().all()
+        day_sales = [s for s in all_sales if s.created_at and s.created_at.date() == target_date]
+
+        # Inventory Logs (metadata for sold items and purchase history)
+        logs_query = select(
             InventoryLog, 
             Product.name, 
             Product.last_purchase_price,
@@ -84,22 +37,15 @@ class DailyReportService:
             Product, InventoryLog.product_id == Product.id
         ).outerjoin(
             Supplier, Product.supplier_id == Supplier.id
-        ).where(
-            and_(
-                InventoryLog.tenant_id == self.tenant_id,
-                InventoryLog.change_amount > 0
-            )
-        )
-        inv_result = await self.db.execute(inv_query)
-        all_logs = inv_result.all()
+        ).where(and_(InventoryLog.tenant_id == self.tenant_id, InventoryLog.change_amount > 0))
+        
+        logs_res = await self.db.execute(logs_query)
+        all_logs = logs_res.all()
         
         # Python-side filtering for logs
-        logs = [
-            row for row in all_logs 
-            if row[0].created_at and row[0].created_at.date() == target_date
-        ]
+        day_logs = [row for row in all_logs if row[0].created_at and row[0].created_at.date() == target_date]
 
-        # Fallback: Products created on this date that might NOT have logs
+        # Fallback for historical daily data
         prods_query = select(Product, Supplier.name).outerjoin(Supplier, Product.supplier_id == Supplier.id).where(and_(
             Product.tenant_id == self.tenant_id,
             cast(Product.created_at, Date) == target_date
@@ -107,12 +53,11 @@ class DailyReportService:
         prods_res = await self.db.execute(prods_query)
         day_prods = prods_res.all()
         
-        existing_log_prod_ids = {row[0].product_id for row in logs}
+        existing_log_prod_ids = {row[0].product_id for row in day_logs}
         for p_row in day_prods:
             p = p_row[0]
             s_name = p_row[1]
             if p.id not in existing_log_prod_ids:
-                # Use a simple object to avoid SQLAlchemy session issues with id=0
                 class VirtualLog:
                     def __init__(self, product_id, stock, created_at):
                         self.id = 0
@@ -120,13 +65,58 @@ class DailyReportService:
                         self.change_amount = stock
                         self.source = "Tarixiy ma'lumot"
                         self.created_at = created_at
-                
                 v_log = VirtualLog(p.id, p.stock, p.created_at)
-                logs.append((v_log, p.name, p.last_purchase_price, p.image_url, s_name))
-        
+                day_logs.append((v_log, p.name, p.last_purchase_price, p.image_url, s_name))
+
+        # Map product names to metadata for augmenting sold items
+        prod_meta = {row[1]: {"image": row[3], "supplier": row[4]} for row in all_logs if row[1]}
+
+        # 2. Process Sales Aggregation
+        total_sales_revenue = sum(s.total_amount for s in day_sales)
+        total_sales_profit = sum(s.profit for s in day_sales)
+        sold_items_dict = {}
+        for s in day_sales:
+            for item in s.items_json:
+                name = item.get("product", "Noma'lum")
+                qty = item.get("quantity", 0)
+                rev = item.get("revenue", 0)
+                prof = item.get("profit", 0)
+                if name not in sold_items_dict:
+                    meta = prod_meta.get(name, {})
+                    sold_items_dict[name] = {
+                        "quantity": 0, 
+                        "revenue": 0, 
+                        "profit": 0,
+                        "image_url": meta.get("image"),
+                        "supplier_name": meta.get("supplier")
+                    }
+                sold_items_dict[name]["quantity"] += qty
+                sold_items_dict[name]["revenue"] += rev
+                sold_items_dict[name]["profit"] += prof
+
+        sold_items_list = [{"name": k, **v} for k, v in sold_items_dict.items()]
+        sold_items_list.sort(key=lambda x: x["revenue"], reverse=True)
+
+        # 3. Expenses, Debts and Payments
+        expenses_query = select(Expense).where(Expense.tenant_id == self.tenant_id)
+        expenses_res = await self.db.execute(expenses_query)
+        expenses = [e for e in expenses_res.scalars().all() if e.created_at and e.created_at.date() == target_date]
+        total_expenses = sum(e.amount for e in expenses)
+        expenses_list = [{"category": e.category, "amount": e.amount, "notes": e.notes} for e in expenses]
+
+        debts_query = select(SupplierDebt).where(SupplierDebt.tenant_id == self.tenant_id)
+        debts_res = await self.db.execute(debts_query)
+        new_debts = sum(d.total_amount for d in debts_res.scalars().all() if d.created_at and d.created_at.date() == target_date)
+
+        payments_query = select(SupplierPaymentLog).where(SupplierPaymentLog.tenant_id == self.tenant_id)
+        payments_res = await self.db.execute(payments_query)
+        all_payments = payments_res.scalars().all()
+        debt_payments = sum(p.amount for p in all_payments if p.payment_date and p.payment_date.date() == target_date)
+
+        # 4. Purchases List Aggregation
         total_purchases = 0
         purchases_list = []
-        for log_row in logs:
+        for log_row in day_logs:
             log_obj = log_row[0]
             prod_name = log_row[1] or "O'chirilgan mahsulot"
             prod_price = log_row[2] or 0.0
@@ -147,17 +137,6 @@ class DailyReportService:
                 "time": log_obj.created_at.strftime("%H:%M") if log_obj.created_at else None
             })
 
-        # 4. Debts and Payments
-        debts_query = select(SupplierDebt).where(SupplierDebt.tenant_id == self.tenant_id)
-        debts_result = await self.db.execute(debts_query)
-        all_debts = debts_result.scalars().all()
-        new_debts = sum(d.total_amount for d in all_debts if d.created_at and d.created_at.date() == target_date)
-
-        payments_query = select(SupplierPaymentLog).where(SupplierPaymentLog.tenant_id == self.tenant_id)
-        payments_result = await self.db.execute(payments_query)
-        all_payments = payments_result.scalars().all()
-        debt_payments = sum(p.amount for p in all_payments if p.payment_date and p.payment_date.date() == target_date)
-
         # Net Daily Cash calculation
         net_cash_flow = total_sales_revenue - total_expenses - debt_payments
 
@@ -171,15 +150,7 @@ class DailyReportService:
                 "new_debts_taken": new_debts,
                 "debt_payments_made": debt_payments,
                 "net_cash_flow": net_cash_flow,
-                "sales_count": len(sales),
-                "debug": {
-                    "total_system_logs": total_logs_all,
-                    "total_system_prods": total_prods_all,
-                    "tenant_logs_total": tenant_logs_count,
-                    "tenant_id_used": self.tenant_id,
-                    "target_date_searched": str(target_date),
-                    "latest_tenant_logs": latest_logs_data
-                }
+                "sales_count": len(day_sales)
             },
             "sold_items": sold_items_list,
             "expenses": expenses_list,
@@ -192,7 +163,7 @@ class DailyReportService:
                     "items_json": s.items_json,
                     "created_at": s.created_at.isoformat() if s.created_at else ""
                 }
-                for s in sales
+                for s in day_sales
             ]
         }
 
@@ -279,8 +250,8 @@ class DailyReportService:
         
         # Product-wise sales aggregation
         sold_items_dict = {}
-        # Map product names to images from current logs/prods for better UI
-        prod_images = {row[1]: row[3] for row in all_logs if row[1]}
+        # Map product names to images and suppliers from current logs/prods for better UI
+        prod_meta = {row[1]: {"image": row[3], "supplier": row[4]} for row in all_logs if row[1]}
 
         for s in monthly_sales:
             for item in s.items_json:
@@ -289,7 +260,14 @@ class DailyReportService:
                 rev = item.get("revenue", 0)
                 prof = item.get("profit", 0)
                 if name not in sold_items_dict:
-                    sold_items_dict[name] = {"quantity": 0, "revenue": 0, "profit": 0, "image_url": prod_images.get(name)}
+                    meta = prod_meta.get(name, {})
+                    sold_items_dict[name] = {
+                        "quantity": 0, 
+                        "revenue": 0, 
+                        "profit": 0, 
+                        "image_url": meta.get("image"),
+                        "supplier_name": meta.get("supplier")
+                    }
                 sold_items_dict[name]["quantity"] += qty
                 sold_items_dict[name]["revenue"] += rev
                 sold_items_dict[name]["profit"] += prof

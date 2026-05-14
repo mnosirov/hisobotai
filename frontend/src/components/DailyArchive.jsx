@@ -193,10 +193,22 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
                 <div className="p-10 text-center text-slate-500 text-xs font-medium">Bu kunda savdo bo'lmagan.</div>
               ) : (
                 report.sold_items.map((item, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
-                    <div>
-                      <p className="text-sm font-bold text-white">{item.name}</p>
-                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
+                  <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
+                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-500">
+                          <PackageOpen size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS
+                        {item.supplier_name && <span className="text-slate-400"> • {item.supplier_name}</span>}
+                      </p>
                     </div>
                     <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
                   </div>
@@ -270,18 +282,21 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               ) : (
                 monthlyReport.sold_items.map((item, idx) => (
                   <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
-                    <div className="h-10 w-10 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-slate-500">
-                          <ShoppingBag size={18} />
+                          <PackageOpen size={20} />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-white truncate">{item.name}</p>
-                      <p className="text-[10px] text-slate-500">{item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {item.quantity} dona • Foyda: {item.profit.toLocaleString()} UZS
+                        {item.supplier_name && <span className="text-slate-400"> • {item.supplier_name}</span>}
+                      </p>
                     </div>
                     <p className="text-sm font-black text-emerald-400">{item.revenue.toLocaleString()} <span className="text-[10px] opacity-50">UZS</span></p>
                   </div>
