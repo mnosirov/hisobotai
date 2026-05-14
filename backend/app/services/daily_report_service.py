@@ -112,15 +112,17 @@ class DailyReportService:
             p = p_row[0]
             s_name = p_row[1]
             if p.id not in existing_log_prod_ids:
-                from app.models.models import InventoryLog
-                virtual_log = InventoryLog(
-                    id=0,
-                    product_id=p.id,
-                    change_amount=p.stock,
-                    source="Tarixiy ma'lumot",
-                    created_at=p.created_at
-                )
-                logs.append((virtual_log, p.name, p.last_purchase_price, p.image_url, s_name))
+                # Use a simple object to avoid SQLAlchemy session issues with id=0
+                class VirtualLog:
+                    def __init__(self, product_id, stock, created_at):
+                        self.id = 0
+                        self.product_id = product_id
+                        self.change_amount = stock
+                        self.source = "Tarixiy ma'lumot"
+                        self.created_at = created_at
+                
+                v_log = VirtualLog(p.id, p.stock, p.created_at)
+                logs.append((v_log, p.name, p.last_purchase_price, p.image_url, s_name))
         
         total_purchases = 0
         purchases_list = []
@@ -247,21 +249,22 @@ class DailyReportService:
         
         # If no logs exist for these products in this month, add them as virtual logs
         existing_log_prod_ids = {row[0].product_id for row in monthly_logs}
+        
+        # Define a simple virtual object for fallback
+        class VirtualLog:
+            def __init__(self, product_id, stock, created_at):
+                self.id = 0
+                self.product_id = product_id
+                self.change_amount = stock
+                self.source = "Tarixiy ma'lumot"
+                self.created_at = created_at
+
         for p_row in month_prods:
             p = p_row[0]
             s_name = p_row[1]
             if p.id not in existing_log_prod_ids:
-                # Create a virtual row matching our logs structure: 
-                # (InventoryLog-like, Product.name, Product.last_purchase_price, Product.image_url, Supplier.name)
-                from app.models.models import InventoryLog
-                virtual_log = InventoryLog(
-                    id=0,
-                    product_id=p.id,
-                    change_amount=p.stock, # Use current stock as initial kirim if no logs
-                    source="Tarixiy ma'lumot",
-                    created_at=p.created_at
-                )
-                monthly_logs.append((virtual_log, p.name, p.last_purchase_price, p.image_url, s_name))
+                v_log = VirtualLog(p.id, p.stock, p.created_at)
+                monthly_logs.append((v_log, p.name, p.last_purchase_price, p.image_url, s_name))
 
         monthly_debts = [d for d in all_debts if d.created_at and d.created_at.year == year and d.created_at.month == month]
         monthly_payments = [p for p in all_payments if p.payment_date and p.payment_date.year == year and p.payment_date.month == month]
