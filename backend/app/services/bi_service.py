@@ -14,18 +14,20 @@ class BIService:
         from sqlalchemy import func
         
         # 1. Omborxonadagi jami mahsulotlar qiymati
-        # Tan narxi (Xarid narxi bo'yicha)
+        # Tan narxi (Xarid narxi bo'yicha) - Faqat musbat qoldiqlar hisoblanadi
         q_stock_cost = select(func.sum(Product.stock * Product.last_purchase_price)).where(
             Product.tenant_id == self.tenant_id,
-            Product.is_deleted == 0
+            Product.is_deleted == 0,
+            Product.stock > 0
         )
         res_stock_cost = await self.db.execute(q_stock_cost)
         total_stock_cost = res_stock_cost.scalar() or 0.0
 
-        # Sotish qiymati (Sotish narxi bo'yicha)
+        # Sotish qiymati (Sotish narxi bo'yicha) - Faqat musbat qoldiqlar hisoblanadi
         q_stock_sell = select(func.sum(Product.stock * Product.sell_price)).where(
             Product.tenant_id == self.tenant_id,
-            Product.is_deleted == 0
+            Product.is_deleted == 0,
+            Product.stock > 0
         )
         res_stock_sell = await self.db.execute(q_stock_sell)
         total_stock_sell = res_stock_sell.scalar() or 0.0
