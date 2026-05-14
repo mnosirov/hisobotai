@@ -179,6 +179,7 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
             <StatCard title="Kunlik Savdo" value={report.summary.total_sales_revenue} icon={ShoppingBag} color="text-emerald-400" subValue={`${report.summary.sales_count} ta sotuv`} />
             <StatCard title="Sof Foyda" value={report.summary.total_sales_profit} icon={TrendingUp} color="text-indigo-400" subValue="Xarajatlarsiz" />
             <StatCard title="Xarajat (Chiqim)" value={report.summary.total_expenses} icon={Banknote} color="text-red-400" />
+            <StatCard title="Kirim Summasi" value={report.summary.total_purchases_cost} icon={BarChart3} color="text-amber-400" subValue="Skladga kirim summasi" />
             <StatCard title="Net Kassa" value={report.summary.net_cash_flow} icon={Layers} color="text-amber-400" subValue="Savdo - Chiqim - Qarz to'lovi" />
           </div>
 
@@ -253,6 +254,7 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
             <StatCard title="Oylik Foyda" value={monthlyReport.summary.total_profit} icon={TrendingUp} color="text-indigo-400" subValue="Savdo - Tannarx" />
             <StatCard title="Oylik Xarajat" value={monthlyReport.summary.total_expenses} icon={Banknote} color="text-red-400" />
             <StatCard title="Net Foyda" value={monthlyReport.summary.net_profit} icon={PieChart} color="text-indigo-400" subValue="Foyda - Xarajat" />
+            <StatCard title="Kirim Summasi" value={monthlyReport.summary.total_purchases_cost} icon={BarChart3} color="text-amber-400" subValue="Skladga kirim summasi" />
             <StatCard title="Qarz To'lovi" value={monthlyReport.summary.total_payments_made} icon={Layers} color="text-rose-400" />
             <StatCard title="Net Kassa" value={monthlyReport.summary.net_cash_flow} icon={Banknote} color="text-amber-400" subValue="Savdo - Xarajat - Qarz To'lovi" />
           </div>
