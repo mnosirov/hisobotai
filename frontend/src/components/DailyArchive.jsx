@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, ShoppingBag, Banknote, PackageOpen, Trash2, Clock, BarChart3, TrendingUp, PieChart, Layers, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -97,10 +97,42 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
     return d.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const [selectedImage, setSelectedImage] = useState(null);
+
   const months = [
     "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
     "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"
   ];
+
+  const ImageModal = ({ url, onClose }) => (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative max-w-4xl w-full h-auto max-h-[90vh] flex items-center justify-center"
+      >
+        <button 
+          onClick={onClose}
+          className="absolute -top-12 right-0 p-2 text-white/50 hover:text-white transition"
+        >
+          <X size={32} />
+        </button>
+        <img 
+          src={url} 
+          alt="Preview" 
+          className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl border border-white/10 object-contain"
+        />
+      </motion.div>
+    </motion.div>
+  );
 
   const StatCard = ({ title, value, icon: Icon, color, subValue }) => (
     <div className="glass-card p-4 relative overflow-hidden group">
@@ -114,33 +146,34 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 pt-4 pb-10"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Calendar className="text-indigo-400" size={24} />
-          <h2 className="text-xl font-bold">Xotira (Arxiv)</h2>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="space-y-6 pt-4 pb-10"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Calendar className="text-indigo-400" size={24} />
+            <h2 className="text-xl font-bold">Xotira (Arxiv)</h2>
+          </div>
+          
+          <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/5">
+            <button 
+              onClick={() => setViewType('daily')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'daily' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Kunlik
+            </button>
+            <button 
+              onClick={() => setViewType('monthly')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'monthly' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Oylik
+            </button>
+          </div>
         </div>
-        
-        <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/5">
-          <button 
-            onClick={() => setViewType('daily')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'daily' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Kunlik
-          </button>
-          <button 
-            onClick={() => setViewType('monthly')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${viewType === 'monthly' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Oylik
-          </button>
-        </div>
-      </div>
 
       {/* Date/Month Navigator */}
       <div className="glass-card p-4 flex items-center justify-between bg-slate-800/80">
@@ -194,7 +227,10 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               ) : (
                 report.sold_items.map((item, idx) => (
                   <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
-                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                    <div 
+                      onClick={() => item.image_url && setSelectedImage(item.image_url)}
+                      className={`h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5 ${item.image_url ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+                    >
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                       ) : (
@@ -226,7 +262,10 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               <div className="glass-card divide-y divide-white/5 overflow-hidden">
                 {report.purchases.map((p, idx) => (
                   <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
-                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                    <div 
+                      onClick={() => p.image_url && setSelectedImage(p.image_url)}
+                      className={`h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5 ${p.image_url ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+                    >
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
@@ -282,7 +321,10 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               ) : (
                 monthlyReport.sold_items.map((item, idx) => (
                   <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
-                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                    <div 
+                      onClick={() => item.image_url && setSelectedImage(item.image_url)}
+                      className={`h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5 ${item.image_url ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+                    >
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                       ) : (
@@ -331,7 +373,10 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
               <div className="glass-card divide-y divide-white/5 overflow-hidden">
                 {monthlyReport.purchases.map((p, idx) => (
                   <div key={idx} className="p-4 flex items-center gap-4 hover:bg-white/5 transition">
-                    <div className="h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5">
+                    <div 
+                      onClick={() => p.image_url && setSelectedImage(p.image_url)}
+                      className={`h-12 w-12 rounded-lg bg-slate-700/50 flex-shrink-0 overflow-hidden border border-white/5 ${p.image_url ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+                    >
                       {p.image_url ? (
                         <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
@@ -365,7 +410,14 @@ const DailyArchive = ({ API_BASE, fetchDashboardData, fetchInventoryData }) => {
           )}
         </div>
       ) : null}
-    </motion.div>
+      </motion.div>
+
+      <AnimatePresence>
+        {selectedImage && (
+          <ImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
