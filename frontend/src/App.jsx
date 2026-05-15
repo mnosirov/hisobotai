@@ -72,7 +72,6 @@ const MainApp = () => {
 
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
       fetchInventoryData();
       fetchSuppliers();
     }
